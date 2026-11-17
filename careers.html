@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Join the Café De Leila team! View current openings and apply online. We're hiring chefs, servers, managers, and more in Lucknow.">
+  <title>Careers | CAFÉ DE LEILA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+</head>
+<body class="careers-page">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div id="header-placeholder"></div>
+
+  <main id="main-content" role="main">
+    <section class="careers-hero" aria-labelledby="careers-hero-title">
+      <div class="container">
+        <h1 id="careers-hero-title" class="careers-hero__title">Join Our Team</h1>
+        <p class="careers-hero__subtitle">We're looking for passionate people who love great food and exceptional service. Come grow with us at Café De Leila.</p>
+        <div class="careers-hero__benefits" role="list" aria-label="Employee benefits">
+          <span class="benefit-tag" role="listitem">Competitive Pay</span>
+          <span class="benefit-tag" role="listitem">Flexible Shifts</span>
+          <span class="benefit-tag" role="listitem">Staff Meals</span>
+          <span class="benefit-tag" role="listitem">Growth Opportunities</span>
+          <span class="benefit-tag" role="listitem">Friendly Culture</span>
+          <span class="benefit-tag" role="listitem">Training Provided</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="careers-form" aria-labelledby="careers-form-title">
+      <div class="container">
+        <form id="careers-form" class="careers-form__card" novalidate enctype="multipart/form-data">
+          <h2 id="careers-form-title" class="sr-only">Job Application Form</h2>
+
+          <div class="form-group">
+            <label for="name">Full Name <span aria-hidden="true">*</span></label>
+            <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your full name">
+            <span class="form-error"></span>
+          </div>
+
+          <div class="booking-form__row booking-form__row--double">
+            <div class="form-group">
+              <label for="email">Email Address <span aria-hidden="true">*</span></label>
+              <input type="email" id="email" name="email" required autocomplete="email" placeholder="your@email.com">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label for="phone">Mobile Number <span aria-hidden="true">*</span></label>
+              <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="10 digit mobile number" pattern="[6-9]\d{9}" inputmode="numeric" maxlength="10">
+              <span class="form-error"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="role">Role Applied For <span aria-hidden="true">*</span></label>
+            <select id="role" name="role" required>
+              <option value="">Select a role</option>
+              <!-- Populated by JS from config.json -->
+            </select>
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group careers-form__file-wrapper">
+            <label for="cv">Upload CV/Resume <span aria-hidden="true">*</span></label>
+            <div class="careers-form__file-wrapper">
+              <input type="file" id="cv" name="cv" class="careers-form__file-input" accept=".pdf,.doc,.docx" required aria-describedby="cv-hint">
+              <label for="cv" class="careers-form__file-label" tabindex="0">
+                <svg class="careers-form__file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span class="careers-form__file-text">Click or drag & drop your CV here</span>
+                <span class="careers-form__file-hint" id="cv-hint">PDF, DOC, or DOCX • Max 2MB</span>
+              </label>
+            </div>
+            <div id="careers-file-name" class="careers-form__file-name" style="display: none;"></div>
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Address <span aria-hidden="true">*</span></label>
+            <textarea id="address" name="address" required rows="3" placeholder="Your complete residential address"></textarea>
+            <span class="form-error"></span>
+          </div>
+
+          <div class="booking-form__actions">
+            <button type="button" class="btn btn--secondary" onclick="window.history.back()">Cancel</button>
+            <button type="submit" class="btn btn--primary btn--lg">Submit Application</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Book a table at Café De Leila, Lucknow. Reserve your spot for a memorable dining experience in Gomti Nagar.">
+  <title>Book a Table | CAFÉ DE LEILA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+</head>
+<body class="booking-page">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div id="header-placeholder"></div>
+
+  <main id="main-content" role="main">
+    <section class="booking-hero" aria-labelledby="booking-hero-title">
+      <div class="container">
+        <h1 id="booking-hero-title" class="booking-hero__title">Book a Table</h1>
+        <p class="booking-hero__subtitle">Reserve your spot for a magical dining experience at Café De Leila, Gomti Nagar, Lucknow.</p>
+      </div>
+    </section>
+
+    <section class="booking-form" aria-labelledby="booking-form-title">
+      <div class="container">
+        <form id="booking-form" class="booking-form__card" novalidate>
+          <h2 id="booking-form-title" class="sr-only">Reservation Details</h2>
+
+          <!-- DATE SELECTION -->
+          <fieldset class="booking-form__section">
+            <legend class="booking-form__section-title">Select Date</legend>
+            <div class="date-options" id="booking-date" role="radiogroup" aria-label="Available dates" style="display: flex; gap: var(--space-sm); overflow-x: auto; padding: var(--space-sm); scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+              <!-- Populated by JS -->
+            </div>
+          </fieldset>
+
+          <!-- TIME SELECTION -->
+          <fieldset class="booking-form__section">
+            <legend class="booking-form__section-title">Select Time</legend>
+            <div class="time-slots" id="booking-time" role="radiogroup" aria-label="Available time slots" style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+              <!-- Populated by JS -->
+            </div>
+          </fieldset>
+
+          <!-- GUESTS SELECTION -->
+          <fieldset class="booking-form__section">
+            <legend class="booking-form__section-title">Number of Guests</legend>
+            <div class="guest-options" id="booking-guests" role="radiogroup" aria-label="Number of guests" style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+              <!-- Populated by JS -->
+            </div>
+          </fieldset>
+
+          <!-- PERSONAL DETAILS -->
+          <fieldset class="booking-form__section">
+            <legend class="booking-form__section-title">Your Details</legend>
+            <div class="booking-form__row booking-form__row--double">
+              <div class="form-group">
+                <label for="name">Full Name <span aria-hidden="true">*</span></label>
+                <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your full name">
+                <span class="form-error"></span>
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone Number <span aria-hidden="true">*</span></label>
+                <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="10 digit mobile number" pattern="[6-9]\d{9}" inputmode="numeric" maxlength="10">
+                <span class="form-error"></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="your@email.com">
+              <span class="form-error"></span>
+            </div>
+          </fieldset>
+
+          <!-- SPECIAL REQUESTS -->
+          <fieldset class="booking-form__section">
+            <legend class="booking-form__section-title">Special Requests</legend>
+            <div class="form-group">
+              <label for="notes">Any special requests?</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="High chair, wheelchair access, anniversary celebration, dietary requirements..."></textarea>
+            </div>
+          </fieldset>
+
+          <div class="booking-form__actions">
+            <button type="button" class="btn btn--secondary" onclick="window.history.back()">Cancel</button>
+            <button type="submit" class="btn btn--primary btn--lg">Confirm Booking</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-placeholder"></div>
+  <script src="/js/main.js"></script>
+</body>
+</html>
