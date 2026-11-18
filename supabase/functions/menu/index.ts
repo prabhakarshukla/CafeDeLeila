@@ -2,13 +2,55 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://cafedeleila.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Max-Age": "86400",
 };
 
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > 60_000) {
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= 60) { // Higher limit for menu reads
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+function sanitizeText(text: string, maxLen: number): string {
+  return text.slice(0, maxLen).replace(/[<>]/g, "");
+}
+
 serve(async (req) => {
+  // Rate limiting
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const now = Date.now();
+  let rateLimitMap = (globalThis as any).__menuRateLimitMap;
+  if (!rateLimitMap) {
+    rateLimitMap = new Map();
+    (globalThis as any).__menuRateLimitMap = rateLimitMap;
+  }
+  const entry = rateLimitMap.get(clientIp);
+  if (!entry || now - entry.windowStart > 60_000) {
+    rateLimitMap.set(clientIp, { count: 1, windowStart: now });
+  } else if (entry.count >= 60) { // 60 req/min for menu
+    return new Response(JSON.stringify({ error: "Too many requests. Please slow down." }), {
+      status: 429,
+      headers: { "Access-Control-Allow-Origin": "https://cafedeleila.com", "Content-Type": "application/json" },
+    });
+  } else {
+    entry.count++;
+  }
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -20,6 +62,11 @@ serve(async (req) => {
   const search = url.searchParams.get("search");
 
   if (req.method === "GET") {
+    // Validate and sanitize query params
+    const sanitizedCategory = category ? sanitizeText(category, 100) : null;
+    const sanitizedVeg = veg === "true" ? true : veg === "false" ? false : null;
+    const sanitizedSearch = search ? sanitizeText(search, 100) : null;
+
     let query = supabase
       .from("menu_items")
       .select(`
@@ -29,15 +76,15 @@ serve(async (req) => {
       .eq("is_available", true)
       .order("display_order");
 
-    if (category) query = query.eq("category.slug", category);
-    if (veg === "true") query = query.eq("veg", true);
-    if (veg === "false") query = query.eq("veg", false);
-    if (search) query = query.ilike("name", `%${search}%`);
+    if (sanitizedCategory) query = query.eq("category.slug", sanitizedCategory);
+    if (sanitizedVeg !== null) query = query.eq("veg", sanitizedVeg);
+    if (sanitizedSearch) query = query.ilike("name", `%${sanitizedSearch}%`);
 
     const { data, error } = await query;
 
-    if (error) return new Response(JSON.stringify({ error: error.message }), { 
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    if (error) return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
     // Also fetch categories
@@ -47,10 +94,14 @@ serve(async (req) => {
       .eq("is_active", true)
       .order("display_order");
 
-    return new Response(JSON.stringify({ items: data, categories }), { 
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    return new Response(JSON.stringify({ items: data, categories }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 });
+
+function sanitizeText(text: string, maxLen: number): string {
+  return text.slice(0, maxLen).replace(/[<>]/g, "");
+}

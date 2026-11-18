@@ -597,6 +597,31 @@
    MENU PAGE
    ======================================== */
 
+.menu-sample-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-wash);
+  border: 1px solid var(--color-wash);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  color: var(--color-sand);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.menu-sample-notice__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-sand);
+}
+
+/* ========================================
+   MENU PAGE
+   ======================================== */
+
 .menu-page {
   padding-top: var(--space-xl);
 }

@@ -1155,6 +1155,22 @@ function renderMenuGrid() {
   const grid = utils.$('.menu-grid');
   if (!grid) return;
 
+  // Show sample notice if menu is sample
+  const config = window.cafeState?.config;
+  if (config?.menu?.is_sample) {
+    const notice = document.createElement('div');
+    notice.className = 'menu-sample-notice';
+    notice.setAttribute('role', 'status');
+    notice.innerHTML = `
+      <svg class="menu-sample-notice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4m0 4h.01"/>
+      </svg>
+      <span>Sample menu for preview — prices and items are placeholders</span>
+    `;
+    grid.parentNode?.insertBefore(notice, grid);
+  }
+
   if (menuState.filteredItems.length === 0) {
     grid.innerHTML = `
       <div class="menu-empty">
@@ -1532,7 +1548,7 @@ function showOrderConfirmation(order) {
         utils.createEl('div', { class: 'confirmation__actions' },
           utils.createEl('button', { class: 'btn btn--primary btn--lg', onclick: closeConfirmation }, 'Done')
         ),
-        utils.createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
+        utils.createEl('p', { class: 'confirmation__note' }, 'We have received your order. We\'ll confirm shortly.')
       )
     )
   );
@@ -1882,7 +1898,7 @@ function showBookingConfirmation(booking) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeBookingConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
+        createEl('p', { class: 'confirmation__note' }, 'We have received your booking request. We\'ll confirm shortly.')
       )
     )
   );

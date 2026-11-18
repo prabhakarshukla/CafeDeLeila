@@ -55,9 +55,11 @@
     "defaultType": "dine-in",
     "minOrderDelivery": 0,
     "deliveryFee": 0,
-    "taxRate": 0,
-    "_sample": true,
     "note": "Sample subtotal only. Taxes, delivery pricing and service area require owner confirmation."
+  },
+  "menu": {
+    "is_sample": true,
+    "note": "All prices and items are samples for preview only. Replace with real data before launch."
   },
   "careers": {
     "allowedFileTypes": [
