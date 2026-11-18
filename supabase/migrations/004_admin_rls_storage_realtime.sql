@@ -1,0 +1,260 @@
+-- ============================================
+-- CAFÉ DE LEILA — MIGRATION 004
+-- Admin RLS policies, storage policies, realtime, stats view
+-- Run in Supabase SQL Editor AFTER 003_order_status_history.sql
+-- ============================================
+
+-- ============================================
+-- ADMIN RLS POLICIES
+-- ============================================
+
+-- ========== ORDERS ==========
+-- Admins can read all orders
+CREATE POLICY "Admins can read all orders" ON orders
+  FOR SELECT USING (is_admin());
+
+-- Staff can update order status and payment fields
+CREATE POLICY "Staff can update order status" ON orders
+  FOR UPDATE USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Only owners can delete orders
+CREATE POLICY "Owners can delete orders" ON orders
+  FOR DELETE USING (is_owner());
+
+-- ========== BOOKINGS ==========
+-- Admins can read all bookings
+CREATE POLICY "Admins can read all bookings" ON bookings
+  FOR SELECT USING (is_admin());
+
+-- Staff can update booking status
+CREATE POLICY "Staff can update booking status" ON bookings
+  FOR UPDATE USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Only owners can delete bookings
+CREATE POLICY "Owners can delete bookings" ON bookings
+  FOR DELETE USING (is_owner());
+
+-- ========== JOB APPLICATIONS ==========
+-- Admins can read all applications
+CREATE POLICY "Admins can read all applications" ON job_applications
+  FOR SELECT USING (is_admin());
+
+-- Staff can update application status
+CREATE POLICY "Staff can update application status" ON job_applications
+  FOR UPDATE USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Only owners can delete applications
+CREATE POLICY "Owners can delete applications" ON job_applications
+  FOR DELETE USING (is_owner());
+
+-- ========== CONTACT MESSAGES ==========
+-- Admins can read all messages
+CREATE POLICY "Admins can read all messages" ON contact_messages
+  FOR SELECT USING (is_admin());
+
+-- Staff can update message status
+CREATE POLICY "Staff can update message status" ON contact_messages
+  FOR UPDATE USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Only owners can delete messages
+CREATE POLICY "Owners can delete messages" ON contact_messages
+  FOR DELETE USING (is_owner());
+
+-- ========== MENU CATEGORIES ==========
+-- Owners can manage categories (CRUD)
+CREATE POLICY "Owners can manage menu categories" ON menu_categories
+  FOR ALL USING (is_owner());
+
+-- ========== MENU ITEMS ==========
+-- Owners can manage menu items (CRUD)
+CREATE POLICY "Owners can manage menu items" ON menu_items
+  FOR ALL USING (is_owner());
+
+-- ========== ORDER STATUS HISTORY ==========
+-- Admins can read history
+CREATE POLICY "Admins can read order status history" ON order_status_history
+  FOR SELECT USING (is_admin());
+
+-- ========== ADMIN USERS ==========
+-- Owners can manage admin users
+CREATE POLICY "Owners can manage admin users" ON admin_users
+  FOR ALL USING (is_owner());
+
+-- ============================================
+-- STORAGE POLICIES
+-- ============================================
+
+-- ========== MENU IMAGES (public read, admin write) ==========
+-- Public can read menu images
+CREATE POLICY "Public read menu images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'menu-images');
+
+-- Admins can upload/manage menu images
+CREATE POLICY "Admins can manage menu images" ON storage.objects
+  FOR ALL USING (bucket_id = 'menu-images' AND is_admin());
+
+-- ========== CV UPLOADS (private, admin read via signed URL) ==========
+-- Authenticated users (applicants) can upload to their own folder
+CREATE POLICY "Applicants can upload CVs" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'cv-uploads' AND auth.role() = 'authenticated');
+
+-- Admins can read CVs (via signed URLs in admin panel)
+CREATE POLICY "Admins can read CVs" ON storage.objects
+  FOR SELECT USING (bucket_id = 'cv-uploads' AND is_admin());
+
+-- ========== OG IMAGES (public read, admin write) ==========
+CREATE POLICY "Public read og images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'og-images');
+
+CREATE POLICY "Admins can manage og images" ON storage.objects
+  FOR ALL USING (bucket_id = 'og-images' AND is_admin());
+
+-- ============================================
+-- REALTIME PUBLICATIONS
+-- ============================================
+
+-- Enable realtime on orders for admin dashboard live alerts
+ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+ALTER PUBLICATION supabase_realtime ADD TABLE bookings;
+
+-- ============================================
+-- STATS VIEW / RPC FOR DASHBOARD (ADMIN ONLY)
+-- ============================================
+
+-- View: Today's orders and revenue (Asia/Kolkata day boundary)
+CREATE VIEW admin_today_stats AS
+WITH today AS (
+  SELECT timezone('Asia/Kolkata', now())::date AS day_start
+),
+today_orders AS (
+  SELECT
+    COUNT(*) AS order_count,
+    COALESCE(SUM(total_inr), 0) AS revenue_inr,
+    COUNT(*) FILTER (WHERE status = 'pending') AS pending_count,
+    COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed_count,
+    COUNT(*) FILTER (WHERE status = 'preparing') AS preparing_count,
+    COUNT(*) FILTER (WHERE status = 'ready') AS ready_count,
+    COUNT(*) FILTER (WHERE status = 'out_for_delivery') AS out_for_delivery_count,
+    COUNT(*) FILTER (WHERE status = 'completed') AS completed_count,
+    COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled_count
+  FROM orders, today
+  WHERE created_at >= today.day_start
+    AND created_at < today.day_start + interval '1 day'
+)
+SELECT * FROM today_orders;
+
+-- View: Today's bookings
+CREATE VIEW admin_today_bookings AS
+WITH today AS (
+  SELECT timezone('Asia/Kolkata', now())::date AS day_start
+)
+SELECT
+  COUNT(*) AS booking_count,
+  COUNT(*) FILTER (WHERE status = 'pending') AS pending_count,
+  COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed_count,
+  COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled_count,
+  COUNT(*) FILTER (WHERE status = 'no_show') AS no_show_count
+FROM bookings, today
+WHERE booking_date = today.day_start;
+
+-- View: Recent applications and messages
+CREATE VIEW admin_recent_activity AS
+SELECT
+  (SELECT COUNT(*) FROM job_applications WHERE status = 'pending') AS pending_applications,
+  (SELECT COUNT(*) FROM contact_messages WHERE status = 'new') AS new_messages;
+
+-- View: Top items last 7 days
+CREATE VIEW admin_top_items_7d AS
+WITH week_ago AS (
+  SELECT timezone('Asia/Kolkata', now()) - interval '7 days' AS start_date
+),
+order_items AS (
+  SELECT
+    jsonb_array_elements(o.items) AS item,
+    o.created_at
+  FROM orders o, week_ago
+  WHERE o.created_at >= week_ago.start_date
+    AND o.status IN ('confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed')
+)
+SELECT
+  item->>'id' AS item_id,
+  item->>'name' AS item_name,
+  SUM((item->>'quantity')::int) AS total_quantity,
+  SUM((item->>'price_inr')::int * (item->>'quantity')::int) AS total_revenue
+FROM order_items
+GROUP BY item->>'id', item->>'name'
+ORDER BY total_quantity DESC
+LIMIT 10;
+
+-- Grant read access to admin roles
+GRANT SELECT ON admin_today_stats TO authenticated;
+GRANT SELECT ON admin_today_bookings TO authenticated;
+GRANT SELECT ON admin_recent_activity TO authenticated;
+GRANT SELECT ON admin_top_items_7d TO authenticated;
+
+-- RLS on views (only admins can read)
+ALTER VIEW admin_today_stats SET (security_invoker = true);
+ALTER VIEW admin_today_bookings SET (security_invoker = true);
+ALTER VIEW admin_recent_activity SET (security_invoker = true);
+ALTER VIEW admin_top_items_7d SET (security_invoker = true);
+
+-- ============================================
+-- RPC FUNCTION: GET DASHBOARD STATS (single call)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION get_admin_dashboard_stats()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_result JSONB;
+BEGIN
+  -- Check admin
+  IF NOT is_admin() THEN
+    RAISE EXCEPTION 'Unauthorized: admin access required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT jsonb_build_object(
+    'today', jsonb_build_object(
+      'orders', (SELECT row_to_json(t) FROM admin_today_stats t),
+      'bookings', (SELECT row_to_json(t) FROM admin_today_bookings t),
+      'pending_applications', (SELECT pending_applications FROM admin_recent_activity),
+      'new_messages', (SELECT new_messages FROM admin_recent_activity)
+    ),
+    'top_items_7d', (SELECT jsonb_agg(t) FROM admin_top_items_7d t)
+  ) INTO v_result;
+
+  RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_admin_dashboard_stats() TO authenticated;
+
+-- ============================================
+-- VERIFICATION QUERIES
+-- ============================================
+
+-- Test RLS policies (run as different users):
+-- SET ROLE authenticated; -- as anon
+-- SELECT * FROM orders; -- should fail for anon
+-- SET ROLE authenticated; -- as staff (after adding to admin_users with role='staff')
+-- SELECT * FROM orders; -- should work
+-- UPDATE orders SET status = 'confirmed' WHERE id = <id>; -- should work for staff
+
+-- Test realtime:
+-- supabase.realtime.subscribe('orders', (payload) => console.log(payload))
+
+-- Test RPC:
+-- SELECT get_admin_dashboard_stats();
+
+-- Test stats views:
+-- SELECT * FROM admin_today_stats;
+-- SELECT * FROM admin_today_bookings;
+-- SELECT * FROM admin_recent_activity;
+-- SELECT * FROM admin_top_items_7d;

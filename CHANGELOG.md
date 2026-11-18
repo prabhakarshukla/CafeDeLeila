@@ -30,3 +30,19 @@ Created PROJECT_STATE.md before application changes, then PLAN.md and ASSUMPTION
 - Rewrote README, AUDIT and PROJECT_REPORT because their architecture/completion claims were stale. No application file required a full rewrite. Removed ignores for audit/changelog documents.
 
 External maps/fonts, real message delivery and owner-provided content remain unverified. No production deployment, message or payment occurred. Three rounds used, below the six-round limit.
+
+---
+
+## 19 November 2026
+
+### T3: Part B Migrations (Migrations 002-005)
+
+- **002_admin_settings.sql**: `admin_users` table, `is_admin()`/`is_owner()` SECURITY DEFINER helpers, `settings` table + `public_settings` view (whitelisted keys), seed default settings (hours, address, phone, ordering, delivery, tax, booking capacity, menu sample flag)
+- **003_order_status_history.sql**: `order_status_history` table, validated status transitions for orders/bookings/applications with BEFORE UPDATE triggers, auto-insert history on status change
+- **004_admin_rls_storage_realtime.sql**: Admin RLS policies (staff update status, owners CRUD), storage policies (public read menu-images, admin manage, CV private + admin read), realtime on orders+bookings, admin stats views + `get_admin_dashboard_stats()` RPC
+- **005_tests.sql**: SQL test suite — anon cannot insert/read orders, staff cannot edit settings, invalid status transitions fail, numbers unique under concurrent inserts, admin RLS works, storage policies correct, views/RPC work
+
+### T1-T2: Part A Fixes (Previous Commits)
+
+- T1: Part A Security & Logic Fixes (A2-A8) — Removed public INSERT RLS policies, rewrote orders/bookings/menu/applications functions with server-side pricing, strict validation, CORS origin restriction, rate limiting, body size limits; removed webhooks; fixed CV upload validation; sequences + Asia/Kolkata timezone for number generation; race-safe booking slots
+- T2: Part A Honesty Fixes (A9, A10) — Replaced "WhatsApp shortly" with "We'll confirm shortly", added sample menu notice banner, removed hardcoded taxRate, added menu.is_sample config, updated confirmations
