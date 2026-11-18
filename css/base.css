@@ -32,8 +32,8 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-obsidian);
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(178, 143, 111, 0.08), transparent),
-    radial-gradient(circle at 100% 100%, rgba(178, 143, 111, 0.05), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--color-wash), var(--color-clear)),
+    radial-gradient(circle at 100% 100%, var(--color-wash), var(--color-clear));
   background-attachment: fixed;
   min-height: 100vh;
   display: flex;
@@ -125,7 +125,7 @@ img {
   font-size: var(--text-base);
   font-weight: 600;
   line-height: 1;
-  border: 2px solid transparent;
+  border: 2px solid var(--color-clear);
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-normal);
@@ -158,18 +158,18 @@ img {
 }
 
 .btn--secondary {
-  background: transparent;
+  background: var(--color-clear);
   color: var(--color-sand);
   border-color: var(--color-sand);
 }
 
 .btn--secondary:hover {
-  background: rgba(178, 143, 111, 0.1);
+  background: var(--color-wash);
   transform: translateY(-1px);
 }
 
 .btn--outline {
-  background: transparent;
+  background: var(--color-clear);
   color: var(--color-text-primary);
   border-color: var(--color-text-muted);
 }
@@ -180,14 +180,14 @@ img {
 }
 
 .btn--ghost {
-  background: transparent;
+  background: var(--color-clear);
   color: var(--color-text-secondary);
-  border-color: transparent;
+  border-color: var(--color-clear);
 }
 
 .btn--ghost:hover {
   color: var(--color-text-primary);
-  background: rgba(255,255,255,0.05);
+  background: var(--color-wash);
 }
 
 .btn--lg {
@@ -228,7 +228,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--color-sand);
-  box-shadow: 0 0 0 3px rgba(178, 143, 111, 0.2);
+  box-shadow: 0 0 0 3px var(--color-wash);
 }
 
 input::placeholder,
@@ -363,21 +363,21 @@ input[type="file"]::file-selector-button:hover {
 /* Card base */
 .card {
   background: var(--color-obsidian-card);
-  border: 1px solid rgba(178, 143, 111, 0.1);
+  border: 1px solid var(--color-wash);
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: all var(--transition-normal);
 }
 
 .card:hover {
-  border-color: rgba(178, 143, 111, 0.3);
+  border-color: var(--color-wash);
   box-shadow: var(--shadow-lg);
 }
 
 /* Divider */
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(178, 143, 111, 0.3), transparent);
+  background: linear-gradient(90deg, var(--color-clear), var(--color-wash), var(--color-clear));
   margin: var(--space-xl) 0;
 }
 

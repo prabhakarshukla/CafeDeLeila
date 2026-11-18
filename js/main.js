@@ -5,7 +5,6 @@
 // Debug: Script started
 window.__mainJSLoaded = true;
 window.__scriptParseComplete = true;
-console.log('[main.js] Script parse complete');
 
 // Global error handler
 window.addEventListener('error', (e) => {
@@ -22,7 +21,8 @@ window.addEventListener('unhandledrejection', (e) => {
 const utils = (function() {
   // DOM UTILITIES
   function createEl(tag, attrs = {}, ...children) {
-    const el = document.createElement(tag);
+    const svgTags = ['svg','path','line','circle','rect','polyline','polygon'];
+    const el = svgTags.includes(tag) ? document.createElementNS('http://www.w3.org/2000/svg', tag) : document.createElement(tag);
     Object.entries(attrs).forEach(([key, value]) => {
       if (key === 'class') {
         el.className = value;
@@ -37,7 +37,7 @@ const utils = (function() {
     children.flat().forEach(child => {
       if (child instanceof Node) {
         el.appendChild(child);
-      } else if (child != null) {
+      } else if (child != null && child !== false) {
         el.appendChild(document.createTextNode(String(child)));
       }
     });
@@ -119,8 +119,7 @@ const utils = (function() {
   }
 
   function validateIndianPhone(phone) {
-    const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length === 10 && /^[6-9]\d{9}$/.test(cleaned);
+    return /^[6-9]\d{9}$/.test(phone.trim());
   }
 
   function validateEmail(email) {
@@ -133,7 +132,7 @@ const utils = (function() {
 
   function validateFile(file, allowedTypes, maxSizeMB) {
     if (!file) return { valid: false, error: 'No file selected' };
-    if (!allowedTypes.includes(file.type)) {
+    if (!/\.(pdf|doc|docx)$/i.test(file.name) || (file.type && !allowedTypes.includes(file.type))) {
       return { valid: false, error: `File type not allowed. Allowed: ${allowedTypes.join(', ')}` };
     }
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -202,7 +201,7 @@ const utils = (function() {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push({
-        value: date.toISOString().split('T')[0],
+        value: indiaDate(date),
         label: formatDate(date, { weekday: 'short', month: 'short' })
       });
     }
@@ -211,31 +210,9 @@ const utils = (function() {
 
   // ACCESSIBILITY UTILITIES
   function trapFocus(element) {
-    const focusableElements = element.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    function handleTab(e) {
-      if (e.key !== 'Tab') return;
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
-    }
-
-    element.addEventListener('keydown', handleTab);
-    firstElement?.focus();
-
-    return () => element.removeEventListener('keydown', handleTab);
+    // The shared dynamic dialog controller handles Tab, Escape and restoration.
+    element.querySelector('button:not(:disabled),input,a[href]')?.focus();
+    return () => {};
   }
 
   function announce(message, politeness = 'polite') {
@@ -245,7 +222,8 @@ const utils = (function() {
       'aria-live': politeness,
       'aria-atomic': 'true',
       class: 'sr-only'
-    }, document.body);
+    });
+    if (!region.isConnected) document.body.appendChild(region);
     region.setAttribute('aria-live', politeness);
     region.textContent = message;
   }
@@ -311,6 +289,15 @@ const utils = (function() {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
+  // API REQUEST UTILITY
+  async function apiRequest(functionName, body) {
+    const { supabase } = window;
+    if (!supabase) throw new Error('Supabase client not initialized');
+    const { data, error } = await supabase.functions.invoke(functionName, { body });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   // LAZY LOADING
   function initLazyLoading() {
     if ('IntersectionObserver' in window) {
@@ -333,9 +320,9 @@ const utils = (function() {
         });
       }, { rootMargin: '100px 0px' });
 
-      document.querySelectorAll('img.lazy[data-src]').forEach(img => observer.observe(img));
+      document.querySelectorAll('img.lazy[data-src], iframe.lazy[data-src]').forEach(img => observer.observe(img));
     } else {
-      document.querySelectorAll('img.lazy[data-src]').forEach(img => {
+      document.querySelectorAll('img.lazy[data-src], iframe.lazy[data-src]').forEach(img => {
         img.src = img.dataset.src;
         img.classList.remove('lazy');
         img.classList.add('loaded');
@@ -382,10 +369,10 @@ const utils = (function() {
 
   function getToastIcon(type) {
     const icons = {
-      success: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#66BB6A', 'stroke-width': '2' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' })),
-      error: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#EF5350', 'stroke-width': '2' }, createEl('circle', { cx: '12', cy: '12', r: '10' }), createEl('line', { x1: '15', y1: '9', x2: '9', y2: '15' }), createEl('line', { x1: '9', y1: '9', x2: '15', y2: '15' })),
-      warning: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#FF9800', 'stroke-width': '2' }, createEl('path', { d: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z' }), createEl('line', { x1: '12', y1: '9', x2: '12', y2: '13' }), createEl('line', { x1: '12', y1: '17', x2: '12.01', y2: '17' })),
-      info: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#64B5F6', 'stroke-width': '2' }, createEl('circle', { cx: '12', cy: '12', r: '10' }), createEl('line', { x1: '12', y1: '16', x2: '12', y2: '12' }), createEl('line', { x1: '12', y1: '8', x2: '12.01', y2: '8' }))
+      success: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' })),
+      error: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' }, createEl('circle', { cx: '12', cy: '12', r: '10' }), createEl('line', { x1: '15', y1: '9', x2: '9', y2: '15' }), createEl('line', { x1: '9', y1: '9', x2: '15', y2: '15' })),
+      warning: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' }, createEl('path', { d: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z' }), createEl('line', { x1: '12', y1: '9', x2: '12', y2: '13' }), createEl('line', { x1: '12', y1: '17', x2: '12.01', y2: '17' })),
+      info: createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' }, createEl('circle', { cx: '12', cy: '12', r: '10' }), createEl('line', { x1: '12', y1: '16', x2: '12', y2: '12' }), createEl('line', { x1: '12', y1: '8', x2: '12.01', y2: '8' }))
     };
     return icons[type] || icons.info;
   }
@@ -394,7 +381,7 @@ const utils = (function() {
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
-    return div.innerHTML;
+    return div.innerHTML.replaceAll('"', '&quot;').replaceAll("'", '&#39;');
   }
 
   // PUBLIC API
@@ -404,11 +391,11 @@ const utils = (function() {
     generateId, generateOrderId, debounce, throttle,
     formatDate, formatTime, isPastDate, getAvailableDates,
     trapFocus, announce, prefersReducedMotion, animate,
-    getWhatsAppUrl, openWhatsAppOrder, initLazyLoading, showToast, escapeHtml
+    getWhatsAppUrl, openWhatsAppOrder, initLazyLoading, showToast, escapeHtml,
+    apiRequest
   };
 })();
 
-console.log('[main.js] After utils IIFE, before state declaration');
 
 // Make utils globally available
 window.utils = utils;
@@ -424,11 +411,6 @@ window.utils.openMobileMenu = openMobileMenu;
 window.utils.closeMobileMenu = closeMobileMenu;
 window.utils.openCheckout = openCheckout;
 window.utils.closeCheckout = closeCheckout;
-window.utils.showOrderConfirmation = showOrderConfirmation;
-window.utils.closeConfirmation = closeConfirmation;
-window.utils.getWhatsAppUrl = getWhatsAppUrl;
-window.utils.openWhatsAppOrder = openWhatsAppOrder;
-window.utils.buildWhatsAppMessage = buildWhatsAppMessage;
 window.utils.showOrderConfirmation = showOrderConfirmation;
 window.utils.closeConfirmation = closeConfirmation;
 
@@ -465,11 +447,9 @@ window.openWhatsAppOrder = utils.openWhatsAppOrder;
 window.initLazyLoading = utils.initLazyLoading;
 window.showToast = utils.showToast;
 window.escapeHtml = utils.escapeHtml;
+window.apiRequest = utils.apiRequest;
 window.showOrderConfirmation = showOrderConfirmation;
 window.closeConfirmation = closeConfirmation;
-window.getWhatsAppUrl = getWhatsAppUrl;
-window.openWhatsAppOrder = openWhatsAppOrder;
-window.buildWhatsAppMessage = buildWhatsAppMessage;
 
 // ========================================
 // STATE
@@ -486,16 +466,14 @@ const state = {
 window.cafeState = state;
 
 window.__stateInitialized = true;
-console.log('[main.js] State initialized, cafeState:', window.cafeState);
 
 // ========================================
 // DATA LOADING
 // ========================================
 
 async function loadConfig() {
-  console.log('[main.js] loadConfig called');
-  try {
-    const response = await fetch('/data/config.json');
+    try {
+    const response = await fetch('data/config.json');
     if (!response.ok) throw new Error('Failed to load config');
     state.config = await response.json();
     applyConfigToPage();
@@ -506,9 +484,8 @@ async function loadConfig() {
 }
 
 async function loadMenu() {
-  console.log('[main.js] loadMenu called');
-  try {
-    const response = await fetch('/data/menu.json');
+    try {
+    const response = await fetch('data/menu.json');
     if (!response.ok) throw new Error('Failed to load menu');
     const data = await response.json();
     state.menu = data.categories;
@@ -521,15 +498,6 @@ async function loadMenu() {
 function applyConfigToPage() {
   if (!state.config) return;
 
-  if (state.config.seo?.defaultTitle) {
-    document.title = state.config.seo.defaultTitle;
-  }
-
-  const metaDesc = $('meta[name="description"]');
-  if (metaDesc && state.config.seo?.defaultDescription) {
-    metaDesc.setAttribute('content', state.config.seo.defaultDescription);
-  }
-
   window.CAFE_CONFIG = state.config;
 }
 
@@ -538,7 +506,13 @@ function applyConfigToPage() {
 // ========================================
 
 function loadCart() {
-  window.cafeState.cart = utils.storageGet(CART_STORAGE_KEY, []);
+  const saved = utils.storageGet(CART_STORAGE_KEY, []);
+  const items = (state.menu || []).flatMap(c => c.items);
+  state.cart = Array.isArray(saved) ? saved.flatMap(row => {
+    const item = items.find(i => i.id === row?.id);
+    return item && Number.isInteger(row.quantity) && row.quantity > 0 ? [{...item, quantity: Math.min(row.quantity, 99)}] : [];
+  }) : [];
+  state.cartNotes = utils.storageGet('cartNotes', '');
   updateCartUI();
 }
 
@@ -559,7 +533,7 @@ function updateCartUI() {
 function addToCart(item, quantity = 1) {
   const existingIndex = window.cafeState.cart.findIndex(i => i.id === item.id);
   if (existingIndex >= 0) {
-    window.cafeState.cart[existingIndex].quantity += quantity;
+    window.cafeState.cart[existingIndex].quantity = Math.min(99, window.cafeState.cart[existingIndex].quantity + quantity);
   } else {
     window.cafeState.cart.push({
       ...item,
@@ -578,7 +552,7 @@ function updateCartQuantity(itemId, quantity) {
     if (quantity <= 0) {
       window.cafeState.cart.splice(index, 1);
     } else {
-      window.cafeState.cart[index].quantity = quantity;
+      window.cafeState.cart[index].quantity = Math.min(99, quantity);
     }
     saveCart();
   }
@@ -627,7 +601,7 @@ function renderCartDrawer() {
           <path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
         <p>Your cart is empty</p>
-        <button class="btn btn--primary" onclick="closeCartDrawer(); document.querySelector('.hero__actions .btn--primary')?.click()">Start Ordering</button>
+        <a class="btn btn--primary" href="menu.html">Start Ordering</a>
       </div>
     `;
     footer.style.display = 'none';
@@ -637,9 +611,9 @@ function renderCartDrawer() {
   footer.style.display = 'block';
 
   const config = window.CAFE_CONFIG;
-  const deliveryFee = config?.ordering?.deliveryFee || 40;
-  const minOrderDelivery = config?.ordering?.minOrderDelivery || 200;
-  const taxRate = config?.ordering?.taxRate || 0.05;
+  const deliveryFee = config?.ordering?.deliveryFee ?? 0;
+  const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
+  const taxRate = config?.ordering?.taxRate ?? 0;
 
   const subtotal = getCartSubtotal();
   const needsDeliveryFee = subtotal < minOrderDelivery;
@@ -674,16 +648,13 @@ function renderCartDrawer() {
   `).join('');
 
   footer.innerHTML = `
-    <div class="cart-drawer__summary">
-      <div class="cart-drawer__row"><span>Subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
-      ${needsDeliveryFee ? `<div class="cart-drawer__row"><span>Delivery Fee</span><span>${utils.formatPrice(deliveryFeeAmount)}</span></div><p class="cart-drawer__note">Free delivery on orders above ${utils.formatPrice(minOrderDelivery)}</p>` : '<div class="cart-drawer__row"><span>Delivery</span><span>Free</span></div>'}
-      <div class="cart-drawer__row"><span>Tax (${(taxRate * 100).toFixed(0)}%)</span><span>${utils.formatPrice(tax)}</span></div>
-      <div class="cart-drawer__row cart-drawer__row--total"><span>Total</span><span>${utils.formatPrice(total)}</span></div>
-    </div>
-    <div class="cart-drawer__actions">
-      <button class="btn btn--primary btn--lg cart-drawer__checkout" ${state.cart.length === 0 ? 'disabled' : ''}>Proceed to Checkout</button>
-    </div>
-  `;
+    <div class="cart-drawer__row cart-drawer__row--total"><span>Sample subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
+    <label for="cart-notes">Order notes</label><textarea id="cart-notes" rows="2" placeholder="Preferences or special requests"></textarea>
+    <p class="cart-drawer__note">Demo menu and prices. Nothing is sent or paid here.</p>
+    <button class="btn btn--primary cart-drawer__checkout">Proceed to Checkout</button>`;
+  const notes = drawer.querySelector('#cart-notes');
+  notes.value = state.cartNotes || '';
+  notes.addEventListener('input', () => { state.cartNotes = notes.value; utils.storageSet('cartNotes', notes.value); });
 }
 
 function openCartDrawer() {
@@ -697,7 +668,7 @@ function openCartDrawer() {
     renderCartDrawer();
     setTimeout(() => {
       const firstBtn = drawer.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-      firstBtn?.focus();
+      if (state.isCartOpen) firstBtn?.focus();
     }, 100);
   }
 }
@@ -727,7 +698,7 @@ function openMobileMenu() {
     btn.setAttribute('aria-expanded', 'true');
     state.isMobileMenuOpen = true;
     document.body.style.overflow = 'hidden';
-    setTimeout(() => menu.querySelector('a')?.focus(), 100);
+    setTimeout(() => { if (state.isMobileMenuOpen) menu.querySelector('a')?.focus(); }, 100);
   }
 }
 
@@ -776,20 +747,20 @@ function renderHeader() {
 
   const config = state.config;
   const navItems = [
-    { href: '/menu.html', label: 'Menu', icon: 'menu' },
-    { href: '/book-table.html', label: 'Book a Table', icon: 'calendar' },
-    { href: '/careers.html', label: 'Careers', icon: 'briefcase' },
-    { href: '/locations.html', label: 'Locations', icon: 'map-pin' },
-    { href: '/contact.html', label: 'Contact', icon: 'phone' }
+    { href: 'menu.html', label: 'Menu', icon: 'menu' },
+    { href: 'book-table.html', label: 'Book a Table', icon: 'calendar' },
+    { href: 'careers.html', label: 'Careers', icon: 'briefcase' },
+    { href: 'locations.html', label: 'Locations', icon: 'map-pin' },
+    { href: 'contact.html', label: 'Contact', icon: 'phone' }
   ];
 
-  const currentPath = window.location.pathname;
+  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
 
   placeholder.innerHTML = `
     <header class="site-header" role="banner">
       <div class="header-inner container">
-        <a href="/index.html" class="logo" aria-label="Café De Leila - Home">
-          <span class="logo__mark" aria-hidden="true">C</span>
+        <a href="index.html" class="logo" aria-label="Café De Leila - Home">
+          <img class="logo__art" src="assets/logo_delelia.svg" alt="" width="48" height="48">
           <span class="logo__text">
             <span class="logo__name">CAFÉ DE LEILA</span>
             <span class="logo__tagline">Magical Delight</span>
@@ -851,8 +822,8 @@ function renderHeader() {
         </ul>
       </nav>
       <div class="mobile-menu__cta">
-        <a href="/menu.html" class="btn btn--primary">Order Online</a>
-        <a href="/book-table.html" class="btn btn--secondary">Book a Table</a>
+        <a href="menu.html" class="btn btn--primary">Order Online</a>
+        <a href="book-table.html" class="btn btn--secondary">Book a Table</a>
       </div>
     </aside>
 
@@ -889,14 +860,14 @@ function renderFooter() {
       <div class="container">
         <div class="footer-grid">
           <div class="footer-brand">
-            <a href="/index.html" class="logo" aria-label="Café De Leila - Home">
-              <span class="logo__mark" aria-hidden="true">C</span>
+            <a href="index.html" class="logo" aria-label="Café De Leila - Home">
+              <img class="logo__art" src="assets/logo_delelia.svg" alt="" width="48" height="48">
               <span class="logo__text">
                 <span class="logo__name">CAFÉ DE LEILA</span>
                 <span class="logo__tagline">Magical Delight</span>
               </span>
             </a>
-            <p class="footer-brand__description">Experience culinary magic at Café De Leila, where every dish tells a story of flavor and tradition. Authentic Indian, Continental & Chinese cuisine in the heart of Lucknow.</p>
+            <p class="footer-brand__description">Indian, Continental and Chinese flavours in Gomti Nagar. A table for your everyday catch-ups and celebrations.</p>
             <div class="footer-social">
               ${config.social?.facebook ? `<a href="${config.social.facebook}" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>` : ''}
               ${config.social?.instagram ? `<a href="${config.social.instagram}" class="footer-social__link" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>` : ''}
@@ -907,11 +878,11 @@ function renderFooter() {
           <div class="footer-section">
             <h3 class="footer-section__title">Quick Links</h3>
             <ul class="footer-links">
-              <li><a href="/menu.html">Menu</a></li>
-              <li><a href="/book-table.html">Book a Table</a></li>
-              <li><a href="/locations.html">Locations</a></li>
-              <li><a href="/careers.html">Careers</a></li>
-              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="menu.html">Menu</a></li>
+              <li><a href="book-table.html">Book a Table</a></li>
+              <li><a href="locations.html">Locations</a></li>
+              <li><a href="careers.html">Careers</a></li>
+              <li><a href="contact.html">Contact Us</a></li>
             </ul>
           </div>
 
@@ -922,7 +893,7 @@ function renderFooter() {
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 <div>
                   <div class="footer-contact__label">Phone</div>
-                  <a class="footer-contact__value" href="tel:${config.contact?.phoneRaw}">${config.contact?.phone}</a>
+                  <a class="footer-contact__value" href="tel:+${config.contact?.phoneRaw}">${config.contact?.phone}</a>
                 </div>
               </div>
               <div class="footer-contact__item">
@@ -945,7 +916,7 @@ function renderFooter() {
           <div class="footer-section">
             <h3 class="footer-section__title">Opening Hours</h3>
             <div class="footer-hours">
-              ${hours.map(h => `
+              ${!config.hours.verified ? '<p>Hours awaiting confirmation. Please call before visiting.</p>' : hours.map(h => `
                 <div class="footer-hours__day">
                   <span>${h.day}</span>
                   <span>${h.closed ? 'Closed' : `${utils.formatTime(h.open)} - ${utils.formatTime(h.close)}`}</span>
@@ -957,10 +928,7 @@ function renderFooter() {
 
         <div class="footer-bottom">
           <p class="footer-bottom__copyright">&copy; ${new Date().getFullYear()} ${config.site?.name}. All rights reserved.</p>
-          <div class="footer-bottom__legal">
-            <a href="/privacy.html">Privacy Policy</a>
-            <a href="/terms.html">Terms of Service</a>
-          </div>
+          <p>Pitch demo. Orders, reservations and applications need café confirmation.</p>
         </div>
       </div>
     </footer>
@@ -974,22 +942,15 @@ function renderFooter() {
 function populateFeaturedDishes(state) {
   const grid = $('#featured-grid');
   if (!grid || !state.menu) return;
-  
-  const featured = [];
-  state.menu.forEach(cat => {
-    cat.items.forEach(item => {
-      if (featured.length < 6) {
-        featured.push({ ...item, categoryName: cat.name });
-      }
-    });
-  });
-  
+
+  const featured = ['imc-1','pizza-1','kebab-3','biryani-1','pasta-2','dessert-1'].map(id => state.menu.flatMap(c => c.items).find(i => i.id === id)).filter(Boolean);
+
   grid.innerHTML = featured.map(item => `
     <article class="dish-card" role="listitem">
       <div class="dish-card__image">
-        ${item.image ? `<img class="lazy" data-src="${item.image}" alt="" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
+        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
         <div class="dish-card__badges">
-          ${item.veg ? '<span class="badge badge--veg">Veg</span>' : '<span class="badge badge--nonveg">Non-Veg</span>'}
+          ${item.veg ? '<span class="badge badge--veg">● Veg</span>' : '<span class="badge badge--nonveg">● Non-veg</span>'}
           ${item.tags?.includes('popular') ? '<span class="badge badge--popular">Popular</span>' : ''}
           ${item.tags?.includes('signature') ? '<span class="badge badge--popular">Signature</span>' : ''}
         </div>
@@ -997,12 +958,12 @@ function populateFeaturedDishes(state) {
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)}</span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
-          <button class="dish-card__add" 
-                  data-id="${item.id}" 
+          <button class="dish-card__add"
+                  data-id="${item.id}"
                   data-name="${utils.escapeHtml(item.name)}"
                   data-price="${item.price}"
                   data-veg="${item.veg}"
@@ -1020,7 +981,8 @@ function populateFeaturedDishes(state) {
 function populateOpeningHours(state) {
   const hoursGrid = $('#hours-grid');
   if (!hoursGrid || !state.config?.hours?.schedule) return;
-  
+  if (!state.config.hours.verified) { hoursGrid.innerHTML = '<p>Opening hours are awaiting confirmation. Please call before visiting.</p>'; return; }
+
   const icons = {
     'Monday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     'Tuesday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
@@ -1030,14 +992,14 @@ function populateOpeningHours(state) {
     'Saturday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     'Sunday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
   };
-  
+
   hoursGrid.innerHTML = state.config.hours.schedule.map(h => `
     <div class="hours-card">
       <div class="hours-card__icon" aria-hidden="true">${icons[h.day] || ''}</div>
       <h3 class="hours-card__title">${h.day}</h3>
       <div class="hours-card__times">
-        ${h.closed 
-          ? '<span>Closed</span>' 
+        ${h.closed
+          ? '<span>Closed</span>'
           : `<span>${utils.formatTime(h.open)} - ${utils.formatTime(h.close)}</span>`}
       </div>
     </div>
@@ -1065,7 +1027,7 @@ function populateReviews() {
         <div class="review-card__avatar">${r.name.charAt(0)}</div>
         <div>
           <div class="review-card__name">${r.name}</div>
-          <div class="review-card__date">${r.date}</div>
+          <div class="review-card__date">Sample review · fictional guest</div>
         </div>
       </div>
     </article>
@@ -1075,53 +1037,13 @@ function populateReviews() {
 function initHomePage() {
   const state = window.cafeState;
   if (!state) return;
-  
+
   populateFeaturedDishes(state);
   populateOpeningHours(state);
   populateReviews();
 }
 
 function initMenuPage() {
-  // Menu page logic - delegate event handlers
-  utils.delegate(document, '.category-chip', 'click', (e, btn) => {
-    const category = btn.dataset.category;
-    menuState.activeCategory = category;
-    
-    utils.$$('.category-chip').forEach(c => {
-      c.classList.toggle('is-active', c.dataset.category === category);
-      c.setAttribute('aria-selected', c.dataset.category === category);
-    });
-    
-    applyFilters();
-  });
-
-  utils.delegate(document, '.filter-chip', 'click', (e, btn) => {
-    const filter = btn.dataset.filter;
-    menuState.activeFilter = filter;
-    
-    utils.$$('.filter-chip').forEach(c => {
-      c.classList.toggle('is-active', c.dataset.filter === filter);
-      c.setAttribute('aria-selected', c.dataset.filter === filter);
-    });
-    
-    applyFilters();
-  });
-
-  utils.delegate(document, '.dish-card__add', 'click', (e, btn) => {
-    const item = {
-      id: btn.dataset.id,
-      name: btn.dataset.name,
-      price: parseFloat(btn.dataset.price),
-      veg: btn.dataset.veg === 'true',
-      image: btn.dataset.image,
-      description: btn.dataset.description
-    };
-    utils.addToCart(item, 1);
-    
-    btn.style.transform = 'scale(0.9)';
-    setTimeout(() => btn.style.transform = '', 100);
-  });
-  
   // Initialize menu state
   if (state.menu && document.body.classList.contains('menu-page')) {
     menuState.categories = state.menu;
@@ -1152,10 +1074,10 @@ function renderCategoryChips() {
   ];
 
   container.innerHTML = categories.map(cat => `
-    <button class="category-chip ${cat.id === menuState.activeCategory ? 'is-active' : ''}" 
-            data-category="${cat.id}" 
-            role="tab" 
-            aria-selected="${cat.id === menuState.activeCategory}"
+    <button class="category-chip ${cat.id === menuState.activeCategory ? 'is-active' : ''}"
+            data-category="${cat.id}"
+            role="button"
+            aria-pressed="${cat.id === menuState.activeCategory}"
             aria-controls="menu-grid">
       ${utils.escapeHtml(cat.name)}
     </button>
@@ -1173,10 +1095,10 @@ function renderFilterChips() {
   ];
 
   container.innerHTML = filters.map(f => `
-    <button class="filter-chip ${f.id === menuState.activeFilter ? 'is-active' : ''}" 
-            data-filter="${f.id}" 
-            role="tab" 
-            aria-selected="${f.id === menuState.activeFilter}"
+    <button class="filter-chip ${f.id === menuState.activeFilter ? 'is-active' : ''}"
+            data-filter="${f.id}"
+            role="button"
+            aria-pressed="${f.id === menuState.activeFilter}"
             aria-controls="menu-grid">
       ${f.icon} ${utils.escapeHtml(f.name)}
     </button>
@@ -1218,7 +1140,7 @@ function applyFilters() {
 
   if (menuState.searchQuery) {
     const query = menuState.searchQuery;
-    items = items.filter(item => 
+    items = items.filter(item =>
       item.name.toLowerCase().includes(query) ||
       item.description.toLowerCase().includes(query) ||
       (item.tags && item.tags.some(t => t.toLowerCase().includes(query)))
@@ -1250,30 +1172,30 @@ function renderMenuGrid() {
   grid.innerHTML = menuState.filteredItems.map(item => `
     <article class="dish-card" data-id="${item.id}">
       <div class="dish-card__image">
-        ${item.image ? `<img class="lazy" data-src="${item.image}" alt="" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
+        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
         <div class="dish-card__badges">
-          ${item.veg ? '<span class="badge badge--veg">Veg</span>' : '<span class="badge badge--nonveg">Non-Veg</span>'}
+          ${item.veg ? '<span class="badge badge--veg">● Veg</span>' : '<span class="badge badge--nonveg">● Non-veg</span>'}
           ${item.tags?.includes('spicy') ? '<span class="badge badge--spicy">Spicy</span>' : ''}
           ${item.tags?.includes('popular') ? '<span class="badge badge--popular">Popular</span>' : ''}
           ${item.tags?.includes('signature') ? '<span class="badge badge--popular">Signature</span>' : ''}
           ${item.tags?.includes('new') ? '<span class="badge badge--new">New</span>' : ''}
-          ${item.tags?.includes('healthy') ? '<span class="badge badge--veg">Healthy</span>' : ''}
-          ${item.tags?.includes('vegan') ? '<span class="badge badge--veg">Vegan</span>' : ''}
-          ${item.tags?.includes('vegan-option') ? '<span class="badge badge--veg">Vegan Option</span>' : ''}
+          ${item.tags?.includes('healthy') ? '<span class="badge badge--popular">Healthy</span>' : ''}
+          ${item.tags?.includes('vegan') ? '<span class="badge badge--popular">Vegan</span>' : ''}
+          ${item.tags?.includes('vegan-option') ? '<span class="badge badge--popular">Vegan Option</span>' : ''}
         </div>
       </div>
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)}</span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
           <div class="dish-card__tags">
-            ${item.tags?.slice(0, 3).map(tag => `<span class="badge" style="background:rgba(178,143,111,0.1);color:var(--color-sand);border-color:rgba(178,143,111,0.2)">${utils.escapeHtml(tag)}</span>`).join('') || ''}
+            ${item.tags?.slice(0, 3).map(tag => `<span class="badge" style="background:var(--color-wash);color:var(--color-sand);border-color:var(--color-wash)">${utils.escapeHtml(tag)}</span>`).join('') || ''}
           </div>
-          <button class="dish-card__add" 
-                  data-id="${item.id}" 
+          <button class="dish-card__add"
+                  data-id="${item.id}"
                   data-name="${utils.escapeHtml(item.name)}"
                   data-price="${item.price}"
                   data-veg="${item.veg}"
@@ -1309,9 +1231,9 @@ function initLazyLoading() {
       });
     }, { rootMargin: '100px 0px' });
 
-    document.querySelectorAll('img.lazy[data-src]').forEach(img => observer.observe(img));
+    document.querySelectorAll('img.lazy[data-src], iframe.lazy[data-src]').forEach(img => observer.observe(img));
   } else {
-    document.querySelectorAll('img.lazy[data-src]').forEach(img => {
+    document.querySelectorAll('img.lazy[data-src], iframe.lazy[data-src]').forEach(img => {
       img.src = img.dataset.src;
       img.classList.remove('lazy');
       img.classList.add('loaded');
@@ -1339,9 +1261,9 @@ function openCheckout() {
   ];
 
   const subtotal = getCartSubtotal();
-  const deliveryFee = config?.ordering?.deliveryFee || 40;
-  const minOrderDelivery = config?.ordering?.minOrderDelivery || 200;
-  const taxRate = config?.ordering?.taxRate || 0.05;
+  const deliveryFee = config?.ordering?.deliveryFee ?? 0;
+  const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
+  const taxRate = config?.ordering?.taxRate ?? 0;
   const needsDeliveryFee = subtotal < minOrderDelivery;
   const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
   const tax = subtotal * taxRate;
@@ -1366,13 +1288,12 @@ function openCheckout() {
                 'data-type': type.id,
                 role: 'radio',
                 'aria-checked': type.id === 'dine-in',
-                onclick: (e) => selectOrderType(e.currentTarget.dataset.type)
               }, type.label))
             ),
             utils.createEl('div', { class: 'checkout-form__address', id: 'delivery-address-field', hidden: '' },
               utils.createEl('div', { class: 'form-group' },
-                utils.createEl('label', { for: 'address' }, 'Delivery Address *'),
-                utils.createEl('textarea', { id: 'address', name: 'address', rows: 3, required: '', placeholder: 'Enter full delivery address including landmark', 'aria-describedby': 'address-hint' }),
+                utils.createEl('label', { for: 'checkout-address' }, 'Delivery Address *'),
+                utils.createEl('textarea', { id: 'checkout-address', name: 'address', rows: 3, placeholder: 'Enter full delivery address including landmark', 'aria-describedby': 'address-hint' }),
                 utils.createEl('span', { id: 'address-hint', class: 'form-error' }, 'Please enter delivery address')
               )
             )
@@ -1381,19 +1302,19 @@ function openCheckout() {
             utils.createEl('h3', { class: 'checkout-form__section-title' }, 'Your Details'),
             utils.createEl('div', { class: 'booking-form__row' },
               utils.createEl('div', { class: 'form-group' },
-                utils.createEl('label', { for: 'name' }, 'Full Name *'),
-                utils.createEl('input', { type: 'text', id: 'name', name: 'name', required: '', autocomplete: 'name', placeholder: 'Your full name' }),
+                utils.createEl('label', { for: 'checkout-name' }, 'Full Name *'),
+                utils.createEl('input', { type: 'text', id: 'checkout-name', name: 'name', required: '', autocomplete: 'name', placeholder: 'Your full name' }),
                 utils.createEl('span', { class: 'form-error' }, 'Please enter your name')
               ),
               utils.createEl('div', { class: 'form-group' },
-                utils.createEl('label', { for: 'phone' }, 'Phone Number *'),
-                utils.createEl('input', { type: 'tel', id: 'phone', name: 'phone', required: '', autocomplete: 'tel', placeholder: '10 digit mobile number', pattern: '[6-9]\\d{9}', inputmode: 'numeric', maxlength: '10' }),
+                utils.createEl('label', { for: 'checkout-phone' }, 'Phone Number *'),
+                utils.createEl('input', { type: 'tel', id: 'checkout-phone', name: 'phone', required: '', autocomplete: 'tel', placeholder: '10 digit mobile number', pattern: '[6-9]\\d{9}', inputmode: 'numeric', maxlength: '10' }),
                 utils.createEl('span', { class: 'form-error' }, 'Please enter a valid 10-digit Indian mobile number')
               )
             ),
             utils.createEl('div', { class: 'form-group' },
-              utils.createEl('label', { for: 'notes' }, 'Special Instructions'),
-              utils.createEl('textarea', { id: 'notes', name: 'notes', rows: 2, placeholder: 'Any allergies, preferences, or delivery instructions...' })
+              utils.createEl('label', { for: 'checkout-notes' }, 'Special Instructions'),
+              utils.createEl('textarea', { id: 'checkout-notes', name: 'notes', rows: 2, placeholder: 'Any allergies, preferences, or delivery instructions...' })
             )
           ),
           utils.createEl('div', { class: 'checkout-form__section' },
@@ -1420,19 +1341,22 @@ function openCheckout() {
 
   document.body.appendChild(modalHtml);
 
+  modalHtml.classList.add('is-open');
+  utils.trapFocus(modalHtml.querySelector('.modal'));
+  modalHtml.querySelector('[name=notes]').value = state.cartNotes || '';
   // Initialize form
   const form = modalHtml.querySelector('#checkout-form');
   const orderTypeBtns = modalHtml.querySelectorAll('.order-type-btn');
   const addressField = modalHtml.querySelector('#delivery-address-field');
-  const addressInput = modalHtml.querySelector('#address');
+  const addressInput = modalHtml.querySelector('#checkout-address');
   const totalEl = modalHtml.querySelector('#checkout-total');
 
   function updateTotal() {
     const subtotal = getCartSubtotal();
     const config = window.CAFE_CONFIG;
-    const deliveryFee = config?.ordering?.deliveryFee || 40;
-    const minOrderDelivery = config?.ordering?.minOrderDelivery || 200;
-    const taxRate = config?.ordering?.taxRate || 0.05;
+    const deliveryFee = config?.ordering?.deliveryFee ?? 0;
+    const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
+    const taxRate = config?.ordering?.taxRate ?? 0;
     const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in';
     const needsDeliveryFee = activeType === 'delivery' && subtotal < minOrderDelivery;
     const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
@@ -1455,6 +1379,8 @@ function openCheckout() {
     utils.on(btn, 'click', () => selectOrderType(btn.dataset.type));
   });
 
+  selectOrderType('dine-in');
+  form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'Demo checkout. Sample prices; no payment or café acceptance.'));
   utils.on(form, 'submit', async (e) => {
     e.preventDefault();
     if (!validateCheckoutForm(form)) return;
@@ -1467,8 +1393,8 @@ function openCheckout() {
       id: utils.generateOrderId(),
       type: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in',
       customer: {
-        name: form.name.value.trim(),
-        phone: form.phone.value.trim()
+        name: form.elements.namedItem('name').value.trim(),
+        phone: form.elements.namedItem('phone').value.trim()
       },
       items: state.cart.map(item => ({
         id: item.id,
@@ -1478,30 +1404,44 @@ function openCheckout() {
       })),
       subtotal: getCartSubtotal(),
       deliveryFee: 0,
-      taxRate: window.CAFE_CONFIG?.ordering?.taxRate || 0.05,
-      tax: getCartSubtotal() * (window.CAFE_CONFIG?.ordering?.taxRate || 0.05),
+      taxRate: window.CAFE_CONFIG?.ordering?.taxRate ?? 0,
+      tax: getCartSubtotal() * (window.CAFE_CONFIG?.ordering?.taxRate ?? 0),
       total: 0,
-      notes: form.notes.value.trim(),
-      address: form.address.value.trim() || null,
+      notes: form.elements.namedItem('notes').value.trim(),
+      address: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type === 'delivery' ? form.elements.namedItem('address').value.trim() : null,
       createdAt: new Date().toISOString()
     };
 
     const config = window.CAFE_CONFIG;
-    const minOrderDelivery = config?.ordering?.minOrderDelivery || 200;
-    const deliveryFee = config?.ordering?.deliveryFee || 40;
+    const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
+    const deliveryFee = config?.ordering?.deliveryFee ?? 0;
     const needsDeliveryFee = order.type === 'delivery' && order.subtotal < minOrderDelivery;
     order.deliveryFee = needsDeliveryFee ? deliveryFee : 0;
     order.total = order.subtotal + order.deliveryFee + order.tax;
 
-    const orders = utils.storageGet('orders', []);
+    const storedOrders = utils.storageGet('orders', []);
+    const orders = Array.isArray(storedOrders) ? storedOrders : [];
     orders.unshift(order);
-    utils.storageSet('orders', orders.slice(0, 50));
+    order.saved = utils.storageSet('orders', orders.slice(0, 50));
 
     clearCart();
 
     closeCheckout();
 
-    setTimeout(() => showOrderConfirmation(order), 300);
+    state.cartNotes = ''; utils.storageRemove('cartNotes');
+    
+    // Submit order to Supabase
+    try {
+      utils.showToast('Placing order...', 'info');
+      const result = await utils.apiRequest('orders', order);
+      if (result.id) {
+        showOrderConfirmation(result);
+      } else {
+        throw new Error(result.error || 'Order failed');
+      }
+    } catch (e) {
+      utils.showToast('Order failed: ' + e.message, 'error');
+    }
   });
 }
 
@@ -1531,13 +1471,14 @@ function validateCheckoutForm(form) {
 
   const addressField = form.querySelector('#delivery-address-field');
   if (!addressField.hidden) {
-    const addressInput = form.querySelector('#address');
+    const addressInput = form.querySelector('#checkout-address');
     if (!addressInput.value.trim()) {
       addressInput.closest('.form-group').classList.add('has-error');
       valid = false;
     }
   }
 
+  if (!valid) form.querySelector('.has-error input, .has-error textarea')?.focus();
   return valid;
 }
 
@@ -1551,7 +1492,6 @@ function closeCheckout() {
 
 function showOrderConfirmation(order) {
   const config = window.CAFE_CONFIG;
-  const whatsappNumber = config?.contact?.whatsapp || '915224584372';
 
   const modalHtml = utils.createEl('div', { class: 'modal-overlay confirmation-modal', id: 'confirmation-modal' },
     utils.createEl('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'confirmation-title' },
@@ -1559,8 +1499,8 @@ function showOrderConfirmation(order) {
         utils.createEl('div', { class: 'confirmation__icon' },
           utils.createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '40', height: '40' }, utils.createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), utils.createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order Confirmed!'),
-        utils.createEl('p', { class: 'confirmation__subtitle' }, 'Your order has been placed successfully.'),
+        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order Confirmed'),
+        utils.createEl('p', { class: 'confirmation__subtitle' }, `Your order has been placed successfully. Reference: ${order.order_number || order.id}`),
         utils.createEl('div', { class: 'confirmation__order-id' }, order.id),
         utils.createEl('div', { class: 'confirmation__summary' },
           utils.createEl('h3', { class: 'confirmation__summary-title' }, 'Order Summary'),
@@ -1590,14 +1530,9 @@ function showOrderConfirmation(order) {
           )
         ),
         utils.createEl('div', { class: 'confirmation__actions' },
-          utils.createEl('a', { class: 'btn btn--primary btn--lg confirmation__whatsapp', href: utils.getWhatsAppUrl(whatsappNumber, buildWhatsAppMessage(order)), target: '_blank', rel: 'noopener noreferrer' },
-            utils.createEl('svg', { width: '20', height: '20', viewBox: '0 0 24 24', fill: 'currentColor' }, utils.createEl('path', { d: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67-.152-.197-.003-.397.05-.578.148-.196.108-.573.335-.92.729-.41.463-1.133 1.584-1.498 2.438-.346.797-.365 1.066-.365 1.195 0 .115.086.203.15.286.09.114.207.324.375.546.306.408 1.028 1.293 1.206 1.761.137.35.163.472.117.53-.05.06-.288.13-.64.144-.562.017-1.015-.055-1.383-.274-.42-.25-.912-.667-1.107-.876-.184-.196-.326-.327-.444-.417-.13-.098-.22-.11-.3-.11-.08 0-.16.01-.239.04-.126.04-.992.34-1.46.997-.32.454-.52.933-.588 1.055-.049.089-.097.178-.13.267-.06.183-.21.177-.336.098-.29-.175-1.05-.567-1.179-.645-.09-.057-.18-.077-.27-.077-.103 0-.196.01-.283.043-.16.06-.35.157-.495.33-.12.15-.212.298-.288.42-.07.123-.113.246-.113.372 0 .14.033.33.16.412.228.14.91.283 1.002.31.083.023.16.032.24.032.153 0 .3-.038.412-.13.086-.06.167-.136.253-.237.19-.236.636-.817.636-1.395 0-.714-.203-1.292-.739-1.692-.234-.175-.474-.4-.646-.594-.19-.213-.33-.446-.435-.65-.12-.226-.19-.477-.185-.69.007-.24.137-.572.41-.89.26-.307.558-.57.895-.763.338-.193.69-.327 1.04-.327.22 0 .436.025.64.07.26.05.507.124.74.22.25.1.47.225.665.32.18.09.33.173.476.213a.4.4 0 0 1 .207.07.4.4 0 0 1 .12.158c.02.06.036.133.044.21l.01.11c.01.105-.013.213-.058.305-.076.157-.2.3-.35.447-.18.176-.42.3-.693.384-.382.11-.855.075-1.192-.028zM12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z' })
-            ),
-            'Send to WhatsApp'
-          ),
-          utils.createEl('button', { class: 'btn btn--secondary btn--lg', onclick: closeConfirmation }, 'Done')
+          utils.createEl('button', { class: 'btn btn--primary btn--lg', onclick: closeConfirmation }, 'Done')
         ),
-        utils.createEl('p', { class: 'confirmation__note' }, 'This is a demo. No real payment was processed. A real backend and payment gateway are planned for Phase 2.')
+        utils.createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
       )
     )
   );
@@ -1660,7 +1595,7 @@ function buildWhatsAppMessage(order) {
 function initBookingPage() {
   if (!document.body.classList.contains('booking-page')) return;
   if (!state.config) return;
-  
+
   bookingState.config = state.config;
   _initBookingPage();
 }
@@ -1670,7 +1605,7 @@ function _initBookingPage() {
   renderDateOptions();
   renderTimeSlots();
   renderGuestOptions();
-  initFormValidation();
+  bookingInitFormValidation();
   initLazyLoading();
 }
 
@@ -1701,7 +1636,7 @@ function loadBookingConfig() {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
     bookingState.availableDates.push({
-      value: date.toISOString().split('T')[0],
+      value: indiaDate(date),
       label: formatDate(date, { weekday: 'short', month: 'short' }),
       fullLabel: formatDate(date, { weekday: 'long', month: 'long', day: 'numeric' })
     });
@@ -1715,11 +1650,11 @@ function renderDateOptions() {
   if (!container) return;
 
   container.innerHTML = bookingState.availableDates.map(date => `
-    <button type="button" 
+    <button type="button"
             class="date-option ${date.value === bookingState.selectedDate ? 'is-selected' : ''}"
             data-date="${date.value}"
             aria-pressed="${date.value === bookingState.selectedDate}"
-            role="radio"
+            role="button"
             aria-label="${date.fullLabel}">
       <span class="date-option__day">${new Date(date.value).getDate()}</span>
       <span class="date-option__label">${date.label}</span>
@@ -1736,9 +1671,8 @@ function renderTimeSlots() {
   const container = $('#booking-time');
   if (!container) return;
 
-  const today = new Date().toISOString().split('T')[0];
-  const now = new Date();
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const today = indiaDate(new Date());
+  const currentTime = new Intl.DateTimeFormat('en-GB', {timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(Date.now() + bookingState.minAdvanceMinutes * 60000));
 
   const slots = bookingState.timeSlots.map(time => {
     const isPast = bookingState.selectedDate === today && time <= currentTime;
@@ -1746,11 +1680,11 @@ function renderTimeSlots() {
   });
 
   container.innerHTML = slots.map(slot => `
-    <button type="button" 
+    <button type="button"
             class="time-slot ${slot.time === bookingState.selectedTime ? 'is-selected' : ''} ${slot.isPast ? 'is-past' : ''}"
             data-time="${slot.time}"
             aria-pressed="${slot.time === bookingState.selectedTime}"
-            role="radio"
+            role="button"
             ${slot.isPast ? 'disabled aria-disabled="true"' : ''}
             aria-label="${formatTime(slot.time)}${slot.isPast ? ' (past)' : ''}">
       ${formatTime(slot.time)}
@@ -1771,38 +1705,38 @@ function renderGuestOptions() {
   if (!container) return;
 
   const options = Array.from({ length: bookingState.maxGuests }, (_, i) => i + 1);
-  
+
   container.innerHTML = options.map(num => `
-    <button type="button" 
+    <button type="button"
             class="guest-option ${num === bookingState.selectedGuests ? 'is-selected' : ''}"
             data-guests="${num}"
             aria-pressed="${num === bookingState.selectedGuests}"
-            role="radio"
+            role="button"
             aria-label="${num} guest${num > 1 ? 's' : ''}">
       ${num}
     </button>
   `).join('');
 }
 
-function initFormValidation() {
+function bookingInitFormValidation() {
   const form = $('#booking-form');
   if (!form) return;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-  
+  const inputs = form.querySelectorAll('input, select, textarea');
+
   inputs.forEach(input => {
-    on(input, 'blur', () => validateField(input));
+    on(input, 'blur', () => bookingValidateField(input));
     on(input, 'input', () => {
       if (input.closest('.form-group').classList.contains('has-error')) {
-        validateField(input);
+        bookingValidateField(input);
       }
     });
   });
 
-  on(form, 'submit', handleSubmit);
+  on(form, 'submit', bookingHandleSubmit);
 }
 
-function validateField(input) {
+function bookingValidateField(input) {
   const group = input.closest('.form-group');
   const error = group?.querySelector('.form-error');
   let valid = true;
@@ -1810,10 +1744,12 @@ function validateField(input) {
 
   if (input.required && !validateRequired(input.value)) {
     valid = false;
-    message = `${getFieldLabel(input)} is required`;
+    message = `${bookingGetFieldLabel(input)} is required`;
   } else if (input.type === 'tel' && input.value && !validateIndianPhone(input.value)) {
     valid = false;
     message = 'Please enter a valid 10-digit Indian mobile number';
+  } else if (input.type === 'email' && input.value && !validateEmail(input.value)) {
+    valid = false; message = 'Please enter a valid email address';
   } else if (input.type === 'date' && input.value) {
     const selected = new Date(input.value);
     const today = new Date();
@@ -1834,30 +1770,30 @@ function validateField(input) {
   return valid;
 }
 
-function getFieldLabel(input) {
+function bookingGetFieldLabel(input) {
   const label = input.closest('.form-group')?.querySelector('label');
   return label ? label.textContent.replace('*', '').trim() : 'This field';
 }
 
-function handleSubmit(e) {
+async function bookingHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+  const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
 
   inputs.forEach(input => {
-    if (!validateField(input)) {
+    if (!bookingValidateField(input)) {
       allValid = false;
     }
   });
 
-  if (!bookingState.selectedDate) {
+  if (!bookingState.availableDates.some(d => d.value === bookingState.selectedDate) || bookingState.selectedDate < indiaDate(new Date())) {
     showToast('Please select a date', 'error');
     allValid = false;
   }
 
-  if (!bookingState.selectedTime) {
+  if (!bookingState.timeSlots.includes(bookingState.selectedTime) || Date.parse(bookingState.selectedDate + 'T' + bookingState.selectedTime + ':00+05:30') < Date.now() + bookingState.minAdvanceMinutes * 60000) {
     showToast('Please select a time', 'error');
     allValid = false;
   }
@@ -1874,20 +1810,29 @@ function handleSubmit(e) {
     time: bookingState.selectedTime,
     guests: bookingState.selectedGuests,
     customer: {
-      name: form.name.value.trim(),
-      phone: form.phone.value.trim(),
-      email: form.email.value.trim() || null
+      name: form.elements.namedItem('name').value.trim(),
+      phone: form.elements.namedItem('phone').value.trim(),
+      email: form.elements.namedItem('email').value.trim() || null
     },
-    notes: form.notes.value.trim() || null,
+    notes: form.elements.namedItem('notes').value.trim() || null,
     createdAt: new Date().toISOString(),
     status: 'pending'
   };
 
-  const bookings = storageGet('bookings', []);
-  bookings.unshift(booking);
-  storageSet('bookings', bookings.slice(0, 50));
+  // Submit booking to Supabase
+  try {
+    utils.showToast('Booking table...', 'info');
+    const result = await utils.apiRequest('bookings', booking);
+    if (result.id) {
+      showBookingConfirmation(result);
+    } else {
+      throw new Error(result.error || 'Booking failed');
+    }
+  } catch (e) {
+    utils.showToast('Booking failed: ' + e.message, 'error');
+    return;
+  }
 
-  showBookingConfirmation(booking);
   form.reset();
   resetPickers();
 }
@@ -1903,16 +1848,15 @@ function resetPickers() {
 
 function showBookingConfirmation(booking) {
   const config = state.config;
-  const whatsappNumber = config?.contact?.whatsapp || '915224584372';
 
   const modalHtml = createEl('div', { class: 'modal-overlay booking-confirmation-modal', id: 'booking-confirmation-modal' },
     createEl('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'booking-confirmation-title' },
       createEl('div', { class: 'modal__body booking-success' },
         createEl('div', { class: 'booking-success__icon' },
-          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#66BB6A', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
+          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        createEl('h2', { class: 'booking-success__title', id: 'booking-confirmation-title' }, 'Table Booked!'),
-        createEl('p', {}, `Your reservation has been confirmed. Booking ID: <strong>${booking.id}</strong>`),
+        createEl('h2', { class: 'booking-success__title', id: 'booking-confirmation-title' }, 'Booking Confirmed'),
+        createEl('p', {}, `Your table has been booked. Reference: ${booking.booking_number || booking.id}`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Date'),
@@ -1936,15 +1880,9 @@ function showBookingConfirmation(booking) {
           )
         ),
         createEl('div', { class: 'booking-success__actions' },
-          createEl('a', { 
-            class: 'btn btn--primary btn--lg', 
-            href: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(buildWhatsAppMessage(booking))}`,
-            target: '_blank',
-            rel: 'noopener noreferrer'
-          }, 'Confirm via WhatsApp'),
-          createEl('button', { class: 'btn btn--secondary btn--lg', onclick: () => closeBookingConfirmation() }, 'Done')
+          createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeBookingConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'This is a demo. A real backend integration is planned for Phase 2.')
+        createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
       )
     )
   );
@@ -1964,7 +1902,7 @@ function closeBookingConfirmation() {
   }
 }
 
-function buildWhatsAppMessage(booking) {
+function bookingBuildWhatsAppMessage(booking) {
   const lines = [
     `*New Table Booking - ${booking.id}*`,
     `*Date:* ${formatDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' })}`,
@@ -1990,7 +1928,7 @@ function buildWhatsAppMessage(booking) {
 function initCareersPage() {
   if (!document.body.classList.contains('careers-page')) return;
   if (!state.config) return;
-  
+
   careersState.config = state.config;
   _initCareersPage();
 }
@@ -1998,7 +1936,7 @@ function initCareersPage() {
 function _initCareersPage() {
   renderRoleOptions();
   initFileUpload();
-  initFormValidation();
+  careersInitFormValidation();
   initLazyLoading();
 }
 
@@ -2030,11 +1968,7 @@ function initFileUpload() {
 
   if (!fileInput || !fileLabel || !fileNameContainer) return;
 
-  on(fileLabel, 'click', (e) => {
-    if (e.target === fileLabel || e.target.closest('.careers-form__file-label') === fileLabel) {
-      fileInput.click();
-    }
-  });
+  on(fileLabel, 'keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 
   on(fileLabel, 'dragover', (e) => {
     e.preventDefault();
@@ -2075,8 +2009,9 @@ function handleFileSelect(file) {
   const maxSizeMB = config.maxFileSizeMB || 2;
 
   const validation = validateFile(file, allowedTypes, maxSizeMB);
-  
+
   if (!validation.valid) {
+    clearFile();
     showToast(validation.error, 'error');
     return;
   }
@@ -2125,17 +2060,17 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-function initFormValidation() {
+function careersInitFormValidation() {
   const form = $('#careers-form');
   if (!form) return;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-  
+  const inputs = form.querySelectorAll('input, select, textarea');
+
   inputs.forEach(input => {
-    on(input, 'blur', () => validateField(input));
+    on(input, 'blur', () => careersValidateField(input));
     on(input, 'input', () => {
       if (input.closest('.form-group').classList.contains('has-error')) {
-        validateField(input);
+        careersValidateField(input);
       }
     });
   });
@@ -2145,10 +2080,10 @@ function initFormValidation() {
     on(fileInput, 'change', () => validateFileField(fileInput));
   }
 
-  on(form, 'submit', handleSubmit);
+  on(form, 'submit', careersHandleSubmit);
 }
 
-function validateField(input) {
+function careersValidateField(input) {
   const group = input.closest('.form-group');
   const error = group?.querySelector('.form-error');
   let valid = true;
@@ -2156,7 +2091,7 @@ function validateField(input) {
 
   if (input.required && !validateRequired(input.value)) {
     valid = false;
-    message = `${getFieldLabel(input)} is required`;
+    message = `${careersGetFieldLabel(input)} is required`;
   } else if (input.type === 'email' && input.value && !validateEmail(input.value)) {
     valid = false;
     message = 'Please enter a valid email address';
@@ -2178,7 +2113,7 @@ function validateField(input) {
 function validateFileField(input) {
   const group = input.closest('.form-group');
   const error = group?.querySelector('.form-error');
-  
+
   if (input.required && !careersState.selectedFile) {
     group.classList.add('has-error');
     if (error) error.textContent = 'Please upload your CV';
@@ -2189,25 +2124,25 @@ function validateFileField(input) {
   return true;
 }
 
-function getFieldLabel(input) {
+function careersGetFieldLabel(input) {
   const label = input.closest('.form-group')?.querySelector('label');
   return label ? label.textContent.replace('*', '').trim() : 'This field';
 }
 
-function handleSubmit(e) {
+async function careersHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+  const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
 
   inputs.forEach(input => {
-    if (!validateField(input)) {
+    if (input.type !== 'file' && !careersValidateField(input)) {
       allValid = false;
     }
   });
 
-  if (!validateFileField(form.querySelector('#careers-cv'))) {
+  if (!validateFileField(form.querySelector('#cv'))) {
     allValid = false;
   }
 
@@ -2219,23 +2154,55 @@ function handleSubmit(e) {
 
   const application = {
     id: generateId('APP'),
-    role: form.role.value,
+    role: form.elements.namedItem('role').value,
     customer: {
-      name: form.name.value.trim(),
-      email: form.email.value.trim(),
-      phone: form.phone.value.trim(),
-      address: form.address.value.trim()
+      name: form.elements.namedItem('name').value.trim(),
+      email: form.elements.namedItem('email').value.trim(),
+      phone: form.elements.namedItem('phone').value.trim(),
+      address: form.elements.namedItem('address').value.trim()
     },
     cv: careersState.selectedFile ? careersState.selectedFile.name : null,
     createdAt: new Date().toISOString(),
     status: 'submitted'
   };
 
-  const applications = storageGet('applications', []);
-  applications.unshift(application);
-  storageSet('applications', applications.slice(0, 50));
+  // Submit application to Supabase
+  try {
+    utils.showToast('Submitting application...', 'info');
+    
+    // Handle CV upload if file selected
+    let cvPath = null;
+    if (careersState.selectedFile) {
+      // Get signed upload URL
+      const { signedUrl, path } = await utils.apiRequest('applications/get-upload-url', {
+        fileName: careersState.selectedFile.name,
+        contentType: careersState.selectedFile.type
+      });
+      
+      // Upload file directly to Supabase Storage
+      await fetch(signedUrl, {
+        method: 'PUT',
+        body: careersState.selectedFile,
+        headers: { 'Content-Type': careersState.selectedFile.type }
+      });
+      cvPath = path;
+    }
 
-  showApplicationConfirmation(application);
+    const result = await utils.apiRequest('applications', {
+      ...application,
+      cv: cvPath
+    });
+    
+    if (result.id) {
+      showApplicationConfirmation(result);
+    } else {
+      throw new Error(result.error || 'Application failed');
+    }
+  } catch (e) {
+    utils.showToast('Application failed: ' + e.message, 'error');
+    return;
+  }
+
   form.reset();
   clearFile();
 }
@@ -2245,10 +2212,10 @@ function showApplicationConfirmation(application) {
     createEl('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'careers-confirmation-title' },
       createEl('div', { class: 'modal__body booking-success' },
         createEl('div', { class: 'booking-success__icon' },
-          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#66BB6A', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
+          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        createEl('h2', { class: 'booking-success__title', id: 'careers-confirmation-title' }, 'Application Submitted!'),
-        createEl('p', {}, `Thank you for your interest in joining our team. Your application has been received. Reference ID: <strong>${application.id}</strong>`),
+        createEl('h2', { class: 'booking-success__title', id: 'careers-confirmation-title' }, 'Application preview ready'),
+        createEl('p', {}, `Demo only. No application or CV was uploaded. Reference: ${application.id}`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Role Applied'),
@@ -2297,14 +2264,14 @@ function closeCareersConfirmation() {
 function initContactPage() {
   if (!document.body.classList.contains('contact-page')) return;
   if (!state.config) return;
-  
+
   contactState.config = state.config;
   _initContactPage();
 }
 
 function _initContactPage() {
-  initFormValidation();
-  initMapLazyLoad();
+  contactInitFormValidation();
+  contactInitMapLazyLoad();
   initLazyLoading();
 }
 
@@ -2312,25 +2279,25 @@ let contactState = {
   config: null
 };
 
-function initFormValidation() {
+function contactInitFormValidation() {
   const form = $('#contact-form');
   if (!form) return;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-  
+  const inputs = form.querySelectorAll('input, select, textarea');
+
   inputs.forEach(input => {
-    on(input, 'blur', () => validateField(input));
+    on(input, 'blur', () => contactValidateField(input));
     on(input, 'input', () => {
       if (input.closest('.form-group').classList.contains('has-error')) {
-        validateField(input);
+        contactValidateField(input);
       }
     });
   });
 
-  on(form, 'submit', handleSubmit);
+  on(form, 'submit', contactHandleSubmit);
 }
 
-function validateField(input) {
+function contactValidateField(input) {
   const group = input.closest('.form-group');
   const error = group?.querySelector('.form-error');
   let valid = true;
@@ -2338,7 +2305,7 @@ function validateField(input) {
 
   if (input.required && !validateRequired(input.value)) {
     valid = false;
-    message = `${getFieldLabel(input)} is required`;
+    message = `${contactGetFieldLabel(input)} is required`;
   } else if (input.type === 'email' && input.value && !validateEmail(input.value)) {
     valid = false;
     message = 'Please enter a valid email address';
@@ -2357,20 +2324,20 @@ function validateField(input) {
   return valid;
 }
 
-function getFieldLabel(input) {
+function contactGetFieldLabel(input) {
   const label = input.closest('.form-group')?.querySelector('label');
   return label ? label.textContent.replace('*', '').trim() : 'This field';
 }
 
-function handleSubmit(e) {
+function contactHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
-  const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+  const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
 
   inputs.forEach(input => {
-    if (!validateField(input)) {
+    if (!contactValidateField(input)) {
       allValid = false;
     }
   });
@@ -2383,20 +2350,21 @@ function handleSubmit(e) {
 
   const contact = {
     id: generateId('MSG'),
-    subject: form.subject.value,
+    subject: form.elements.namedItem('subject').value,
     customer: {
-      name: form.name.value.trim(),
-      email: form.email.value.trim(),
-      phone: form.phone.value.trim()
+      name: form.elements.namedItem('name').value.trim(),
+      email: form.elements.namedItem('email').value.trim(),
+      phone: form.elements.namedItem('phone').value.trim()
     },
-    message: form.message.value.trim(),
+    message: form.elements.namedItem('message').value.trim(),
     createdAt: new Date().toISOString(),
     status: 'submitted'
   };
 
-  const contacts = storageGet('contacts', []);
+  const stored = storageGet('contacts', []);
+  const contacts = Array.isArray(stored) ? stored : [];
   contacts.unshift(contact);
-  storageSet('contacts', contacts.slice(0, 50));
+  // Contact preview stays in memory.
 
   showContactConfirmation(contact);
   form.reset();
@@ -2407,10 +2375,10 @@ function showContactConfirmation(contact) {
     createEl('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'contact-confirmation-title' },
       createEl('div', { class: 'modal__body booking-success' },
         createEl('div', { class: 'booking-success__icon' },
-          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: '#66BB6A', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
+          createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message Sent!'),
-        createEl('p', {}, `Thank you for reaching out. We'll get back to you soon. Reference ID: <strong>${contact.id}</strong>`),
+        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message preview ready'),
+        createEl('p', {}, `Demo only. This message was not sent. Reference: ${contact.id}`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Subject'),
@@ -2452,7 +2420,7 @@ function closeContactConfirmation() {
   }
 }
 
-function initMapLazyLoad() {
+function contactInitMapLazyLoad() {
   const mapContainer = $('.contact-map');
   if (!mapContainer) return;
 
@@ -2480,13 +2448,13 @@ function initMapLazyLoad() {
 function initLocationsPage() {
   if (!document.body.classList.contains('locations-page')) return;
   if (!state.config) return;
-  
+
   locationsState.config = state.config;
   _initLocationsPage();
 }
 
 function _initLocationsPage() {
-  initMapLazyLoad();
+  locationsInitMapLazyLoad();
   initLazyLoading();
 }
 
@@ -2494,9 +2462,9 @@ let locationsState = {
   config: null
 };
 
-function initMapLazyLoad() {
+function locationsInitMapLazyLoad() {
   const mapIframes = $$('.location-card__map iframe');
-  
+
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries, obs) => {
       entries.forEach(entry => {
@@ -2560,6 +2528,12 @@ function initEventDelegation() {
   utils.delegate(document, '.mobile-menu__close, #mobile-menu-overlay', 'click', closeMobileMenu);
   utils.delegate(document, '.mobile-menu__link', 'click', closeMobileMenu);
 
+  delegate(document, '.date-option', 'click', (e, btn) => {
+    bookingState.selectedDate = btn.dataset.date; bookingState.selectedTime = null;
+    renderDateOptions(); renderTimeSlots(); syncPickers();
+  });
+  delegate(document, '.time-slot', 'click', (e, btn) => { if (!btn.disabled) { bookingState.selectedTime = btn.dataset.time; renderTimeSlots(); syncPickers(); } });
+  delegate(document, '.guest-option', 'click', (e, btn) => { bookingState.selectedGuests = Number(btn.dataset.guests); renderGuestOptions(); });
   // Header scroll
   initHeaderScroll();
 
@@ -2579,12 +2553,12 @@ function initEventDelegation() {
   utils.delegate(document, '.category-chip', 'click', (e, btn) => {
     const category = btn.dataset.category;
     menuState.activeCategory = category;
-    
+
     utils.$$('.category-chip').forEach(c => {
       c.classList.toggle('is-active', c.dataset.category === category);
-      c.setAttribute('aria-selected', c.dataset.category === category);
+      c.setAttribute('aria-pressed', c.dataset.category === category);
     });
-    
+
     applyFilters();
   });
 
@@ -2592,12 +2566,12 @@ function initEventDelegation() {
   utils.delegate(document, '.filter-chip', 'click', (e, btn) => {
     const filter = btn.dataset.filter;
     menuState.activeFilter = filter;
-    
+
     utils.$$('.filter-chip').forEach(c => {
       c.classList.toggle('is-active', c.dataset.filter === filter);
-      c.setAttribute('aria-selected', c.dataset.filter === filter);
+      c.setAttribute('aria-pressed', c.dataset.filter === filter);
     });
-    
+
     applyFilters();
   });
 
@@ -2612,7 +2586,7 @@ function initEventDelegation() {
       description: btn.dataset.description
     };
     utils.addToCart(item, 1);
-    
+
     btn.style.transform = 'scale(0.9)';
     setTimeout(() => btn.style.transform = '', 100);
   });
@@ -2623,8 +2597,7 @@ function initEventDelegation() {
 // ========================================
 
 async function init() {
-  console.log('[app.js] Module loaded, readyState:', document.readyState);
-  
+
   try {
     // Render shared header/footer first
     renderHeader();
@@ -2637,6 +2610,7 @@ async function init() {
     // Initialize page-specific components
     if (document.body.classList.contains('home-page')) {
       initHomePage();
+      initLazyLoading();
     }
     if (document.body.classList.contains('menu-page')) {
       initMenuPage();
@@ -2654,9 +2628,11 @@ async function init() {
       initLocationsPage();
     }
 
+    populateBusinessDetails();
+    installDialogAccessibility();
+    syncPickers();
     // Mark body as ready
     document.body.classList.add('app-ready');
-    console.log('[app.js] Initialization complete');
 
     // Dispatch custom event for page-specific init
     window.dispatchEvent(new CustomEvent('cafe:ready', { detail: { config: state.config, menu: state.menu } }));
@@ -2675,7 +2651,6 @@ if (document.readyState === 'loading') {
     }
   });
 } else {
-  console.log('[main.js] End of script, about to call init');
 
   try {
     init();

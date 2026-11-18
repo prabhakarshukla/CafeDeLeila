@@ -4,28 +4,25 @@
    ======================================== */
 
 :root {
-  /* Brand colours */
   --color-sand: #B28F6F;
-  --color-sand-light: #C9A88E;
-  --color-sand-dark: #967858;
-  --color-sand-darker: #7A6148;
-
   --color-obsidian: #161616;
-  --color-obsidian-light: #1E1E1E;
-  --color-obsidian-lighter: #282828;
-  --color-obsidian-card: #1A1A1A;
-
-  /* Text colours */
-  --color-text-primary: #F5F0EB;
-  --color-text-secondary: #D4C4B8;
-  --color-text-muted: #9A8D82;
-  --color-text-on-sand: #161616;
-
-  /* Semantic colours */
-  --color-success: #2E7D32;
-  --color-error: #C62828;
-  --color-warning: #EF6C00;
-
+  --color-sand-light: #d4b79e;
+  --color-sand-dark: #967858;
+  --color-obsidian-card: #25211e;
+  --color-text-primary: #f5f0eb;
+  --color-text-secondary: var(--color-text-primary);
+  --color-text-muted: var(--color-sand-light);
+  --color-text-on-sand: var(--color-obsidian);
+  --color-sand-darker: var(--color-sand-dark);
+  --color-obsidian-light: var(--color-obsidian-card);
+  --color-obsidian-lighter: var(--color-obsidian-card);
+  --color-success: var(--color-sand-light);
+  --color-error: var(--color-sand-light);
+  --color-warning: var(--color-sand-light);
+  --color-border: #b28f6f40;
+  --color-wash: #b28f6f18;
+  --color-overlay: #161616cc;
+  --color-clear: #16161600;
   /* Spacing scale */
   --space-xs: 4px;
   --space-sm: 8px;

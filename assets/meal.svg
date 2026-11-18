@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title">
+<title id="title">Decorative café table illustration</title>
+<style>:root{--ink:#161616;--card:#25211e;--sand:#B28F6F;--cream:#f5f0eb;--shade:#967858} .line{fill:none;stroke:var(--sand);stroke-width:2}</style>
+<rect width="640" height="480" fill="var(--card)"/>
+<path d="M0 390L640 90M0 420L640 120M0 450L640 150" stroke="var(--sand)" opacity=".12"/>
+<circle cx="330" cy="246" r="177" fill="var(--ink)" stroke="var(--sand)"/>
+<circle cx="330" cy="246" r="151" class="line"/><circle cx="330" cy="246" r="139" class="line" opacity=".35"/>
+<path d="M239 213Q308 148 410 203L431 264Q351 330 251 286Z" fill="var(--sand)"/>
+<path d="M252 218Q324 167 399 207M260 236Q328 190 410 228M265 256Q339 213 413 248M278 278Q346 239 415 268" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>
+<g fill="var(--cream)"><ellipse cx="257" cy="172" rx="25" ry="10" transform="rotate(-32 257 172)"/><ellipse cx="277" cy="151" rx="25" ry="10" transform="rotate(-57 277 151)"/><ellipse cx="416" cy="318" rx="26" ry="10" transform="rotate(-35 416 318)"/><ellipse cx="391" cy="334" rx="24" ry="10" transform="rotate(-20 391 334)"/></g>
+<g class="line"><path d="M92 138V350M78 138V184Q92 206 106 184V138M99 138V179M85 138V179"/><path d="M543 350V140Q520 160 520 221H543"/></g>
+<circle cx="548" cy="65" r="45" fill="var(--sand)"/><circle cx="548" cy="65" r="32" fill="var(--ink)"/><path d="M590 55Q623 65 590 80" class="line"/>
+<text x="30" y="441" fill="var(--sand)" font-family="Georgia,serif" font-size="14" letter-spacing="3">THE TABLE IS YOURS</text>
+<text x="30" y="462" fill="var(--cream)" font-family="sans-serif" font-size="10" letter-spacing="2">ILLUSTRATION · SAMPLE MENU</text>
+</svg>

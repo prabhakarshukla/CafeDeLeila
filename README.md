@@ -1,245 +1,94 @@
-# CAFÉ DE LEILA — Website
+# Café De Leila website
 
-A modern, mobile-first website for Café De Leila, Lucknow. Built with vanilla HTML, CSS, and JavaScript — no build step required.
+Six-page pitch demo, repaired from the existing frontend. Plain HTML, CSS and JavaScript; no build step. No orders, bookings, CVs or contact messages reach a backend. No payment is collected.
 
-## 🚀 Quick Start
+## Run locally
 
-```bash
-# Navigate to project directory
-cd "C:/cafe de lelia"
-
-# Start local server (Windows PowerShell compatible)
+```powershell
+cd 'C:\cafe de lelia'
 python -m http.server 8080
-
-# Open in browser
-# http://localhost:8080
 ```
 
-## 📁 Folder Structure
+Open http://localhost:8080/index.html. Use an HTTP server, not file://, so JSON loading works.
 
-```
-cafe de lelia/
-├── index.html           # Home page
-├── menu.html            # Menu with filters & search
-├── book-table.html      # Table booking form
-├── careers.html         # Job applications with CV upload
-├── contact.html         # Contact form & map
-├── locations.html       # Location cards & maps
-├── css/
-│   ├── variables.css    # CSS custom properties (theme)
-│   ├── base.css         # Reset, typography, utilities
-│   ├── components.css   # Header, footer, cart, modals, forms
-│   └── pages.css        # Page-specific styles
-├── js/
-│   ├── utils.js         # Shared utilities (DOM, storage, formatting, etc.)
-│   ├── app.js           # Core app (header, footer, cart, checkout)
-│   ├── menu.js          # Menu page logic
-│   ├── booking.js       # Booking page logic
-│   ├── careers.js       # Careers page logic
-│   ├── contact.js       # Contact page logic
-│   └── locations.js     # Locations page logic
-├── data/
-│   ├── config.json      # Site configuration (contacts, hours, social, etc.)
-│   └── menu.json        # Menu data (categories, items, prices)
-├── assets/
-│   ├── favicon.svg      # Site favicon
-│   └── logo_deleila.svg # Logo placeholder
-└── audit/               # Audit screenshots (generated during QA)
+On this machine, `python` resolves to an inaccessible Windows app alias. This bundled executable was tested successfully:
+
+```powershell
+& 'C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-1117-835-0_26.1117.835.0_x64__3k8sg7r9htsxt\dependencies\python\python.exe' -m http.server 8080
 ```
 
-## ⚙️ Configuration
+That path is machine-specific and may change after an update. Installing Python on PATH makes the standard command work.
 
-### `data/config.json` — Site Settings
+## Structure
 
-Edit this file to update:
-- **Contact info**: phone, email, address, WhatsApp number
-- **Opening hours**: schedule array (TODO: confirm actual hours)
-- **Social links**: Facebook, Instagram, YouTube
-- **Ordering settings**: delivery fee, minimum order, tax rate
-- **Booking settings**: time slots, max guests, advance booking window
-- **Careers settings**: allowed file types, max file size, roles
-- **SEO**: default title, description, OG image
+- Six HTML pages: home, menu, book-table, careers, contact, locations.
+- `js/main.js`: active app, header/footer, cart, checkout, menu and forms.
+- `js/support.js`: India dates, safe handoff links, config-driven details and dialog accessibility.
+- Other `js/*.js`: retained legacy modules, not loaded. Edit the active scripts; do not load both implementations.
+- `css/variables.css`: theme tokens. Original base/components/pages styles remain; `css/refinements.css` corrects layout and usability.
+- `data/menu.json`: 19 categories and 80 sample dishes.
+- `data/config.json`: business details, unconfirmed hours, booking samples and handoff settings.
+- `assets/`: existing logo/favicon and local meal illustration.
+- `PROJECT_STATE.md`, `PLAN.md`, `ASSUMPTIONS.md`, `CHANGELOG.md`, `AUDIT.md`: inventory, decisions and evidence.
+- `audit/`: test scripts/results and screenshots at all three requested widths.
 
-### `data/menu.json` — Menu Data
+## Real versus SAMPLE
 
-Structure:
+Name, tagline, phone and Gmail address come from the supplied brief, not independent verification. The address remains flagged because listings disagree. Opening hours are unconfirmed; no schedule is guessed.
+
+All dishes, descriptions, prices, tags, illustrations, reviews, hiring roles and booking slots are samples. Menu metadata and every dish have `_sample: true`; reviews are explicitly fictional. Existing logo artwork requires owner approval.
+
+Cart/notes and recent order/booking records use localStorage keys beginning `cafe_de_leila_`. Clear browser site data to remove them. Checkout creates a summary and ID, not an accepted order. Booking creates a request, not a reserved table. Applications and CVs stay in memory and are not uploaded. Contact messages are previews. Use fictional personal details for the pitch.
+
+## Edit menu.json
+
+Keep category/item IDs unique. Every item needs `id`, `name`, a distinct `description`, numeric `price`, boolean `veg`, local `image`, `tags` array and `_sample`. Image paths are relative to the site root; add the actual file before referencing it. Verify dietary labels and ingredients with the kitchen.
+
 ```json
-{
-  "_meta": {
-    "note": "All prices are SAMPLE values for demonstration only.",
-    "_sample": true,
-    "currency": "INR"
-  },
-  "categories": [
-    {
-      "id": "desserts",
-      "name": "Desserts",
-      "description": "Sweet endings...",
-      "items": [
-        {
-          "id": "dessert-1",
-          "name": "Gulab Jamun Cheesecake",
-          "description": "Creamy New York cheesecake...",
-          "price": 280,
-          "veg": true,
-          "image": "/assets/menu/dessert-gulab-jamun-cheesecake.jpg",
-          "tags": ["popular", "signature"],
-          "_sample": true
-        }
-      ]
-    }
-  ]
-}
+{"id":"main-4","name":"Sample paneer dish","description":"Paneer with tomato and toasted cumin.","price":300,"veg":true,"image":"assets/meal.svg","tags":[],"_sample":true}
 ```
 
-**Important**: All prices are marked with `"_sample": true` — replace with real prices before launch.
+Keep sample labels until the owner approves the complete menu. Removing flags alone does not make this a production ordering system. Update the explicit demo copy and implement the backend before launch.
 
-## 🎨 Theme Customization
+## Edit config.json
 
-All colors are defined in `css/variables.css` under `:root`:
+- Update `contact.phone`, `phoneRaw` with country code, `email`, `address.full`, `mapLinkUrl` and `mapEmbedUrl`. Footer and contact/location bodies use these values.
+- Resolve the address discrepancy and update its warning in `js/support.js`.
+- Keep `hours.verified: false` and `schedule: []` until confirmed. Then add entries such as `{"day":"Monday","open":"12:00","close":"21:00","closed":false}` and set `verified: true`.
+- `contact.whatsapp` is deliberately empty. Add the owner's verified 12-digit Indian WhatsApp number beginning `91` and set `whatsappVerified: true`. Checkout then opens a prefilled wa.me draft. Otherwise confirmations offer an email draft. The user must send it; opening a draft does not mean acceptance.
+- Add owner-confirmed Facebook/Instagram/YouTube URLs in `social`; nonempty values appear only in the footer.
+- `booking.timeSlots`, `maxGuests`, `maxAdvanceDays` and `minAdvanceMinutes` control demo requests in India time. Confirm them before launch.
+- Fees/tax are zero; the demo displays a sample subtotal. Real charges and service areas belong in phase 2.
 
-```css
-:root {
-  --color-sand: #B28F6F;        /* Primary accent */
-  --color-sand-light: #C9A88E;  /* Hover states */
-  --color-sand-dark: #967858;   /* Active/pressed */
-  --color-obsidian: #161616;    /* Main background */
-  --color-obsidian-light: #1E1E1E;
-  --color-obsidian-card: #1A1A1A; /* Card backgrounds */
-  --color-text-primary: #F5F0EB;
-  --color-text-secondary: #D4C4B8;
-  --color-text-muted: #9A8D82;
-}
-```
+## Tests
 
-Derive new shades only from these two base colors.
+Run `node audit/static.cjs` for JSON/schema, all JS syntax, HTML metadata/labels/local links and contrast checks. No additional packages needed.
 
-## 📱 Features
+`node audit/browser.cjs` needs Playwright and Chrome. Set `NODE_PATH` to an installed package directory if needed. This machine used `C:\Users\prabh\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules`. The suite captures six pages at 360, 768 and 1280px, then checks cart, forms, negative cases, storage failures, keyboard behavior and reduced motion.
 
-### Home Page (`index.html`)
-- Hero with headline, tagline, CTA buttons, image placeholder
-- Featured dishes (6 cards from menu data)
-- "How ordering works" (3 steps)
-- About section with story
-- Opening hours from config
-- Reviews strip (sample data)
-- CTA band
+Browser requests serve exact local files through routing because browser loopback access was restricted. External fonts/maps are stubbed; WhatsApp is intercepted, never sent. `audit/server-check.cjs` separately tests a real Python HTTP response on port 8099 and stops its server; set `CAFE_PYTHON` if Python is not on PATH. See AUDIT.md for limits. Test real Android/iOS devices before launch.
 
-### Menu Page (`menu.html`) — **Core Feature**
-- Search box with debounced filtering
-- Dietary filter chips: All / Veg / Non-Veg
-- Horizontal scrollable category chips (all 18 categories)
-- Responsive grid: 1 col (mobile) → 2 (tablet) → 3 (desktop) → 4 (large)
-- Dish cards with: image, name, description, price, veg/non-veg badge, tags, add button
-- Quantity stepper in cart drawer
+## Deploy after owner approval
 
-### Cart & Order Flow (No Backend)
-- Slide-out cart drawer (persists in localStorage)
-- Quantity controls, remove items
-- Subtotal, delivery fee (free above ₹200), tax (5%)
-- Checkout modal: name, phone (10-digit validation), order type (Dine-in/Takeaway/Delivery), address (conditional), notes
-- On submit: validation → order ID → localStorage → WhatsApp pre-filled message
-- **Phase 2**: Real payment gateway integration
+No deployment was performed. Create an upload folder containing the six HTML files, `assets`, `css`, `data`, `js/main.js` and `js/support.js`, preserving relative paths. Exclude `.git`, audit evidence and local notes.
 
-### Book a Table (`book-table.html`)
-- Date picker (next 60 days, no past dates)
-- Time slots (configurable, past times disabled for today)
-- Guest counter (1-20)
-- Form validation with clear error messages
-- Success screen with booking summary + WhatsApp confirmation link
+- Netlify: manually upload that folder or connect a repository. No build command; publish the directory containing index.html. [Netlify documentation](https://docs.netlify.com/manage/projects/add-new-project/).
+- Vercel: choose the Other preset, leave the build command empty and select the directory containing index.html as output. [Vercel configuration](https://vercel.com/docs/builds/configure-a-build).
+- GitHub Pages: place deployable files in the selected branch root or `/docs`, then select that branch/folder in Settings → Pages. Relative paths support repository subpaths. [GitHub Pages publishing sources](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
-### Careers (`careers.html`)
-- Form: name, email, phone, role (dropdown from config), CV upload (PDF/DOC/DOCX, max 2MB), address
-- Drag & drop file upload with validation
-- Success screen with reference ID
+Use the host's HTTPS URL; configure DNS/certificates before enforcing HTTPS on a custom domain. Static hosting adds no backend. Check current plan terms before choosing commercial hosting.
 
-### Contact (`contact.html`)
-- Contact form with validation
-- Contact info card (phone, email, address from config)
-- Lazy-loaded Google Maps iframe
-- "Open in Maps" link
+## TODO FOR OWNER
 
-### Locations (`locations.html`)
-- Location cards with embedded maps (lazy-loaded)
-- Address, hours, direction/call buttons
-- Placeholder for future locations
+1. Approve the real logo; provide café and food photos with usage rights.
+2. Supply real menu, prices, ingredients and dietary labels.
+3. Confirm opening hours and booking slots.
+4. Provide the WhatsApp Business number.
+5. Resolve Vikas Khand versus Vipul Khand and confirm the map destination.
+6. Set up email on the café's domain.
+7. Confirm social URLs, vacancies, delivery area, charges and acceptance process.
+8. Approve copy and genuine testimonials.
 
-## ♿ Accessibility
+## Phase 2
 
-- Semantic HTML5 (header, nav, main, section, footer, article, aside)
-- One `<h1>` per page
-- Skip link on every page
-- ARIA labels, roles, and states on interactive components
-- Focus visible styles on all interactive elements
-- Keyboard navigation (Tab, Escape to close modals)
-- Focus trapping in modals/drawers
-- Screen reader announcements for cart updates, form errors
-- `prefers-reduced-motion` respected
-- Minimum 44px touch targets
-- Minimum 16px body text
-- Color contrast ≥ 4.5:1
-
-## 🚀 Deployment
-
-### Netlify (Recommended)
-1. Push to GitHub
-2. Connect repo to Netlify
-3. Build command: (none)
-4. Publish directory: `.` (root)
-5. Netlify provides free HTTPS, custom domain, form handling
-
-### Vercel
-1. Push to GitHub
-2. Import in Vercel
-3. Framework: Other
-4. Output directory: `.`
-
-### GitHub Pages
-1. Push to GitHub
-2. Settings → Pages → Source: Deploy from branch (main)
-3. Folder: `/ (root)`
-4. Enable "Enforce HTTPS"
-
-**All three provide free HTTPS** — fixing the old site's security warning.
-
-## 📋 TODO FOR OWNER (Before Launch)
-
-| Item | Status | Notes |
-|------|--------|-------|
-| Real logo file | ⬜ | Replace `/assets/logo_deleila.svg` |
-| Real food photos | ⬜ | Add to `/assets/menu/` and update `menu.json` |
-| Real prices | ⬜ | Edit `menu.json`, remove `"_sample": true` |
-| Confirm opening hours | ⬜ | Update `config.json` hours.schedule |
-| WhatsApp number | ⬜ | Update `config.json` contact.whatsapp |
-| Confirm address | ⬜ | Update `config.json` contact.address |
-| Payment gateway | ⬜ | Phase 2: Razorpay/Stripe/PayU integration |
-| Admin panel | ⬜ | Phase 2: Order management dashboard |
-| SSL/HTTPS | ✅ | Provided by Netlify/Vercel/GitHub Pages |
-
-## 🔧 Development Notes
-
-### Adding New Menu Items
-1. Edit `data/menu.json`
-2. Add item to appropriate category
-3. Include: id, name, description, price, veg (boolean), image path, tags array, "_sample": true
-
-### Adding New Pages
-1. Create `new-page.html` with header/footer placeholders
-2. Add page-specific CSS to `css/pages.css`
-3. Create `js/new-page.js` if needed
-4. Import in HTML: `<script type="module" src="/js/new-page.js"></script>`
-
-### Browser Support
-- Modern browsers (last 2 versions)
-- ES Modules (native)
-- CSS Custom Properties
-- IntersectionObserver (lazy loading)
-- localStorage
-
-## 📝 Changelog
-
-See `CHANGELOG.md` for iteration history.
-
-## 📄 License
-
-Proprietary — Café De Leila. All rights reserved.
+Add an order/booking backend with server-side price and availability checks, an admin panel, secure CV upload, and a payment gateway with verified webhooks. Add notifications, order status, retention controls and launch policies once the business workflow is agreed.

@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "screenshots": 18,
+  "errors": [],
+  "flows": [
+    "menu filters/search",
+    "single add",
+    "quantity",
+    "persistence and notes",
+    "checkout validation",
+    "delivery toggle",
+    "takeaway order and totals",
+    "email fallback",
+    "booking date/time/guests",
+    "careers PDF/DOC/DOCX",
+    "invalid and oversized files",
+    "contact preview",
+    "invalid phone and optional email",
+    "past booking date",
+    "keyboard trap and focus restoration",
+    "malformed storage",
+    "unavailable storage checkout",
+    "reduced motion",
+    "verified WhatsApp URL dry-run"
+  ],
+  "externalServices": "Local files served through request routing. Remote fonts and map content stubbed. WhatsApp window.open intercepted; no external messages sent."
+}

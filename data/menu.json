@@ -3,7 +3,8 @@
     "note": "All prices are placeholder values for demonstration only. Replace with real prices before launch.",
     "lastUpdated": "2026-11-18",
     "currency": "INR",
-    "currencySymbol": "₹"
+    "currencySymbol": "₹",
+    "_sample": true
   },
   "categories": [
     {
@@ -17,11 +18,12 @@
           "description": "Creamy New York cheesecake infused with rose-scented gulab jamun, topped with pistachio crumble and saffron drizzle",
           "price": 280,
           "veg": true,
-          "image": "/assets/menu/dessert-gulab-jamun-cheesecake.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "signature"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "dessert-2",
@@ -29,10 +31,11 @@
           "description": "Warm dark chocolate cake with a molten center, served with vanilla bean ice cream and berry compote",
           "price": 320,
           "veg": true,
-          "image": "/assets/menu/dessert-chocolate-lava.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "dessert-3",
@@ -40,10 +43,11 @@
           "description": "Traditional pistachio kulfi with rose syrup, vermicelli, basil seeds, and chopped nuts",
           "price": 220,
           "veg": true,
-          "image": "/assets/menu/dessert-kulfi-falooda.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "traditional"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "dessert-4",
@@ -51,8 +55,9 @@
           "description": "Classic Italian dessert with espresso-soaked ladyfingers, mascarpone cream, and cocoa dusting",
           "price": 300,
           "veg": true,
-          "image": "/assets/menu/dessert-tiramisu.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -64,14 +69,15 @@
         {
           "id": "mcc-1",
           "name": "Grilled Chicken Breast",
-          "description": "Herb-marinated chicken breast with roasted vegetables, mashed potatoes, and red wine jus",
+          "description": "Herb-marinated chicken breast with roasted vegetables, mashed potatoes, and herb jus",
           "price": 420,
           "veg": false,
-          "image": "/assets/menu/mcc-grilled-chicken.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "mcc-2",
@@ -79,10 +85,11 @@
           "description": "Catch of the day with lemon butter sauce, sautéed asparagus, and herb rice pilaf",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/mcc-pan-seared-fish.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "mcc-3",
@@ -90,10 +97,11 @@
           "description": "Layers of pasta, roasted vegetables, ricotta, mozzarella, and rich tomato basil sauce",
           "price": 350,
           "veg": true,
-          "image": "/assets/menu/mcc-veg-lasagna.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "comfort"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "mcc-4",
@@ -101,8 +109,9 @@
           "description": "Tender chicken strips in creamy mushroom sauce with paprika, served with buttered noodles",
           "price": 400,
           "veg": false,
-          "image": "/assets/menu/mcc-chicken-stroganoff.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -117,11 +126,12 @@
           "description": "Three variations: classic tomato-basil, mushroom-truffle, and roasted pepper-goat cheese on toasted baguette",
           "price": 280,
           "veg": true,
-          "image": "/assets/menu/ca-bruschetta.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "sharing"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "ca-2",
@@ -129,8 +139,9 @@
           "description": "Crispy fried squid rings with lemon aioli and marinara sauce",
           "price": 350,
           "veg": false,
-          "image": "/assets/menu/ca-calamari.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "ca-3",
@@ -138,10 +149,11 @@
           "description": "Creamy blend of spinach, artichokes, and three cheeses served with toasted pita chips",
           "price": 300,
           "veg": true,
-          "image": "/assets/menu/ca-spinach-dip.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "sharing"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "ca-4",
@@ -149,8 +161,9 @@
           "description": "Grilled chicken skewers with peanut sauce, cucumber relish, and peanut crumble",
           "price": 320,
           "veg": false,
-          "image": "/assets/menu/ca-chicken-satay.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -165,11 +178,12 @@
           "description": "Classic Roman recipe with guanciale, egg yolks, Pecorino Romano, and black pepper",
           "price": 380,
           "veg": false,
-          "image": "/assets/menu/pasta-carbonara.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pasta-2",
@@ -177,11 +191,12 @@
           "description": "Spicy tomato sauce with garlic, red chilies, and fresh basil",
           "price": 320,
           "veg": true,
-          "image": "/assets/menu/pasta-arrabbiata.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "vegan-option"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pasta-3",
@@ -189,21 +204,23 @@
           "description": "Rich parmesan cream sauce with butter, garlic, and nutmeg",
           "price": 360,
           "veg": true,
-          "image": "/assets/menu/pasta-alfredo.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "comfort"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pasta-4",
           "name": "Seafood Linguine",
-          "description": "Fresh prawns, mussels, and calamari in white wine garlic sauce with cherry tomatoes",
+          "description": "Fresh prawns, mussels, and calamari in lemon garlic sauce with cherry tomatoes",
           "price": 450,
           "veg": false,
-          "image": "/assets/menu/pasta-seafood.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pasta-5",
@@ -211,8 +228,9 @@
           "description": "Layers of pasta, slow-cooked meat ragù, béchamel, and Parmigiano-Reggiano",
           "price": 400,
           "veg": false,
-          "image": "/assets/menu/pasta-lasagna.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -227,11 +245,12 @@
           "description": "San Marzano tomato sauce, fresh mozzarella, basil, and extra virgin olive oil",
           "price": 350,
           "veg": true,
-          "image": "/assets/menu/pizza-margherita.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic",
             "vegan-option"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pizza-2",
@@ -239,10 +258,11 @@
           "description": "Spicy pepperoni, mozzarella, tomato sauce, and oregano",
           "price": 420,
           "veg": false,
-          "image": "/assets/menu/pizza-pepperoni.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pizza-3",
@@ -250,10 +270,11 @@
           "description": "Mozzarella, gorgonzola, parmesan, and goat cheese with honey drizzle",
           "price": 450,
           "veg": true,
-          "image": "/assets/menu/pizza-quattro.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "cheese-lovers"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pizza-4",
@@ -261,11 +282,12 @@
           "description": "Tandoori marinated chicken, red onions, bell peppers, cilantro, and mint chutney drizzle",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/pizza-tandoori.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "fusion",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "pizza-5",
@@ -273,10 +295,11 @@
           "description": "Roasted vegetables, olives, feta, sun-dried tomatoes, and pesto",
           "price": 400,
           "veg": true,
-          "image": "/assets/menu/pizza-mediterranean.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -291,11 +314,12 @@
           "description": "200g Angus beef patty, cheddar, lettuce, tomato, onion, pickles, and signature sauce on brioche bun",
           "price": 380,
           "veg": false,
-          "image": "/assets/menu/sb-cheeseburger.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "signature"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "sb-2",
@@ -303,8 +327,9 @@
           "description": "Herb-marinated chicken breast, avocado, bacon, lettuce, tomato, and garlic aioli on ciabatta",
           "price": 360,
           "veg": false,
-          "image": "/assets/menu/sb-chicken-sandwich.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "sb-3",
@@ -312,10 +337,11 @@
           "description": "House-made black bean patty, halloumi, roasted peppers, arugula, and chipotle mayo",
           "price": 340,
           "veg": true,
-          "image": "/assets/menu/sb-veggie-burger.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "vegetarian"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "sb-4",
@@ -323,8 +349,9 @@
           "description": "Triple-decker with grilled chicken, bacon, lettuce, tomato, egg, and mayo on toasted sourdough",
           "price": 360,
           "veg": false,
-          "image": "/assets/menu/sb-club.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "sb-5",
@@ -332,10 +359,11 @@
           "description": "Spiced lamb patty, feta, tzatziki, cucumber, red onion, and arugula on pretzel bun",
           "price": 450,
           "veg": false,
-          "image": "/assets/menu/sb-lamb-burger.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -350,10 +378,11 @@
           "description": "Wok-tossed jasmine rice with chicken, egg, vegetables, and soy-ginger sauce",
           "price": 320,
           "veg": false,
-          "image": "/assets/menu/rn-chicken-fried-rice.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "rn-2",
@@ -361,11 +390,12 @@
           "description": "Stir-fried noodles with colorful vegetables, schezwan sauce, and spring onions",
           "price": 280,
           "veg": true,
-          "image": "/assets/menu/rn-veggie-noodles.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "vegan"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "rn-3",
@@ -373,10 +403,11 @@
           "description": "Rice noodles with prawns, tamarind sauce, peanuts, bean sprouts, and lime",
           "price": 420,
           "veg": false,
-          "image": "/assets/menu/rn-pad-thai.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "rn-4",
@@ -384,64 +415,108 @@
           "description": "Spicy fermented kimchi rice with pork belly, fried egg, and sesame seeds",
           "price": 350,
           "veg": false,
-          "image": "/assets/menu/rn-kimchi-rice.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "korean"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
     {
-      "id": "main-course-chinese",
-      "name": "Main Course Chinese",
+      "id": "main-course",
+      "name": "Main Course",
+      "description": "Sample vegetarian mains",
+      "items": [
+        {
+          "id": "main-1",
+          "name": "Dal Makhani",
+          "description": "Black lentils simmered with tomato, butter and cream.",
+          "price": 280,
+          "veg": true,
+          "image": "assets/meal.svg",
+          "tags": [
+            "comfort"
+          ],
+          "_sample": true
+        },
+        {
+          "id": "main-2",
+          "name": "Paneer Lababdar",
+          "description": "Paneer cubes in a smooth onion and cashew gravy, finished with fenugreek.",
+          "price": 320,
+          "veg": true,
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
+        },
+        {
+          "id": "main-3",
+          "name": "Seasonal Vegetable Curry",
+          "description": "Mixed vegetables in a lightly spiced tomato gravy with coriander.",
+          "price": 260,
+          "veg": true,
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
+        }
+      ]
+    },
+    {
+      "id": "chinese",
+      "name": "Chinese",
       "description": "Authentic Chinese mains with bold flavors",
       "items": [
         {
-          "id": "mcc-1",
+          "id": "chinese-1",
           "name": "Kung Pao Chicken",
           "description": "Diced chicken with peanuts, dried chilies, Sichuan peppercorns, and vegetables",
           "price": 380,
           "veg": false,
-          "image": "/assets/menu/mcc-kung-pao.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
-          "id": "mcc-2",
+          "id": "chinese-2",
           "name": "Mapo Tofu",
           "description": "Silken tofu in spicy fermented bean sauce with minced pork and Sichuan peppercorns",
           "price": 320,
           "veg": false,
-          "image": "/assets/menu/mcc-mapo-tofu.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "signature"
-          ]
+          ],
+          "_sample": true
         },
         {
-          "id": "mcc-3",
+          "id": "chinese-3",
           "name": "Vegetable Manchurian",
           "description": "Crispy vegetable balls in tangy soy-ginger gravy with bell peppers and spring onions",
           "price": 300,
           "veg": true,
-          "image": "/assets/menu/mcc-veg-manchurian.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
-          "id": "mcc-4",
+          "id": "chinese-4",
           "name": "Chili Garlic Prawns",
           "description": "Succulent prawns wok-tossed with garlic, chilies, soy sauce, and spring onions",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/mcc-chili-prawns.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -456,10 +531,11 @@
           "description": "Crispy chickpea pearls in spiced yogurt with cumin and coriander",
           "price": 120,
           "veg": true,
-          "image": "/assets/menu/raita-boondi.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "raita-2",
@@ -467,11 +543,12 @@
           "description": "Fresh cucumber, mint, roasted cumin, and black salt in creamy yogurt",
           "price": 100,
           "veg": true,
-          "image": "/assets/menu/raita-cucumber.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "refreshing",
             "healthy"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "raita-3",
@@ -479,8 +556,9 @@
           "description": "Sweet pineapple chunks with chat masala and fresh mint in yogurt",
           "price": 130,
           "veg": true,
-          "image": "/assets/menu/raita-pineapple.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -495,10 +573,11 @@
           "description": "Soft naan brushed with garlic butter and cilantro",
           "price": 80,
           "veg": true,
-          "image": "/assets/menu/bread-garlic-naan.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "bread-2",
@@ -506,10 +585,11 @@
           "description": "Classic naan brushed with melted butter",
           "price": 70,
           "veg": true,
-          "image": "/assets/menu/bread-butter-naan.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "bread-3",
@@ -517,11 +597,12 @@
           "description": "Stuffed with melted mozzarella and cheddar, brushed with herb butter",
           "price": 130,
           "veg": true,
-          "image": "/assets/menu/bread-cheese-naan.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "cheese-lovers"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "bread-4",
@@ -529,8 +610,9 @@
           "description": "Stuffed with spiced minced lamb, onions, and herbs",
           "price": 160,
           "veg": false,
-          "image": "/assets/menu/bread-keema-naan.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "bread-5",
@@ -538,10 +620,11 @@
           "description": "Multi-layered flaky whole wheat bread",
           "price": 90,
           "veg": true,
-          "image": "/assets/menu/bread-lachha.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "traditional"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -556,11 +639,12 @@
           "description": "Premium long-grain basmati, perfectly steamed",
           "price": 120,
           "veg": true,
-          "image": "/assets/menu/rice-steamed.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic",
             "vegan"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "rice-2",
@@ -568,10 +652,11 @@
           "description": "Basmati rice tempered with cumin seeds and ghee",
           "price": 150,
           "veg": true,
-          "image": "/assets/menu/rice-jeera.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "rice-3",
@@ -579,8 +664,9 @@
           "description": "Fragrant basmati rice with mixed vegetables and whole spices",
           "price": 200,
           "veg": true,
-          "image": "/assets/menu/rice-pulao.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "rice-4",
@@ -588,11 +674,12 @@
           "description": "South Indian style rice with lemon, turmeric, peanuts, and curry leaves",
           "price": 180,
           "veg": true,
-          "image": "/assets/menu/rice-lemon.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "south-indian",
             "vegan"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -607,11 +694,12 @@
           "description": "Marinated chicken layered with basmati rice, saffron, mint, and caramelized onions - slow cooked in dum style",
           "price": 420,
           "veg": false,
-          "image": "/assets/menu/biryani-chicken.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "biryani-2",
@@ -619,10 +707,11 @@
           "description": "Tender mutton pieces slow-cooked with fragrant rice, rose water, and kewra essence",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/biryani-mutton.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "biryani-3",
@@ -630,10 +719,11 @@
           "description": "Seasonal vegetables layered with basmati rice, saffron, and aromatic spices",
           "price": 350,
           "veg": true,
-          "image": "/assets/menu/biryani-veg.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "biryani-4",
@@ -641,17 +731,19 @@
           "description": "Succulent prawns with coconut milk, curry leaves, and basmati rice",
           "price": 500,
           "veg": false,
-          "image": "/assets/menu/biryani-prawn.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         },
         {
           "id": "biryani-5",
           "name": "Egg Biryani",
           "description": "Hard-boiled eggs in spiced gravy layered with saffron rice and fried onions",
           "price": 320,
-          "veg": true,
-          "image": "/assets/menu/biryani-egg.jpg",
-          "tags": []
+          "veg": false,
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -666,11 +758,12 @@
           "description": "Tandoori chicken in rich tomato-cream gravy with fenugreek and butter",
           "price": 420,
           "veg": false,
-          "image": "/assets/menu/imc-butter-chicken.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "imc-2",
@@ -678,10 +771,11 @@
           "description": "Grilled chicken tikka in spiced onion-tomato gravy with cream",
           "price": 400,
           "veg": false,
-          "image": "/assets/menu/imc-tikka-masala.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "imc-3",
@@ -689,11 +783,12 @@
           "description": "Kashmiri-style mutton curry with yogurt, fennel, and aromatic spices",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/imc-rogan-josh.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "kashmiri"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "imc-4",
@@ -701,10 +796,11 @@
           "description": "Slow-braised mutton in rich cashew-almond gravy with saffron",
           "price": 500,
           "veg": false,
-          "image": "/assets/menu/imc-mutton-korma.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "royal"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "imc-5",
@@ -712,10 +808,11 @@
           "description": "Chicken with bell peppers, onions, tomatoes, and kadai masala",
           "price": 380,
           "veg": false,
-          "image": "/assets/menu/imc-chicken-kadai.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -730,12 +827,13 @@
           "description": "Crispy fermented rice-lentil crepe with spiced potato filling, sambar, and chutneys",
           "price": 220,
           "veg": true,
-          "image": "/assets/menu/si-masala-dosa.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "breakfast",
             "vegan"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "si-2",
@@ -743,12 +841,13 @@
           "description": "Steamed rice cakes with lentil stew and coconut chutney",
           "price": 180,
           "veg": true,
-          "image": "/assets/menu/si-idli.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "breakfast",
             "healthy",
             "vegan"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "si-3",
@@ -756,11 +855,12 @@
           "description": "Thick savory pancake topped with onions, tomatoes, chilies, and served with sambar",
           "price": 200,
           "veg": true,
-          "image": "/assets/menu/si-uttapam.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "breakfast",
             "vegan"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "si-4",
@@ -768,11 +868,12 @@
           "description": "Spicy Tamil Nadu style chicken with curry leaves, pepper, and coconut",
           "price": 400,
           "veg": false,
-          "image": "/assets/menu/si-chettinad.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "signature"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -784,14 +885,15 @@
         {
           "id": "kebab-1",
           "name": "Galouti Kebab",
-          "description": "Melt-in-mouth minced lamb kebabs with 100+ spices, served with roomali roti",
+          "description": "Melt-in-mouth minced lamb kebabs with warming spices, served with roomali roti",
           "price": 450,
           "veg": false,
-          "image": "/assets/menu/kebab-galouti.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "awadhi"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "kebab-2",
@@ -799,10 +901,11 @@
           "description": "Minced chicken with herbs and spices, grilled on skewers",
           "price": 350,
           "veg": false,
-          "image": "/assets/menu/kebab-seekh.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "kebab-3",
@@ -810,11 +913,12 @@
           "description": "Cottage cheese cubes marinated in yogurt and spices, grilled with vegetables",
           "price": 320,
           "veg": true,
-          "image": "/assets/menu/kebab-paneer.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular",
             "vegetarian"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "kebab-4",
@@ -822,8 +926,9 @@
           "description": "Tender mutton chunks marinated in raw papaya and spices, charcoal grilled",
           "price": 480,
           "veg": false,
-          "image": "/assets/menu/kebab-boti.jpg",
-          "tags": []
+          "image": "assets/meal.svg",
+          "tags": [],
+          "_sample": true
         }
       ]
     },
@@ -838,11 +943,12 @@
           "description": "Chicken marinated in yogurt, Kashmiri chili, and spices, char-grilled to perfection",
           "price": 380,
           "veg": false,
-          "image": "/assets/menu/tandoori-chicken.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "signature",
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "tandoori-2",
@@ -850,10 +956,11 @@
           "description": "Whole fish marinated in coastal spices, grilled with lemon and herbs",
           "price": 550,
           "veg": false,
-          "image": "/assets/menu/tandoori-pomfret.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "seafood"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "tandoori-3",
@@ -861,10 +968,11 @@
           "description": "Button mushrooms in cashew-cream marinade with aromatic spices",
           "price": 300,
           "veg": true,
-          "image": "/assets/menu/tandoori-mushroom.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "vegetarian"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "tandoori-4",
@@ -872,11 +980,12 @@
           "description": "Char-grilled broccoli florets with hung yogurt, cheese, and spices",
           "price": 280,
           "veg": true,
-          "image": "/assets/menu/tandoori-broccoli.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy",
             "new"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -890,11 +999,12 @@
           "name": "Caesar Salad",
           "description": "Romaine, parmesan, croutons, and classic anchovy dressing (add chicken +₹80)",
           "price": 280,
-          "veg": true,
-          "image": "/assets/menu/salad-caesar.jpg",
+          "veg": false,
+          "image": "assets/meal.svg",
           "tags": [
             "classic"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "salad-2",
@@ -902,11 +1012,12 @@
           "description": "Cucumber, tomatoes, olives, feta, red onion, oregano, and olive oil",
           "price": 300,
           "veg": true,
-          "image": "/assets/menu/salad-greek.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy",
             "mediterranean"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "salad-3",
@@ -914,12 +1025,13 @@
           "description": "Quinoa, avocado, pomegranate, nuts, seeds, and lemon-tahini dressing",
           "price": 350,
           "veg": true,
-          "image": "/assets/menu/salad-quinoa.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "healthy",
             "vegan",
             "superfood"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "salad-4",
@@ -927,11 +1039,12 @@
           "description": "Traditional Indian salad with cucumber, tomato, onion, chilies, and lemon",
           "price": 150,
           "veg": true,
-          "image": "/assets/menu/salad-kachumber.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "traditional",
             "vegan"
-          ]
+          ],
+          "_sample": true
         }
       ]
     },
@@ -946,11 +1059,12 @@
           "description": "Slow-roasted tomatoes, fresh basil, cream, served with garlic croutons",
           "price": 200,
           "veg": true,
-          "image": "/assets/menu/soup-tomato.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "classic",
             "comfort"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "soup-2",
@@ -958,22 +1072,24 @@
           "description": "Creamy corn soup with vegetables (add chicken +₹50)",
           "price": 180,
           "veg": true,
-          "image": "/assets/menu/soup-corn.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "popular"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "soup-3",
           "name": "Hot & Sour Soup",
           "description": "Spicy tangy broth with vegetables, tofu, mushrooms, and egg ribbons",
           "price": 200,
-          "veg": true,
-          "image": "/assets/menu/soup-hot-sour.jpg",
+          "veg": false,
+          "image": "assets/meal.svg",
           "tags": [
             "spicy",
             "chinese"
-          ]
+          ],
+          "_sample": true
         },
         {
           "id": "soup-4",
@@ -981,11 +1097,12 @@
           "description": "Traditional slow-cooked mutton broth with aromatic spices and lemon",
           "price": 250,
           "veg": false,
-          "image": "/assets/menu/soup-mutton.jpg",
+          "image": "assets/meal.svg",
           "tags": [
             "traditional",
             "healthy"
-          ]
+          ],
+          "_sample": true
         }
       ]
     }

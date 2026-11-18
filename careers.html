@@ -8,30 +8,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/css/base.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <link rel="stylesheet" href="/css/pages.css">
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/refinements.css">
+  <script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  window.supabase = createClient(
+    'https://dqzmyahsedhvgbfqprks.supabase.co',
+    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
+  );
+</script>
+
 </head>
 <body class="careers-page">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <div id="header-placeholder"></div>
+  <div id="header-placeholder"></div><noscript><p class="demo-notice">Enable JavaScript to browse the menu and try the demo forms.</p></noscript>
 
   <main id="main-content" role="main">
     <section class="careers-hero" aria-labelledby="careers-hero-title">
       <div class="container">
         <h1 id="careers-hero-title" class="careers-hero__title">Join Our Team</h1>
-        <p class="careers-hero__subtitle">We're looking for passionate people who love great food and exceptional service. Come grow with us at Café De Leila.</p>
-        <div class="careers-hero__benefits" role="list" aria-label="Employee benefits">
-          <span class="benefit-tag" role="listitem">Competitive Pay</span>
-          <span class="benefit-tag" role="listitem">Flexible Shifts</span>
-          <span class="benefit-tag" role="listitem">Staff Meals</span>
-          <span class="benefit-tag" role="listitem">Growth Opportunities</span>
-          <span class="benefit-tag" role="listitem">Friendly Culture</span>
-          <span class="benefit-tag" role="listitem">Training Provided</span>
-        </div>
+        <p class="careers-hero__subtitle">Interested in working with the café? Explore the application preview below.</p>
+        <p class="demo-notice">Demo application. Roles are examples, not confirmed vacancies. Your CV is checked on this device and is not uploaded.</p>
       </div>
     </section>
 
@@ -89,8 +91,8 @@
           </div>
 
           <div class="booking-form__actions">
-            <button type="button" class="btn btn--secondary" onclick="window.history.back()">Cancel</button>
-            <button type="submit" class="btn btn--primary btn--lg">Submit Application</button>
+            <button type="button" class="btn btn--secondary" onclick="window.location.href='index.html'">Cancel</button>
+            <button type="submit" class="btn btn--primary btn--lg">Preview Application</button>
           </div>
         </form>
       </div>
@@ -98,6 +100,7 @@
   </main>
 
   <div id="footer-placeholder"></div>
-  <script src="/js/main.js"></script>
+  <script src="js/support.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

@@ -8,37 +8,39 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/css/base.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <link rel="stylesheet" href="/css/pages.css">
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/refinements.css">
+  <script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  window.supabase = createClient(
+    'https://dqzmyahsedhvgbfqprks.supabase.co',
+    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
+  );
+</script>
+
 </head>
 <body class="home-page">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <div id="header-placeholder"></div>
+  <div id="header-placeholder"></div><noscript><p class="demo-notice">Enable JavaScript to browse the menu and try the demo forms.</p></noscript>
 
   <main id="main-content" role="main">
     <!-- HERO SECTION -->
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero__content container">
-        <span class="hero__badge">Est. 2023 • Gomti Nagar, Lucknow</span>
-        <h1 id="hero-title" class="hero__title">Eat the Food You Love</h1>
-        <p class="hero__subtitle">Experience culinary magic at Café De Leila. Authentic Indian, Continental & Chinese cuisine crafted with passion and the finest ingredients.</p>
+        <span class="hero__badge">CAFÉ DE LEILA · MAGICAL DELIGHT</span>
+        <h1 id="hero-title" class="hero__title">Good food.<br>A little magic.</h1>
+        <p class="hero__subtitle">Indian favourites, comforting pasta and something sweet. Make room for a leisurely meal in Gomti Nagar.</p>
         <div class="hero__actions">
-          <a href="/menu.html" class="btn btn--primary btn--lg">Order Now</a>
-          <a href="/book-table.html" class="btn btn--secondary btn--lg">Book a Table</a>
+          <a href="menu.html" class="btn btn--primary btn--lg">Order Now</a>
+          <a href="book-table.html" class="btn btn--secondary btn--lg">Book a Table</a>
         </div>
         <div class="hero__image">
-          <div class="hero__image-placeholder">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-            <span>Hero Image Placeholder</span>
-          </div>
+          <img src="assets/meal.svg" width="640" height="480" alt="Decorative illustration of a meal and a cup, not a café photograph">
         </div>
       </div>
     </section>
@@ -48,13 +50,13 @@
       <div class="container">
         <header class="section-header">
           <h2 id="featured-title" class="section-header__title">Featured Dishes</h2>
-          <p class="section-header__subtitle">Our most loved creations, handpicked for you</p>
+          <p class="section-header__subtitle">A taste of the sample menu. Illustrations and prices are for this demo.</p>
         </header>
         <div class="featured__grid" id="featured-grid" role="list">
           <!-- Populated by home.js from menu.json -->
         </div>
         <div class="text-center" style="margin-top: var(--space-xl);">
-          <a href="/menu.html" class="btn btn--secondary btn--lg">View Full Menu</a>
+          <a href="menu.html" class="btn btn--secondary btn--lg">View Full Menu</a>
         </div>
       </div>
     </section>
@@ -64,7 +66,7 @@
       <div class="container">
         <header class="section-header">
           <h2 id="how-title" class="section-header__title">How Ordering Works</h2>
-          <p class="section-header__subtitle">Simple steps to delicious food at your doorstep</p>
+          <p class="section-header__subtitle">Try the ordering flow before the café goes live.</p>
         </header>
         <div class="steps">
           <article class="step">
@@ -80,7 +82,7 @@
           <article class="step">
             <div class="step__number" aria-hidden="true">3</div>
             <h3 class="step__title">Enjoy</h3>
-            <p class="step__description">Receive order confirmation via WhatsApp. Track your order and enjoy your meal!</p>
+            <p class="step__description">Review your sample order, then open a message draft. The café must confirm availability and accept your request.</p>
           </article>
         </div>
       </div>
@@ -92,19 +94,11 @@
         <div class="about__grid">
           <div class="about__content">
             <h2 id="about-title" class="about__title">Our Story</h2>
-            <p class="about__text">Founded in 2023, Café De Leila was born from a simple belief: great food brings people together. Nestled in the heart of Gomti Nagar, Lucknow, we've been serving authentic flavors with a touch of magic ever since.</p>
-            <p class="about__text">Our chefs blend traditional recipes with contemporary techniques, using only the freshest ingredients sourced locally. From our signature Butter Chicken to handcrafted pizzas and South Indian classics, every dish tells a story.</p>
-            <p class="about__text">Whether you're here for a quick lunch, a family dinner, or a special celebration, we promise an experience that delights all your senses.</p>
-            <a href="/contact.html" class="btn btn--primary">Visit Us</a>
+            <p class="about__text">A café in Gomti Nagar for long conversations and shared plates. Explore Indian, Continental and Chinese dishes, with vegetarian and non-vegetarian choices.</p><p class="about__text">No alcohol. Parking available. Come for a catch-up, a family meal or a quiet break in your day.</p><p class="about__text">This website is a proposal. The menu and illustrations are samples awaiting the owner's approval.</p>
+            <a href="contact.html" class="btn btn--primary">Visit Us</a>
           </div>
           <div class="about__image">
-            <div class="about__image-placeholder">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-              <span>About Image Placeholder</span>
-            </div>
+            <img src="assets/meal.svg" loading="lazy" width="640" height="480" alt="Decorative table illustration">
           </div>
         </div>
       </div>
@@ -115,7 +109,7 @@
       <div class="container">
         <header class="section-header">
           <h2 id="hours-title" class="section-header__title">Opening Hours</h2>
-          <p class="section-header__subtitle">We're here when you need us</p>
+          <p class="section-header__subtitle">Please confirm hours before planning your visit.</p>
         </header>
         <div class="opening-hours__grid" id="hours-grid">
           <!-- Populated by home.js from config.json -->
@@ -128,7 +122,7 @@
       <div class="container">
         <header class="section-header">
           <h2 id="reviews-title" class="section-header__title">What Our Guests Say</h2>
-          <p class="section-header__subtitle">Real experiences from our valued customers</p>
+          <p class="section-header__subtitle">Sample reviews for layout preview. These are fictional, not customer testimonials.</p>
         </header>
         <div class="reviews__slider" id="reviews-slider" role="list">
           <!-- Populated by home.js with sample data -->
@@ -143,8 +137,8 @@
           <h2 id="cta-title" class="cta-band__title">Ready for a Magical Meal?</h2>
           <p class="cta-band__text">Order online for delivery or pickup, or book a table for a memorable dining experience.</p>
           <div class="cta-band__actions">
-            <a href="/menu.html" class="btn btn--primary btn--lg">Order Now</a>
-            <a href="/book-table.html" class="btn btn--secondary btn--lg">Book a Table</a>
+            <a href="menu.html" class="btn btn--primary btn--lg">Order Now</a>
+            <a href="book-table.html" class="btn btn--secondary btn--lg">Book a Table</a>
           </div>
         </div>
       </div>
@@ -153,6 +147,7 @@
 
   <div id="footer-placeholder"></div>
 
-    <script src="/js/main.js"></script>
+    <script src="js/support.js"></script>
+  <script src="js/main.js"></script>
   </body>
   </html>

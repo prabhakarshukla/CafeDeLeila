@@ -4,8 +4,8 @@
  * ES Module - imports from utils.js and uses window.cafeState
  */
 
-import { 
-  $, $$, formatDate, formatTime, formatPrice, escapeHtml 
+import {
+  $, $$, formatDate, formatTime, formatPrice, escapeHtml
 } from '/js/utils.js';
 
 // ========================================
@@ -15,7 +15,7 @@ import {
 export function initHomePage() {
   const state = window.cafeState;
   if (!state) return;
-  
+
   populateFeaturedDishes(state);
   populateOpeningHours(state);
   populateReviews();
@@ -24,7 +24,7 @@ export function initHomePage() {
 function populateFeaturedDishes(state) {
   const grid = $('#featured-grid');
   if (!grid || !state.menu) return;
-  
+
   const featured = [];
   state.menu.forEach(cat => {
     cat.items.forEach(item => {
@@ -33,7 +33,7 @@ function populateFeaturedDishes(state) {
       }
     });
   });
-  
+
   grid.innerHTML = featured.map(item => `
     <article class="dish-card" role="listitem">
       <div class="dish-card__image">
@@ -51,8 +51,8 @@ function populateFeaturedDishes(state) {
         </div>
         <p class="dish-card__description">${escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
-          <button class="dish-card__add" 
-                  data-id="${item.id}" 
+          <button class="dish-card__add"
+                  data-id="${item.id}"
                   data-name="${escapeHtml(item.name)}"
                   data-price="${item.price}"
                   data-veg="${item.veg}"
@@ -70,7 +70,7 @@ function populateFeaturedDishes(state) {
 function populateOpeningHours(state) {
   const hoursGrid = $('#hours-grid');
   if (!hoursGrid || !state.config?.hours?.schedule) return;
-  
+
   const icons = {
     'Monday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     'Tuesday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
@@ -80,17 +80,16 @@ function populateOpeningHours(state) {
     'Saturday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
     'Sunday': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
   };
-  
-  const hoursGrid = $('#hours-grid');
-  if (!hoursGrid) return;
-  
+
+
+
   hoursGrid.innerHTML = state.config.hours.schedule.map(h => `
     <div class="hours-card">
       <div class="hours-card__icon" aria-hidden="true">${icons[h.day] || ''}</div>
       <h3 class="hours-card__title">${h.day}</h3>
       <div class="hours-card__times">
-        ${h.closed 
-          ? '<span>Closed</span>' 
+        ${h.closed
+          ? '<span>Closed</span>'
           : `<span>${formatTime(h.open)} - ${formatTime(h.close)}</span>`}
       </div>
     </div>
@@ -131,5 +130,3 @@ if (window.cafeState?.menu) {
 } else {
   window.addEventListener('cafe:ready', initHomePage);
 }
-
-export { initHomePage };

@@ -1,0 +1,35 @@
+{
+  "checks": [
+    "JSON valid; exact 19 categories; 80 unique IDs/descriptions; 3+ per category; sample flags; local images",
+    "All 10 JavaScript files pass node --check",
+    "Six HTML pages: metadata, lang, one h1, skip link, labels, local links and assets",
+    "Unconfirmed hours and WhatsApp safely unset; text palette contrasts >=4.5:1"
+  ],
+  "contrast": [
+    {
+      "fg": "f5f0eb",
+      "bg": "161616",
+      "ratio": 15.98
+    },
+    {
+      "fg": "f5f0eb",
+      "bg": "25211e",
+      "ratio": 14.1
+    },
+    {
+      "fg": "d4b79e",
+      "bg": "25211e",
+      "ratio": 8.42
+    },
+    {
+      "fg": "b28f6f",
+      "bg": "25211e",
+      "ratio": 5.36
+    },
+    {
+      "fg": "161616",
+      "bg": "b28f6f",
+      "ratio": 6.08
+    }
+  ]
+}

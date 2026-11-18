@@ -2,7 +2,7 @@
   "site": {
     "name": "CAFÉ DE LEILA",
     "tagline": "Magical Delight",
-    "description": "Experience culinary magic at Café De Leila - where every dish tells a story of flavor and tradition."
+    "description": "Indian, Continental and Chinese flavours in Gomti Nagar, Lucknow."
   },
   "contact": {
     "phone": "+91 522 458 4372",
@@ -14,42 +14,57 @@
       "city": "Lucknow",
       "state": "Uttar Pradesh",
       "pincode": "226010",
-      "full": "5/34, Vikas Khand, Dayal Chauraha, Gomti Nagar, Lucknow - 226010"
+      "full": "5/34, Vikas Khand, Dayal Chauraha, Gomti Nagar, Lucknow - 226010",
+      "note": "TODO: Confirm address. Old site says Vikas Khand; Maps listing says Dr Akhilesh Das Gupta Marg, Vipul Khand 5/6."
     },
-    "whatsapp": "919876543210",
-    "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3552.123456789!2d80.9913307!3d26.8428444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399be3ff808515df%3A0xd213a276b19fcadc!2sCafe%20De%20Leila!5e0!3m2!1sen!2sin!4v1234567890",
-    "mapLinkUrl": "https://www.google.com/maps/place/Cafe+De+Leila/@26.8428444,80.9913307,18z/data=!3m1!4b1!4m5!3m4!1s0x399be3ff808515df:0xd213a276b19fcadc!8m2!3d26.8428522!4d80.9923693"
+    "whatsapp": "",
+    "mapEmbedUrl": "https://www.google.com/maps?q=Cafe+De+Leila+Gomti+Nagar+Lucknow&output=embed",
+    "mapLinkUrl": "https://www.google.com/maps/search/?api=1&query=Cafe+De+Leila+Gomti+Nagar+Lucknow",
+    "whatsappVerified": false,
+    "whatsappNote": "TODO: Add verified WhatsApp Business number with country code, then set whatsappVerified true."
   },
   "hours": {
-    "note": "TODO: Confirm opening hours - old site and listing sites disagree. Update before launch.",
-    "schedule": [
-      { "day": "Monday", "open": "11:00", "close": "21:00", "closed": false },
-      { "day": "Tuesday", "open": "11:00", "close": "21:00", "closed": false },
-      { "day": "Wednesday", "open": "11:00", "close": "21:00", "closed": false },
-      { "day": "Thursday", "open": "11:00", "close": "21:00", "closed": false },
-      { "day": "Friday", "open": "11:00", "close": "22:00", "closed": false },
-      { "day": "Saturday", "open": "11:00", "close": "22:00", "closed": false },
-      { "day": "Sunday", "open": "11:00", "close": "21:00", "closed": false }
-    ]
+    "verified": false,
+    "note": "TODO: Owner must confirm hours. Old site lists lunch 11am–5pm and dinner 5pm–9pm; a listing says noon–11pm. No schedule is assumed.",
+    "schedule": []
   },
   "social": {
-    "facebook": "https://www.facebook.com/Deleila-Cafe-105264018814172",
-    "instagram": "https://instagram.com/cafedeleila",
-    "youtube": ""
+    "facebook": "",
+    "instagram": "",
+    "youtube": "",
+    "note": "TODO: Owner to confirm social profile URLs before displaying."
   },
   "ordering": {
     "types": [
-      { "id": "dine-in", "label": "Dine In", "description": "Enjoy your meal at our cafe" },
-      { "id": "takeaway", "label": "Takeaway", "description": "Pick up your order" },
-      { "id": "delivery", "label": "Delivery", "description": "Delivered to your door" }
+      {
+        "id": "dine-in",
+        "label": "Dine In",
+        "description": "Enjoy your meal at our cafe"
+      },
+      {
+        "id": "takeaway",
+        "label": "Takeaway",
+        "description": "Pick up your order"
+      },
+      {
+        "id": "delivery",
+        "label": "Delivery",
+        "description": "Delivered to your door"
+      }
     ],
     "defaultType": "dine-in",
-    "minOrderDelivery": 200,
-    "deliveryFee": 40,
-    "taxRate": 0.05
+    "minOrderDelivery": 0,
+    "deliveryFee": 0,
+    "taxRate": 0,
+    "_sample": true,
+    "note": "Sample subtotal only. Taxes, delivery pricing and service area require owner confirmation."
   },
   "careers": {
-    "allowedFileTypes": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+    "allowedFileTypes": [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ],
     "maxFileSizeMB": 2,
     "roles": [
       "Chef",
@@ -58,32 +73,55 @@
       "Server",
       "Host/Hostess",
       "Barista",
-      "Bartender",
       "Manager",
       "Assistant Manager",
       "Dishwasher",
       "Other"
-    ]
+    ],
+    "_sample": true
   },
   "booking": {
     "timeSlots": [
-      "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-      "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-      "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-      "20:00", "20:30", "21:00"
+      "11:00",
+      "11:30",
+      "12:00",
+      "12:30",
+      "13:00",
+      "13:30",
+      "14:00",
+      "14:30",
+      "15:00",
+      "15:30",
+      "16:00",
+      "16:30",
+      "17:00",
+      "17:30",
+      "18:00",
+      "18:30",
+      "19:00",
+      "19:30",
+      "20:00",
+      "20:30",
+      "21:00"
     ],
     "maxGuests": 20,
     "minAdvanceMinutes": 30,
-    "maxAdvanceDays": 60
+    "maxAdvanceDays": 60,
+    "_sample": true,
+    "note": "Sample slots only, not confirmed opening hours or availability."
   },
   "payment": {
     "note": "Phase 2: Integrate real payment gateway (Razorpay/Stripe/PayU). Current implementation uses WhatsApp for order confirmation only.",
-    "methods": ["cash", "upi", "card"]
+    "methods": [
+      "cash",
+      "upi",
+      "card"
+    ]
   },
   "seo": {
     "defaultTitle": "CAFÉ DE LEILA | Magical Delight",
     "defaultDescription": "Experience culinary magic at Café De Leila, Lucknow. Authentic Indian, Continental & Chinese cuisine. Order online, book a table, or visit us at Gomti Nagar.",
-    "ogImage": "/assets/og-image.jpg",
+    "ogImage": "assets/meal.svg",
     "twitterHandle": "@cafedeleila"
   }
 }

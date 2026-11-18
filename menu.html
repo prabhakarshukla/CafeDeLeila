@@ -8,23 +8,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/css/base.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <link rel="stylesheet" href="/css/pages.css">
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/refinements.css">
+  <script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  window.supabase = createClient(
+    'https://dqzmyahsedhvgbfqprks.supabase.co',
+    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
+  );
+</script>
+
 </head>
 <body class="menu-page">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <div id="header-placeholder"></div>
+  <div id="header-placeholder"></div><noscript><p class="demo-notice">Enable JavaScript to browse the menu and try the demo forms.</p></noscript>
 
   <main id="main-content" role="main">
     <section class="menu-page" aria-labelledby="menu-title">
       <div class="container">
         <header style="margin-bottom: var(--space-xl);">
           <h1 id="menu-title" style="font-family: var(--font-heading); font-size: var(--text-4xl); font-weight: 600; margin-bottom: var(--space-xs);">Our Menu</h1>
-          <p style="color: var(--color-text-secondary);">Discover authentic flavors crafted with passion</p>
+          <p style="color: var(--color-text-secondary);">Sample menu and prices. All dish illustrations are placeholders; availability needs café confirmation.</p>
         </header>
 
         <!-- TOOLBAR -->
@@ -34,17 +43,17 @@
             <input type="search" placeholder="Search dishes..." aria-label="Search menu items" autocomplete="off">
           </div>
 
-          <div class="menu-toolbar__filters" role="tablist" aria-label="Dietary filters">
-            <button class="filter-chip is-active" data-filter="all" role="tab" aria-selected="true" aria-controls="menu-grid">All</button>
-            <button class="filter-chip" data-filter="veg" role="tab" aria-selected="false" aria-controls="menu-grid">
+          <div class="menu-toolbar__filters" role="group" aria-label="Dietary filters">
+            <button class="filter-chip is-active" data-filter="all" role="button" aria-pressed="true" aria-controls="menu-grid">All</button>
+            <button class="filter-chip" data-filter="veg" role="button" aria-pressed="false" aria-controls="menu-grid">
               <svg class="badge badge--veg" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg> Veg
             </button>
-            <button class="filter-chip" data-filter="nonveg" role="tab" aria-selected="false" aria-controls="menu-grid">
+            <button class="filter-chip" data-filter="nonveg" role="button" aria-pressed="false" aria-controls="menu-grid">
               <svg class="badge badge--nonveg" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 12c0 2.21-1.79 4-4 4S10 14.21 10 12"/><path d="M18 12l-4 4"/><path d="M14 8l-4 4"/><path d="M10 12l-4-4"/><circle cx="12" cy="12" r="10"/></svg> Non-Veg
             </button>
           </div>
 
-          <div class="menu-toolbar__category-chips" role="tablist" aria-label="Menu categories" id="category-chips">
+          <div class="menu-toolbar__category-chips" role="group" aria-label="Menu categories" id="category-chips">
             <!-- Populated by JS -->
           </div>
         </div>
@@ -59,6 +68,7 @@
 
   <div id="footer-placeholder"></div>
 
-  <script src="/js/main.js"></script>
+  <script src="js/support.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

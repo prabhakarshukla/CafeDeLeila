@@ -36,8 +36,6 @@ coverage/
 
 # Project-specific
 PROJECT_REPORT.md
-AUDIT.md
-CHANGELOG.md
 
 # Supabase
 .supabase/

@@ -8,16 +8,25 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/css/base.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <link rel="stylesheet" href="/css/pages.css">
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/refinements.css">
+  <script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  window.supabase = createClient(
+    'https://dqzmyahsedhvgbfqprks.supabase.co',
+    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
+  );
+</script>
+
 </head>
 <body class="locations-page">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <div id="header-placeholder"></div>
+  <div id="header-placeholder"></div><noscript><p class="demo-notice">Enable JavaScript to browse the menu and try the demo forms.</p></noscript>
 
   <main id="main-content" role="main">
     <section class="locations-hero" aria-labelledby="locations-hero-title">
@@ -27,7 +36,7 @@
       </div>
     </section>
 
-    <section class="locations-grid" aria-labelledby="locations-title">
+    <section class="locations-grid" aria-label="Café location">
       <div class="container">
         <div class="location-card">
           <div class="location-card__map">
@@ -66,27 +75,12 @@
           </div>
         </div>
 
-        <!-- Future locations placeholder -->
-        <div class="location-card" style="opacity: 0.6;">
-          <div class="location-card__map" style="background: linear-gradient(135deg, var(--color-obsidian-lighter), var(--color-obsidian-card)); display: flex; align-items: center; justify-content: center;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <div class="location-card__content">
-            <h2 class="location-card__name">Coming Soon — Hazratganj</h2>
-            <address class="location-card__address" style="font-style: normal;">
-              <span>New location opening 2025</span>
-              <span>Hazratganj, Lucknow</span>
-            </address>
-            <div class="location-card__actions">
-              <button class="btn btn--secondary" disabled>Notify Me</button>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   </main>
 
   <div id="footer-placeholder"></div>
-  <script src="/js/main.js"></script>
+  <script src="js/support.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "index",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "CAFÉ DE LEILA | Magical Delight",
+    "small": []
+  },
+  {
+    "name": "menu",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "Menu | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "book-table",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "Book a Table | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "careers",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "Careers | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "contact",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "Contact Us | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "locations",
+    "width": 360,
+    "scroll": 360,
+    "h1": 1,
+    "title": "Locations | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "index",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "CAFÉ DE LEILA | Magical Delight",
+    "small": []
+  },
+  {
+    "name": "menu",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "Menu | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "book-table",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "Book a Table | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "careers",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "Careers | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "contact",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "Contact Us | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "locations",
+    "width": 768,
+    "scroll": 768,
+    "h1": 1,
+    "title": "Locations | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "index",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "CAFÉ DE LEILA | Magical Delight",
+    "small": []
+  },
+  {
+    "name": "menu",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "Menu | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "book-table",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "Book a Table | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "careers",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "Careers | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "contact",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "Contact Us | CAFÉ DE LEILA",
+    "small": []
+  },
+  {
+    "name": "locations",
+    "width": 1280,
+    "scroll": 1280,
+    "h1": 1,
+    "title": "Locations | CAFÉ DE LEILA",
+    "small": []
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "command": "python -m http.server",
+  "port": 8099,
+  "httpStatus": 200,
+  "python": "C:\\Program Files\\WindowsApps\\OpenAI.CodexPrimaryRuntime.v26-1117-835-0_26.1117.835.0_x64__3k8sg7r9htsxt\\dependencies\\python\\python.exe"
+}
