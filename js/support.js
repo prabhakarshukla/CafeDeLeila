@@ -36,8 +36,8 @@ function populateBusinessDetails() {
   });
   document.querySelectorAll('main address,footer address').forEach(el => {
     const note = document.createElement('p'); note.className = 'address-note';
-    note.textContent = 'Address differs across listings. Please confirm with the café before travelling.';
-    el.after(note);
+    note.textContent = contact.address.note || '';
+    if (note.textContent) el.after(note);
   });
 }
 

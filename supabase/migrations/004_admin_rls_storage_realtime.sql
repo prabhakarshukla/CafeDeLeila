@@ -360,3 +360,15 @@ END $$;
 CREATE OR REPLACE TRIGGER protect_payment_update BEFORE UPDATE OF payment_status ON orders
 FOR EACH ROW WHEN (OLD.payment_status IS DISTINCT FROM NEW.payment_status)
 EXECUTE FUNCTION protect_payment_update();
+
+-- Explicit API grants for projects that do not expose new tables by default.
+GRANT SELECT ON menu_categories, menu_items TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON menu_categories, menu_items TO authenticated;
+GRANT SELECT ON orders, bookings, job_applications, contact_messages TO anon, authenticated;
+GRANT DELETE ON orders, bookings, job_applications, contact_messages TO authenticated;
+REVOKE INSERT ON orders, bookings, job_applications, contact_messages FROM anon, authenticated;
+GRANT SELECT ON order_status_history TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON admin_users, settings TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON menu_categories, menu_items, orders, bookings,
+  job_applications, contact_messages, submission_limits, settings TO service_role;
+GRANT USAGE, SELECT ON order_seq, booking_seq, application_seq TO service_role;

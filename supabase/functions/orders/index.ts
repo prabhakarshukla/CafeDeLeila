@@ -78,7 +78,7 @@ serve(async (req) => {
     }
 
     // Validate required fields
-    if (!body.customer_name || !body.customer_phone || !body.items?.length) {
+    if (typeof body.customer_name !== "string" || !body.customer_name.trim() || typeof body.customer_phone !== "string" || !Array.isArray(body.items) || !body.items.length || body.items.length > 50 || body.items.some((item: any) => !item || !/^[a-f0-9-]{36}$/i.test(item.id))) {
       return new Response(JSON.stringify({ error: "Missing required fields: customer_name, customer_phone, items" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -113,7 +113,7 @@ serve(async (req) => {
 
     // Validate delivery address for delivery orders
     if (orderType === "delivery") {
-      if (!body.delivery_address || typeof body.delivery_address !== "object") {
+      if (typeof body.delivery_address?.full !== "string" || !body.delivery_address.full.trim() || body.delivery_address.full.length > 500) {
         return new Response(JSON.stringify({ error: "Delivery address required for delivery orders" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -125,7 +125,8 @@ serve(async (req) => {
     const itemIds = body.items.map((i: any) => i.id);
     const { data: menuItems, error: menuError } = await supabase
       .from("menu_items")
-      .select("id, name, price_inr, veg, is_available")
+      .select("id, name, price_inr, veg, is_available, category:menu_categories!inner(is_active)")
+      .eq("category.is_active", true)
       .in("id", itemIds);
 
     if (menuError) {
@@ -193,11 +194,11 @@ serve(async (req) => {
     // Get delivery settings
     const { data: deliverySettings } = await supabase
       .from("settings")
-      .select("value")
+      .select("key,value")
       .in("key", ["delivery_enabled", "delivery_fee", "min_order", "tax_percent"]);
 
     const settingsMap = new Map(deliverySettings?.map((s: any) => [s.key, s.value]) || []);
-    const deliveryEnabled = settingsMap.get("delivery_enabled")?.enabled ?? true;
+    const deliveryEnabled = settingsMap.get("delivery_enabled")?.enabled ?? false;
     const deliveryFee = orderType === "delivery" && deliveryEnabled ? (settingsMap.get("delivery_fee")?.amount ?? 0) : 0;
     const minOrder = settingsMap.get("min_order")?.amount ?? 0;
     const taxPercent = settingsMap.get("tax_percent")?.value ?? 0;

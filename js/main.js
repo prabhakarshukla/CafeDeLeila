@@ -486,6 +486,7 @@ async function loadMenu() {
       try {
         const catalog = await publicSupabase('/functions/v1/menu');
         state.menu = catalogFromDatabase(catalog);
+        if (!state.menu.some(category => category.items.length)) throw new Error('Catalog is empty');
         state.onlineCatalog = true;
         return;
       } catch { /* Show the sample catalog without enabling checkout. */ }
@@ -621,9 +622,9 @@ function renderCartDrawer() {
   const taxRate = config?.ordering?.taxRate ?? 0;
 
   const subtotal = getCartSubtotal();
-  const needsDeliveryFee = subtotal < minOrderDelivery;
+  const needsDeliveryFee = false;
   const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-  const tax = subtotal * taxRate;
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + deliveryFeeAmount + tax;
 
   body.innerHTML = window.cafeState.cart.map(item => `
@@ -653,9 +654,9 @@ function renderCartDrawer() {
   `).join('');
 
   footer.innerHTML = `
-    <div class="cart-drawer__row cart-drawer__row--total"><span>Sample subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
+    <div class="cart-drawer__row cart-drawer__row--total"><span>Subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
     <label for="cart-notes">Order notes</label><textarea id="cart-notes" rows="2" placeholder="Preferences or special requests"></textarea>
-    <p class="cart-drawer__note">Demo menu and prices. Nothing is sent or paid here.</p>
+    <p class="cart-drawer__note">Review quantities and notes before checkout.</p>
     <button class="btn btn--primary cart-drawer__checkout">Proceed to Checkout</button>`;
   const notes = drawer.querySelector('#cart-notes');
   notes.value = state.cartNotes || '';
@@ -923,7 +924,7 @@ function renderFooter() {
             <div class="footer-hours">
               ${!config.hours.verified ? '<p>Hours awaiting confirmation. Please call before visiting.</p>' : hours.map(h => `
                 <div class="footer-hours__day">
-                  <span>${h.day}</span>
+                  <span>${utils.escapeHtml(h.day)}</span>
                   <span>${h.closed ? 'Closed' : `${utils.formatTime(h.open)} - ${utils.formatTime(h.close)}`}</span>
                 </div>
               `).join('')}
@@ -1001,7 +1002,7 @@ function populateOpeningHours(state) {
   hoursGrid.innerHTML = state.config.hours.schedule.map(h => `
     <div class="hours-card">
       <div class="hours-card__icon" aria-hidden="true">${icons[h.day] || ''}</div>
-      <h3 class="hours-card__title">${h.day}</h3>
+      <h3 class="hours-card__title">${utils.escapeHtml(h.day)}</h3>
       <div class="hours-card__times">
         ${h.closed
           ? '<span>Closed</span>'
@@ -1289,9 +1290,9 @@ function openCheckout() {
   const deliveryFee = config?.ordering?.deliveryFee ?? 0;
   const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
   const taxRate = config?.ordering?.taxRate ?? 0;
-  const needsDeliveryFee = subtotal < minOrderDelivery;
+  const needsDeliveryFee = false;
   const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-  const tax = subtotal * taxRate;
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + deliveryFeeAmount + tax;
 
   const modalHtml = utils.createEl('div', { class: 'modal-overlay checkout-modal', id: 'checkout-modal' },
@@ -1383,9 +1384,9 @@ function openCheckout() {
     const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
     const taxRate = config?.ordering?.taxRate ?? 0;
     const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in';
-    const needsDeliveryFee = activeType === 'delivery' && subtotal < minOrderDelivery;
+    const needsDeliveryFee = activeType === 'delivery';
     const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-    const tax = subtotal * taxRate;
+    const tax = Math.round(subtotal * taxRate);
     const total = subtotal + deliveryFeeAmount + tax;
     totalEl.textContent = utils.formatPrice(total);
   }
@@ -1405,7 +1406,7 @@ function openCheckout() {
   });
 
   selectOrderType('dine-in');
-  form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'Demo checkout. Sample prices; no payment or café acceptance.'));
+  form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'The café will review your order request. Payment is arranged separately.'));
   utils.on(form, 'submit', async (e) => {
     e.preventDefault();
     if (!validateCheckoutForm(form)) return;
@@ -1440,7 +1441,7 @@ function openCheckout() {
     const config = window.CAFE_CONFIG;
     const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
     const deliveryFee = config?.ordering?.deliveryFee ?? 0;
-    const needsDeliveryFee = order.type === 'delivery' && order.subtotal < minOrderDelivery;
+    const needsDeliveryFee = order.type === 'delivery';
     order.deliveryFee = needsDeliveryFee ? deliveryFee : 0;
     order.total = order.subtotal + order.deliveryFee + order.tax;
 
@@ -1658,8 +1659,8 @@ function loadBookingConfig() {
   const today = new Date();
   bookingState.availableDates = [];
   for (let i = 0; i <= bookingState.maxAdvanceDays; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
+    const date = new Date(indiaDate(today) + 'T12:00:00+05:30');
+    date.setUTCDate(date.getUTCDate() + i);
     bookingState.availableDates.push({
       value: indiaDate(date),
       label: formatDate(date, { weekday: 'short', month: 'short' }),
@@ -2409,7 +2410,7 @@ function showContactConfirmation(contact) {
         createEl('div', { class: 'booking-success__icon' },
           createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message preview ready'),
+        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message received'),
         createEl('p', {}, `Your message was received.`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },

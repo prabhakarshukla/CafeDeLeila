@@ -5,7 +5,7 @@
 -- ============================================
 
 -- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- gen_random_uuid() is built into supported PostgreSQL versions.
 
 -- ============================================
 -- SEQUENCES FOR SAFE NUMBER GENERATION

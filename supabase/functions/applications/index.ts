@@ -42,7 +42,7 @@ function validateCvFile(contentType: string, size: number): { valid: boolean; er
   if (!ALLOWED_CV_TYPES.includes(contentType)) {
     return { valid: false, error: "Invalid file type. Allowed: PDF, DOC, DOCX" };
   }
-  if (size > MAX_CV_SIZE) {
+  if (!Number.isInteger(size) || size < 1 || size > MAX_CV_SIZE) {
     return { valid: false, error: "File size exceeds 2 MB limit" };
   }
   return { valid: true };
@@ -77,7 +77,7 @@ serve(async (req) => {
     }
 
     const { fileName, contentType, fileSize } = body;
-    if (!fileName || !contentType || typeof fileSize !== "number") {
+    if (typeof fileName !== "string" || fileName.length > 160 || !/\.(pdf|docx?)$/i.test(fileName) || !contentType || typeof fileSize !== "number") {
       return new Response(JSON.stringify({ error: "Missing fileName, contentType, or fileSize" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -150,6 +150,11 @@ serve(async (req) => {
     const address = body.address ? body.address.slice(0, 500).replace(/[<>]/g, "") : null;
     const cvPath = body.cv_path ? body.cv_path.slice(0, 500).replace(/[<>]/g, "") : null;
 
+    if (!cvPath || !/^cvs\/[0-9a-f-]{36}-[\w.-]+$/i.test(cvPath)) {
+      return new Response(JSON.stringify({error:"A valid CV upload is required"}), {status:400, headers:corsHeaders});
+    }
+    const cv = await supabase.storage.from("cv-uploads").info(cvPath);
+    if (cv.error) return new Response(JSON.stringify({error:"Upload a CV first"}), {status:400, headers:corsHeaders});
     // Insert application (trigger will generate application_number)
     const { data, error } = await supabase
       .from("job_applications")
@@ -180,20 +185,3 @@ serve(async (req) => {
 
   return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 });
-
-function validateCvFile(contentType: string, size: number): { valid: boolean; error?: string } {
-  const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-  const maxSize = 2 * 1024 * 1024; // 2 MB
-
-  if (!allowedTypes.includes(contentType)) {
-    return { valid: false, error: "Invalid file type. Allowed: PDF, DOC, DOCX" };
-  }
-  if (size > maxSize) {
-    return { valid: false, error: "File size exceeds 2 MB limit" };
-  }
-  return { valid: true };
-}

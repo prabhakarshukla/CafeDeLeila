@@ -99,7 +99,3 @@ serve(async (req) => {
 
   return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 });
-
-function sanitizeText(text: string, maxLen: number): string {
-  return text.slice(0, maxLen).replace(/[<>]/g, "");
-}

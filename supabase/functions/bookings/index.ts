@@ -36,10 +36,8 @@ function sanitizeText(text: string, maxLen: number): string {
 }
 
 function validateDateNotPast(dateStr: string): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const inputDate = new Date(dateStr + "T00:00:00");
-  return inputDate >= today;
+  const today = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata'}).format(new Date());
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && dateStr >= today;
 }
 
 serve(async (req) => {
@@ -179,10 +177,3 @@ serve(async (req) => {
 
   return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 });
-
-function validateDateNotPast(dateStr: string): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const inputDate = new Date(dateStr + "T00:00:00");
-  return inputDate >= today;
-}
