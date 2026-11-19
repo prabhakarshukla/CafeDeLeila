@@ -1416,7 +1416,11 @@ function openCheckout() {
   form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'The café will review your order request. Payment is arranged separately.'));
   utils.on(form, 'submit', async (e) => {
     e.preventDefault();
-    if (!validateCheckoutForm(form)) return;
+    form.querySelector('.submission-error')?.remove();
+    if (!validateCheckoutForm(form)) {
+      showFormFailure(form, 'Please check the highlighted order fields.');
+      return;
+    }
 
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
@@ -1461,6 +1465,10 @@ function openCheckout() {
         notes: order.notes,
         delivery_address: order.address ? {full: order.address} : null,
       });
+      if (!result?.order_number || !Array.isArray(result.items) || !Number.isFinite(result.total_inr)) {
+        throw new Error('Invalid order response');
+      }
+      const items = result.items.map(item => ({...item, price: item.price_inr}));
       clearCart();
       closeCheckout();
       state.cartNotes = '';
@@ -1468,12 +1476,12 @@ function openCheckout() {
       showOrderConfirmation({
         ...result, id: result.order_number, subtotal: result.subtotal_inr,
         deliveryFee: result.delivery_fee_inr, tax: result.tax_inr, total: result.total_inr,
-        items: result.items.map(item => ({...item, price: item.price_inr})),
+        items,
       });
-    } catch (error) {
-      utils.showToast(error.message, 'error');
+    } catch {
+      showFormFailure(form, 'We could not confirm your order. Please check with us before resubmitting.');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit order request';
+      submitBtn.textContent = 'Place Order';
     }
   });
 }
@@ -1811,6 +1819,7 @@ function bookingGetFieldLabel(input) {
 async function bookingHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -1834,6 +1843,7 @@ async function bookingHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -1865,8 +1875,8 @@ async function bookingHandleSubmit(e) {
     } else {
       throw new Error(result.error || 'Booking failed');
     }
-  } catch (e) {
-    utils.showToast('Booking failed: ' + e.message, 'error');
+  } catch {
+    showFormFailure(form, 'We could not confirm your booking request.');
     return;
   }
 
@@ -2169,6 +2179,7 @@ function careersGetFieldLabel(input) {
 async function careersHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -2186,6 +2197,7 @@ async function careersHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -2217,6 +2229,8 @@ async function careersHandleSubmit(e) {
         fileSize: careersState.selectedFile.size
       });
       
+      if (typeof signedUrl !== 'string' || typeof path !== 'string' || !path) throw new Error('Invalid upload response');
+
       // Upload file directly to Supabase Storage
       const upload = await fetch(signedUrl, {
         method: 'PUT',
@@ -2237,8 +2251,8 @@ async function careersHandleSubmit(e) {
     } else {
       throw new Error(result.error || 'Application failed');
     }
-  } catch (e) {
-    utils.showToast('Application failed: ' + e.message, 'error');
+  } catch {
+    showFormFailure(form, 'We could not submit your application.');
     return;
   }
 
@@ -2371,6 +2385,7 @@ function contactGetFieldLabel(input) {
 async function contactHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -2384,6 +2399,7 @@ async function contactHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -2401,9 +2417,10 @@ async function contactHandleSubmit(e) {
   };
 
   try {
-    await utils.apiRequest('contact', {...contact.customer, subject: contact.subject, message: contact.message});
-  } catch (error) {
-    utils.showToast(error.message, 'error');
+    const result = await utils.apiRequest('contact', {...contact.customer, subject: contact.subject, message: contact.message});
+    if (result?.received !== true) throw new Error('Invalid contact response');
+  } catch {
+    showFormFailure(form, 'We could not send your message.');
     return;
   }
   showContactConfirmation(contact);

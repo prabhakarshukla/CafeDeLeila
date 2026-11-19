@@ -69,6 +69,8 @@ section.menu-page { padding-top: 40px; }
 .booking-form__actions .btn { white-space: normal; padding: 14px 18px; }
 label,.form-error,.cart-item__name,.cart-item__price,.footer-brand__description,.footer-links a,.footer-contact__item,.footer-hours__day,.footer-bottom__copyright { font-size: 16px; }
 .form-error { color: var(--color-text-primary); }
+.submission-error { margin: 12px 0; color: var(--color-text-primary); }
+.submission-error a { color: inherit; text-decoration: underline; }
 .has-error { border-left: 3px solid var(--color-sand); padding-left: 12px; }
 .careers-form__file-input { position: static; opacity: 1; }
 .careers-form__file-label { margin-top: 8px; padding: 24px; }

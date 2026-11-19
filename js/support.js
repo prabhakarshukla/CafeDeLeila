@@ -106,13 +106,33 @@ function installDialogAccessibility() {
 async function publicSupabase(path, options = {}) {
   const {url, publishableKey} = window.CAFE_CONFIG?.supabase || {};
   if (!url || !publishableKey) throw new Error('Online requests are unavailable in this preview.');
-  const response = await fetch(url.replace(/\/$/, '') + path, {
-    ...options,
-    headers: {apikey: publishableKey, 'Content-Type': 'application/json', ...options.headers},
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || data.message || 'Request failed.');
-  return data;
+  try {
+    const response = await fetch(url.replace(/\/$/, '') + path, {
+      ...options,
+      headers: {apikey: publishableKey, 'Content-Type': 'application/json', ...options.headers},
+    });
+    if (response.ok) return await response.json();
+  } catch {
+    // The caller supplies the customer-facing failure message.
+  }
+  throw new Error('Online request failed.');
+}
+
+function showFormFailure(form, message) {
+  const contact = window.CAFE_CONFIG?.contact;
+  const text = document.createElement('p');
+  text.className = 'submission-error';
+  text.setAttribute('role', 'alert');
+  text.textContent = message;
+  if (contact?.phone && /^\d+$/.test(contact.phoneRaw)) {
+    const phone = document.createElement('a');
+    phone.href = 'tel:+' + contact.phoneRaw;
+    phone.textContent = contact.phone;
+    text.append(' Please call the café at ', phone, '.');
+  }
+  form.querySelector('.submission-error')?.remove();
+  const submit = form.querySelector('[type="submit"]');
+  (submit?.parentElement || form).append(text);
 }
 
 async function loadPublicSettings(config) {
