@@ -47,4 +47,5 @@ assets/og-image.jpg
 
 # Cache
 .cache/
-*.cache
+*.cachesupabase/.temp/
+supabase/legacy/local-drafts/

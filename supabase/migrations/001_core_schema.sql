@@ -20,8 +20,8 @@ CREATE SEQUENCE IF NOT EXISTS application_seq;
 -- ============================================
 
 -- Menu categories
-CREATE TABLE menu_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS menu_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   description TEXT,
@@ -31,8 +31,8 @@ CREATE TABLE menu_categories (
 );
 
 -- Menu items
-CREATE TABLE menu_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS menu_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES menu_categories(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
@@ -47,8 +47,8 @@ CREATE TABLE menu_items (
 );
 
 -- Orders
-CREATE TABLE orders (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number TEXT UNIQUE NOT NULL,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -71,8 +71,8 @@ CREATE TABLE orders (
 );
 
 -- Bookings
-CREATE TABLE bookings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   booking_number TEXT UNIQUE NOT NULL,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -88,8 +88,8 @@ CREATE TABLE bookings (
 );
 
 -- Job Applications
-CREATE TABLE job_applications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS job_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   application_number TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -103,8 +103,8 @@ CREATE TABLE job_applications (
 );
 
 -- Contact Messages
-CREATE TABLE contact_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT,
@@ -126,9 +126,11 @@ ALTER TABLE job_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
 -- Public read access for menu (active items only)
+DROP POLICY IF EXISTS "Public read menu categories" ON menu_categories;
 CREATE POLICY "Public read menu categories" ON menu_categories 
   FOR SELECT USING (is_active = true);
 
+DROP POLICY IF EXISTS "Public read menu items" ON menu_items;
 CREATE POLICY "Public read menu items" ON menu_items 
   FOR SELECT USING (is_available = true);
 
@@ -138,18 +140,18 @@ CREATE POLICY "Public read menu items" ON menu_items
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
-CREATE INDEX idx_menu_items_category ON menu_items(category_id);
-CREATE INDEX idx_menu_items_available ON menu_items(is_available);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_created ON orders(created_at DESC);
-CREATE INDEX idx_orders_customer_phone ON orders(customer_phone);
-CREATE INDEX idx_bookings_date ON bookings(booking_date);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_bookings_customer_phone ON bookings(customer_phone);
-CREATE INDEX idx_applications_status ON job_applications(status);
-CREATE INDEX idx_applications_created ON job_applications(created_at DESC);
-CREATE INDEX idx_contact_status ON contact_messages(status);
-CREATE INDEX idx_contact_created ON contact_messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_menu_items_available ON menu_items(is_available);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders(customer_phone);
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_customer_phone ON bookings(customer_phone);
+CREATE INDEX IF NOT EXISTS idx_applications_status ON job_applications(status);
+CREATE INDEX IF NOT EXISTS idx_applications_created ON job_applications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contact_status ON contact_messages(status);
+CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages(created_at DESC);
 
 -- ============================================
 -- SEQUENCES FOR SAFE NUMBER GENERATION
@@ -177,7 +179,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_generate_order_number
+CREATE OR REPLACE TRIGGER trigger_generate_order_number
   BEFORE INSERT ON orders
   FOR EACH ROW EXECUTE FUNCTION generate_order_number();
 
@@ -194,7 +196,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_generate_booking_number
+CREATE OR REPLACE TRIGGER trigger_generate_booking_number
   BEFORE INSERT ON bookings
   FOR EACH ROW EXECUTE FUNCTION generate_booking_number();
 
@@ -211,7 +213,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_generate_application_number
+CREATE OR REPLACE TRIGGER trigger_generate_application_number
   BEFORE INSERT ON job_applications
   FOR EACH ROW EXECUTE FUNCTION generate_application_number();
 
@@ -224,19 +226,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_menu_items_updated_at
+CREATE OR REPLACE TRIGGER update_menu_items_updated_at
   BEFORE UPDATE ON menu_items
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_orders_updated_at
+CREATE OR REPLACE TRIGGER update_orders_updated_at
   BEFORE UPDATE ON orders
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_bookings_updated_at
+CREATE OR REPLACE TRIGGER update_bookings_updated_at
   BEFORE UPDATE ON bookings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_applications_updated_at
+CREATE OR REPLACE TRIGGER update_applications_updated_at
   BEFORE UPDATE ON job_applications
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -262,7 +264,8 @@ INSERT INTO menu_categories (name, slug, description, display_order) VALUES
   ('Indian Kebabs', 'indian-kebabs', 'Tandoor-grilled delicacies marinated in aromatic spices', 15),
   ('Tandoori Appetizers', 'tandoori-appetizers', 'Charcoal-grilled starters from the clay oven', 16),
   ('Salads', 'salads', 'Fresh, crisp, and nutritious', 17),
-  ('Soups', 'soups', 'Warming bowls of comfort', 18);
+  ('Soups', 'soups', 'Warming bowls of comfort', 18)
+ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================
 -- VERIFICATION QUERIES

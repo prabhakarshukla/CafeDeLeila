@@ -8,7 +8,7 @@
 -- ADMIN USERS TABLE
 -- ============================================
 
-CREATE TABLE admin_users (
+CREATE TABLE IF NOT EXISTS admin_users (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('owner', 'staff')),
   display_name TEXT,
@@ -20,6 +20,7 @@ CREATE TABLE admin_users (
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Admin users can read admin_users (for checking their own role)
+DROP POLICY IF EXISTS "Admin users can read themselves" ON admin_users;
 CREATE POLICY "Admin users can read themselves" ON admin_users
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -67,7 +68,7 @@ $$;
 -- SETTINGS TABLE
 -- ============================================
 
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL,
   updated_by UUID REFERENCES auth.users(id),
@@ -79,6 +80,7 @@ ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
 -- Public can read whitelisted settings via public_settings view (see below)
 -- Only owners can write settings
+DROP POLICY IF EXISTS "Owners can manage settings" ON settings;
 CREATE POLICY "Owners can manage settings" ON settings
   FOR ALL USING (is_owner());
 
@@ -86,7 +88,7 @@ CREATE POLICY "Owners can manage settings" ON settings
 -- PUBLIC SETTINGS VIEW (whitelisted keys only)
 -- ============================================
 
-CREATE VIEW public_settings AS
+CREATE OR REPLACE VIEW public_settings AS
 SELECT key, value
 FROM settings
 WHERE key IN (

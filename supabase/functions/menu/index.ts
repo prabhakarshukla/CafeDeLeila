@@ -1,12 +1,7 @@
+import { cors, readJson, visitorKey } from "../_shared/http.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://cafedeleila.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-};
 
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
 
@@ -29,6 +24,10 @@ function sanitizeText(text: string, maxLen: number): string {
 }
 
 serve(async (req) => {
+  const corsHeaders = Object.fromEntries(cors(req, "GET"));
+  if (req.headers.has("origin") && !corsHeaders["access-control-allow-origin"]) return new Response(null, {status: 403, headers: corsHeaders});
+  if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: corsHeaders});
+  if (req.method !== "GET") return new Response(null, {status: 405, headers: corsHeaders});
   // Rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
@@ -43,13 +42,11 @@ serve(async (req) => {
   } else if (entry.count >= 60) { // 60 req/min for menu
     return new Response(JSON.stringify({ error: "Too many requests. Please slow down." }), {
       status: 429,
-      headers: { "Access-Control-Allow-Origin": "https://cafedeleila.com", "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } else {
     entry.count++;
   }
-
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -71,9 +68,10 @@ serve(async (req) => {
       .from("menu_items")
       .select(`
         *,
-        category:menu_categories!inner(name, slug)
+        category:menu_categories!inner(name, slug, is_active)
       `)
       .eq("is_available", true)
+      .eq("category.is_active", true)
       .order("display_order");
 
     if (sanitizedCategory) query = query.eq("category.slug", sanitizedCategory);

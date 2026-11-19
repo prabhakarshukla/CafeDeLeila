@@ -271,7 +271,7 @@ const utils = (function() {
       lines.push(`*Delivery Fee:* ${formatPrice(order.deliveryFee)}`);
     }
     if (order.tax > 0) {
-      lines.push(`*Tax (${(order.taxRate * 100).toFixed(0)}%):* ${formatPrice(order.tax)}`);
+      lines.push(`*Tax:* ${formatPrice(order.tax)}`);
     }
     lines.push(`*Total:* ${formatPrice(order.total)}`);
 
@@ -291,11 +291,7 @@ const utils = (function() {
 
   // API REQUEST UTILITY
   async function apiRequest(functionName, body) {
-    const { supabase } = window;
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.functions.invoke(functionName, { body });
-    if (error) throw new Error(error.message);
-    return data;
+    return publicSupabase('/functions/v1/' + functionName, {method: 'POST', body: JSON.stringify(body)});
   }
 
   // LAZY LOADING
@@ -477,6 +473,7 @@ async function loadConfig() {
     if (!response.ok) throw new Error('Failed to load config');
     state.config = await response.json();
     applyConfigToPage();
+    try { await loadPublicSettings(state.config); } catch { /* Keep local defaults if settings are unavailable. */ }
   } catch (error) {
     console.error('Config load failed:', error);
     utils.showToast('Failed to load configuration', 'error');
@@ -485,6 +482,14 @@ async function loadConfig() {
 
 async function loadMenu() {
     try {
+    if (state.config?.supabase?.url) {
+      try {
+        const catalog = await publicSupabase('/functions/v1/menu');
+        state.menu = catalogFromDatabase(catalog);
+        state.onlineCatalog = true;
+        return;
+      } catch { /* Show the sample catalog without enabling checkout. */ }
+    }
     const response = await fetch('data/menu.json');
     if (!response.ok) throw new Error('Failed to load menu');
     const data = await response.json();
@@ -893,21 +898,21 @@ function renderFooter() {
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 <div>
                   <div class="footer-contact__label">Phone</div>
-                  <a class="footer-contact__value" href="tel:+${config.contact?.phoneRaw}">${config.contact?.phone}</a>
+                  <a class="footer-contact__value" href="tel:+${utils.escapeHtml(config.contact?.phoneRaw)}">${utils.escapeHtml(config.contact?.phone)}</a>
                 </div>
               </div>
               <div class="footer-contact__item">
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <div>
                   <div class="footer-contact__label">Email</div>
-                  <a class="footer-contact__value" href="mailto:${config.contact?.email}">${config.contact?.email}</a>
+                  <a class="footer-contact__value" href="mailto:${utils.escapeHtml(config.contact?.email)}">${utils.escapeHtml(config.contact?.email)}</a>
                 </div>
               </div>
               <div class="footer-contact__item">
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <div>
                   <div class="footer-contact__label">Address</div>
-                  <address class="footer-contact__value" style="font-style: normal;">${config.contact?.address?.full}</address>
+                  <address class="footer-contact__value" style="font-style: normal;">${utils.escapeHtml(config.contact?.address?.full)}</address>
                 </div>
               </div>
             </div>
@@ -958,7 +963,7 @@ function populateFeaturedDishes(state) {
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)}${state.config?.menu?.is_sample || !state.onlineCatalog ? ' <small>sample</small>' : ''}</span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
@@ -1157,7 +1162,7 @@ function renderMenuGrid() {
 
   // Show sample notice if menu is sample
   const config = window.cafeState?.config;
-  if (config?.menu?.is_sample) {
+  if ((config?.menu?.is_sample || !state.onlineCatalog)) {
     const notice = document.createElement('div');
     notice.className = 'menu-sample-notice';
     notice.setAttribute('role', 'status');
@@ -1203,7 +1208,7 @@ function renderMenuGrid() {
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)}${state.config?.menu?.is_sample || !state.onlineCatalog ? ' <small>sample</small>' : ''}</span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
@@ -1262,6 +1267,10 @@ function initLazyLoading() {
 // ========================================
 
 function openCheckout() {
+  if (!state.onlineCatalog || state.config.ordering.enabled === false) {
+    utils.showToast('Online ordering is currently unavailable.', 'info');
+    return;
+  }
   if (window.cafeState.cart.length === 0) {
     utils.showToast('Your cart is empty', 'warning');
     return;
@@ -1298,7 +1307,7 @@ function openCheckout() {
           utils.createEl('div', { class: 'checkout-form__section' },
             utils.createEl('h3', { class: 'checkout-form__section-title' }, 'Order Type'),
             utils.createEl('div', { class: 'checkout-form__order-type', role: 'radiogroup', 'aria-label': 'Order type' },
-              orderTypes.map(type => utils.createEl('button', {
+              orderTypes.filter(type => type.id !== 'delivery' || state.config.ordering.deliveryEnabled).map(type => utils.createEl('button', {
                 type: 'button',
                 class: `order-type-btn ${type.id === 'dine-in' ? 'is-active' : ''}`,
                 'data-type': type.id,
@@ -1435,28 +1444,28 @@ function openCheckout() {
     order.deliveryFee = needsDeliveryFee ? deliveryFee : 0;
     order.total = order.subtotal + order.deliveryFee + order.tax;
 
-    const storedOrders = utils.storageGet('orders', []);
-    const orders = Array.isArray(storedOrders) ? storedOrders : [];
-    orders.unshift(order);
-    order.saved = utils.storageSet('orders', orders.slice(0, 50));
-
-    clearCart();
-
-    closeCheckout();
-
-    state.cartNotes = ''; utils.storageRemove('cartNotes');
-    
-    // Submit order to Supabase
     try {
-      utils.showToast('Placing order...', 'info');
-      const result = await utils.apiRequest('orders', order);
-      if (result.id) {
-        showOrderConfirmation(result);
-      } else {
-        throw new Error(result.error || 'Order failed');
-      }
-    } catch (e) {
-      utils.showToast('Order failed: ' + e.message, 'error');
+      const result = await utils.apiRequest('orders', {
+        customer_name: order.customer.name,
+        customer_phone: '91' + order.customer.phone,
+        order_type: order.type.replace('-', '_'),
+        items: order.items.map(({id, quantity}) => ({id, quantity})),
+        notes: order.notes,
+        delivery_address: order.address ? {full: order.address} : null,
+      });
+      clearCart();
+      closeCheckout();
+      state.cartNotes = '';
+      utils.storageRemove('cartNotes');
+      showOrderConfirmation({
+        ...result, id: result.order_number, subtotal: result.subtotal_inr,
+        deliveryFee: result.delivery_fee_inr, tax: result.tax_inr, total: result.total_inr,
+        items: result.items.map(item => ({...item, price: item.price_inr})),
+      });
+    } catch (error) {
+      utils.showToast(error.message, 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit order request';
     }
   });
 }
@@ -1515,8 +1524,8 @@ function showOrderConfirmation(order) {
         utils.createEl('div', { class: 'confirmation__icon' },
           utils.createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '40', height: '40' }, utils.createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), utils.createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order Confirmed'),
-        utils.createEl('p', { class: 'confirmation__subtitle' }, `Your order has been placed successfully. Reference: ${order.order_number || order.id}`),
+        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order received'),
+        utils.createEl('p', { class: 'confirmation__subtitle' }, `The café will review your request. Reference: ${order.order_number || order.id}`),
         utils.createEl('div', { class: 'confirmation__order-id' }, order.id),
         utils.createEl('div', { class: 'confirmation__summary' },
           utils.createEl('h3', { class: 'confirmation__summary-title' }, 'Order Summary'),
@@ -1536,7 +1545,7 @@ function showOrderConfirmation(order) {
               utils.createEl('span', {}, utils.formatPrice(order.deliveryFee))
             ),
             utils.createEl('div', { class: 'confirmation__total-row' },
-              utils.createEl('span', {}, `Tax (${(order.taxRate * 100).toFixed(0)}%)`),
+              utils.createEl('span', {}, 'Tax'),
               utils.createEl('span', {}, utils.formatPrice(order.tax))
             ),
             utils.createEl('div', { class: 'confirmation__total-row confirmation__total-row--grand' },
@@ -1838,9 +1847,13 @@ async function bookingHandleSubmit(e) {
   // Submit booking to Supabase
   try {
     utils.showToast('Booking table...', 'info');
-    const result = await utils.apiRequest('bookings', booking);
+    const result = await utils.apiRequest('bookings', {
+      customer_name: booking.customer.name, customer_phone: '91' + booking.customer.phone,
+      customer_email: booking.customer.email, booking_date: booking.date,
+      booking_time: booking.time, guests: booking.guests, special_requests: booking.notes,
+    });
     if (result.id) {
-      showBookingConfirmation(result);
+      showBookingConfirmation({...booking, id: result.booking_number});
     } else {
       throw new Error(result.error || 'Booking failed');
     }
@@ -2192,25 +2205,27 @@ async function careersHandleSubmit(e) {
       // Get signed upload URL
       const { signedUrl, path } = await utils.apiRequest('applications/get-upload-url', {
         fileName: careersState.selectedFile.name,
-        contentType: careersState.selectedFile.type
+        contentType: careersState.selectedFile.type,
+        fileSize: careersState.selectedFile.size
       });
       
       // Upload file directly to Supabase Storage
-      await fetch(signedUrl, {
+      const upload = await fetch(signedUrl, {
         method: 'PUT',
-        body: careersState.selectedFile,
-        headers: { 'Content-Type': careersState.selectedFile.type }
+        body: (() => { const data = new FormData(); data.append('', careersState.selectedFile); return data; })()
       });
+      if (!upload.ok) throw new Error('CV upload failed');
       cvPath = path;
     }
 
     const result = await utils.apiRequest('applications', {
-      ...application,
-      cv: cvPath
+      full_name: application.customer.name, email: application.customer.email,
+      phone: '91' + application.customer.phone, address: application.customer.address,
+      role: application.role, cv_path: cvPath
     });
     
     if (result.id) {
-      showApplicationConfirmation(result);
+      showApplicationConfirmation({...application, id: result.application_number});
     } else {
       throw new Error(result.error || 'Application failed');
     }
@@ -2231,7 +2246,7 @@ function showApplicationConfirmation(application) {
           createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
         createEl('h2', { class: 'booking-success__title', id: 'careers-confirmation-title' }, 'Application preview ready'),
-        createEl('p', {}, `Demo only. No application or CV was uploaded. Reference: ${application.id}`),
+        createEl('p', {}, `Application received. Reference: ${application.id}`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Role Applied'),
@@ -2257,7 +2272,7 @@ function showApplicationConfirmation(application) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeCareersConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'This is a demo. A real backend integration is planned for Phase 2.')
+        createEl('p', { class: 'confirmation__note' }, 'The café can review your request in its dashboard.')
       )
     )
   );
@@ -2345,7 +2360,7 @@ function contactGetFieldLabel(input) {
   return label ? label.textContent.replace('*', '').trim() : 'This field';
 }
 
-function contactHandleSubmit(e) {
+async function contactHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
@@ -2377,11 +2392,12 @@ function contactHandleSubmit(e) {
     status: 'submitted'
   };
 
-  const stored = storageGet('contacts', []);
-  const contacts = Array.isArray(stored) ? stored : [];
-  contacts.unshift(contact);
-  // Contact preview stays in memory.
-
+  try {
+    await utils.apiRequest('contact', {...contact.customer, subject: contact.subject, message: contact.message});
+  } catch (error) {
+    utils.showToast(error.message, 'error');
+    return;
+  }
   showContactConfirmation(contact);
   form.reset();
 }
@@ -2394,7 +2410,7 @@ function showContactConfirmation(contact) {
           createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
         createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message preview ready'),
-        createEl('p', {}, `Demo only. This message was not sent. Reference: ${contact.id}`),
+        createEl('p', {}, `Your message was received.`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Subject'),
@@ -2416,7 +2432,7 @@ function showContactConfirmation(contact) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeContactConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'This is a demo. A real backend integration is planned for Phase 2.')
+        createEl('p', { class: 'confirmation__note' }, 'The café can review your request in its dashboard.')
       )
     )
   );

@@ -103,3 +103,50 @@ function installDialogAccessibility() {
   }, true);
   sync();
 }
+async function publicSupabase(path, options = {}) {
+  const {url, publishableKey} = window.CAFE_CONFIG?.supabase || {};
+  if (!url || !publishableKey) throw new Error('Online requests are unavailable in this preview.');
+  const response = await fetch(url.replace(/\/$/, '') + path, {
+    ...options,
+    headers: {apikey: publishableKey, 'Content-Type': 'application/json', ...options.headers},
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || data.message || 'Request failed.');
+  return data;
+}
+
+async function loadPublicSettings(config) {
+  if (!config.supabase?.url || !config.supabase?.publishableKey) return;
+  const rows = await publicSupabase('/rest/v1/public_settings?select=key,value');
+  const settings = Object.fromEntries(rows.map(row => [row.key, row.value]));
+  const contact = config.contact;
+  if (settings.address?.full) contact.address = {...contact.address, ...settings.address};
+  if (settings.phone?.formatted) contact.phone = settings.phone.formatted;
+  if (settings.phone?.raw) contact.phoneRaw = settings.phone.raw;
+  if (settings.email?.value) contact.email = settings.email.value;
+  if (settings.opening_hours) config.hours = {...config.hours, ...settings.opening_hours};
+  if (settings.whatsapp_number) {
+    contact.whatsapp = settings.whatsapp_number.value;
+    contact.whatsappVerified = settings.whatsapp_number.verified;
+  }
+  config.menu.is_sample = settings.menu_is_sample?.is_sample ?? config.menu.is_sample;
+  config.ordering.enabled = settings.ordering_enabled?.enabled ?? true;
+  config.ordering.deliveryEnabled = settings.delivery_enabled?.enabled ?? false;
+  config.ordering.deliveryFee = settings.delivery_fee?.amount ?? 0;
+  config.ordering.minOrderDelivery = settings.min_order?.amount ?? 0;
+  config.ordering.taxRate = (settings.tax_percent?.value ?? 0) / 100;
+}
+
+function catalogFromDatabase({categories, items}) {
+  return categories.map(category => ({
+    id: category.slug, name: category.name,
+    items: items.filter(item => item.category_id === category.id).map(item => {
+      const image = item.image_url;
+      return {
+        id: item.id, name: item.name, description: item.description ?? '', price: item.price_inr,
+        veg: item.veg, image: /^https:\/\/[\w./%?=&-]+$/.test(image) ? image : 'assets/meal.svg',
+        tags: item.tags ?? [],
+      };
+    }),
+  }));
+}

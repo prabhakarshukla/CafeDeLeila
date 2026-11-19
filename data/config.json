@@ -125,5 +125,9 @@
     "defaultDescription": "Experience culinary magic at Café De Leila, Lucknow. Authentic Indian, Continental & Chinese cuisine. Order online, book a table, or visit us at Gomti Nagar.",
     "ogImage": "assets/meal.svg",
     "twitterHandle": "@cafedeleila"
+  },
+  "supabase": {
+    "url": "",
+    "publishableKey": ""
   }
 }

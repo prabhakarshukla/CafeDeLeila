@@ -1,12 +1,7 @@
+import { cors, readJson, visitorKey } from "../_shared/http.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://cafedeleila.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-};
 
 const ALLOWED_CV_TYPES = [
   "application/pdf",
@@ -54,53 +49,26 @@ function validateCvFile(contentType: string, size: number): { valid: boolean; er
 }
 
 serve(async (req) => {
+  const corsHeaders = Object.fromEntries(cors(req, "POST"));
+  if (req.headers.has("origin") && !corsHeaders["access-control-allow-origin"]) return new Response(null, {status: 403, headers: corsHeaders});
+  if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: corsHeaders});
+  if (req.method !== "POST") return new Response(null, {status: 405, headers: corsHeaders});
   // Rate limiting (stricter for applications)
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
-  let rateLimitMap = (globalThis as any).__appRateLimitMap;
-  if (!rateLimitMap) {
-    rateLimitMap = new Map();
-    (globalThis as any).__appRateLimitMap = rateLimitMap;
-  }
-  const entry = rateLimitMap.get(clientIp);
-  if (!entry || now - entry.windowStart > 60_000) {
-    rateLimitMap.set(clientIp, { count: 1, windowStart: now });
-  } else if (entry.count >= 10) { // Stricter: 10 req/min
-    return new Response(JSON.stringify({ error: "Too many requests. Please slow down." }), {
-      status: 429,
-      headers: { "Access-Control-Allow-Origin": "https://cafedeleila.com", "Content-Type": "application/json" },
-    });
-  } else {
-    entry.count++;
-  }
-
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "https://cafedeleila.com",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Max-Age": "86400",
-  };
-
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const contentLength = req.headers.get("content-length");
-  if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-    return new Response(JSON.stringify({ error: "Request body too large" }), {
-      status: 413,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+
+  const limit = await supabase.rpc("allow_submission", {endpoint: "applications", visitor: await visitorKey(req)});
+  if (limit.error || !limit.data) return new Response(JSON.stringify({error: "Try again shortly"}), {status: limit.error ? 503 : 429, headers: corsHeaders});
   // Get signed upload URL for CV
   if (req.method === "POST" && new URL(req.url).pathname.endsWith("/get-upload-url")) {
     let body: any;
     try {
-      body = await req.json();
+      body = await readJson(req);
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400,
@@ -142,7 +110,7 @@ serve(async (req) => {
   if (req.method === "POST") {
     let body: any;
     try {
-      body = await req.json();
+      body = await readJson(req);
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400,
@@ -200,25 +168,6 @@ serve(async (req) => {
     if (error) {
       console.error("Application insert error:", error);
       return new Response(JSON.stringify({ error: "Failed to create application" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  if (req.method === "GET") {
-    const { data, error } = await supabase
-      .from("job_applications")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

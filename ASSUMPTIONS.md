@@ -9,3 +9,6 @@
 - Preserve existing vector logo artwork pending owner approval. Use local decorative SVG artwork, not food photos or claims about actual dishes.
 - Do not invent founding dates, locations, ratings, employment benefits, delivery fees or taxes. This prototype shows sample subtotal only.
 - Browser localStorage is optional. Failed persistence must leave the interaction usable and disclose that the result was not saved.
+## Backend handover
+
+Existing untracked SQL drafts were moved intact to the ignored supabase/legacy/local-drafts directory to keep them out of the migration runner. Booking capacity counts active reservations per slot. Storefront sample fallback is display-only for orders. Auth users are created by the owner in Supabase and assigned to staff by UUID in the panel.

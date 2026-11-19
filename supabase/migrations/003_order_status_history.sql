@@ -8,7 +8,7 @@
 -- ORDER STATUS HISTORY TABLE
 -- ============================================
 
-CREATE TABLE order_status_history (
+CREATE TABLE IF NOT EXISTS order_status_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   from_status TEXT,
@@ -22,8 +22,7 @@ CREATE TABLE order_status_history (
 ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
 -- Admins can read all history
-CREATE POLICY "Admins can read order status history" ON order_status_history
-  FOR SELECT USING (is_admin());
+
 
 -- ============================================
 -- ORDER STATUS TRANSITION VALIDATION
@@ -78,7 +77,7 @@ END;
 $$;
 
 -- Trigger to validate status transitions
-CREATE TRIGGER trigger_validate_order_status_transition
+CREATE OR REPLACE TRIGGER trigger_validate_order_status_transition
   BEFORE UPDATE OF status ON orders
   FOR EACH ROW EXECUTE FUNCTION validate_order_status_transition();
 
@@ -102,7 +101,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_insert_order_status_history
+CREATE OR REPLACE TRIGGER trigger_insert_order_status_history
   AFTER UPDATE OF status ON orders
   FOR EACH ROW EXECUTE FUNCTION insert_order_status_history();
 
@@ -146,7 +145,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_validate_booking_status_transition
+CREATE OR REPLACE TRIGGER trigger_validate_booking_status_transition
   BEFORE UPDATE OF status ON bookings
   FOR EACH ROW EXECUTE FUNCTION validate_booking_status_transition();
 
@@ -192,7 +191,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_validate_application_status_transition
+CREATE OR REPLACE TRIGGER trigger_validate_application_status_transition
   BEFORE UPDATE OF status ON job_applications
   FOR EACH ROW EXECUTE FUNCTION validate_application_status_transition();
 

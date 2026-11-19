@@ -1,12 +1,7 @@
+import { cors, readJson, visitorKey } from "../_shared/http.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://cafedeleila.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-};
 
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -42,6 +37,10 @@ function sanitizeText(text: string, maxLen: number): string {
 }
 
 serve(async (req) => {
+  const corsHeaders = Object.fromEntries(cors(req, "POST"));
+  if (req.headers.has("origin") && !corsHeaders["access-control-allow-origin"]) return new Response(null, {status: 403, headers: corsHeaders});
+  if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: corsHeaders});
+  if (req.method !== "POST") return new Response(null, {status: 405, headers: corsHeaders});
   // Rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (!checkRateLimit(clientIp)) {
@@ -52,7 +51,6 @@ serve(async (req) => {
   }
 
   // CORS preflight
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   // Body size limit
   const contentLength = req.headers.get("content-length");
@@ -71,7 +69,7 @@ serve(async (req) => {
   if (req.method === "POST") {
     let body: any;
     try {
-      body = await req.json();
+      body = await readJson(req);
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400,
@@ -158,8 +156,8 @@ serve(async (req) => {
         });
       }
 
-      const qty = Math.floor(item.quantity);
-      if (qty < 1 || qty > 50) {
+      const qty = item.quantity;
+      if (!Number.isInteger(qty) || qty < 1 || qty > 50) {
         return new Response(JSON.stringify({ error: `Invalid quantity for ${menuItem.name}: must be 1-50` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -254,26 +252,6 @@ serve(async (req) => {
 
     // TODO: Send WhatsApp via Business API (async, don't block response)
     // await sendWhatsAppOrder(data);
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  if (req.method === "GET") {
-    // Admin only - but we don't check auth here; RLS will handle
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

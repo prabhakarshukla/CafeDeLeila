@@ -1,12 +1,7 @@
+import { cors, readJson, visitorKey } from "../_shared/http.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://cafedeleila.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-};
 
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -48,6 +43,10 @@ function validateDateNotPast(dateStr: string): boolean {
 }
 
 serve(async (req) => {
+  const corsHeaders = Object.fromEntries(cors(req, "POST"));
+  if (req.headers.has("origin") && !corsHeaders["access-control-allow-origin"]) return new Response(null, {status: 403, headers: corsHeaders});
+  if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: corsHeaders});
+  if (req.method !== "POST") return new Response(null, {status: 405, headers: corsHeaders});
   // Rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   // Simple rate limiting (same as orders)
@@ -62,20 +61,11 @@ serve(async (req) => {
     if (e && e.count >= 30) {
       return new Response(JSON.stringify({ error: "Too many requests. Please slow down." }), {
         status: 429,
-        headers: { "Access-Control-Allow-Origin": "https://cafedeleila.com", "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (e) e.count++;
   }
-
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "https://cafedeleila.com",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Max-Age": "86400",
-  };
-
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const contentLength = req.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > 1024 * 1024) {
@@ -93,7 +83,7 @@ serve(async (req) => {
   if (req.method === "POST") {
     let body: any;
     try {
-      body = await req.json();
+      body = await readJson(req);
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400,
@@ -142,8 +132,8 @@ serve(async (req) => {
     }
 
     // Validate guests 1-20
-    const guests = parseInt(body.guests);
-    if (isNaN(guests) || guests < 1 || guests > 20) {
+    const guests = body.guests;
+    if (!Number.isInteger(guests) || guests < 1 || guests > 20) {
       return new Response(JSON.stringify({ error: "Guests must be between 1 and 20" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -155,60 +145,21 @@ serve(async (req) => {
     const customerEmail = body.customer_email ? body.customer_email.slice(0, 255).replace(/[<>]/g, "") : null;
     const specialRequests = body.special_requests ? body.special_requests.slice(0, 500).replace(/[<>]/g, "") : null;
 
-    // Race-safe slot check using a transaction-like approach with unique constraint
-    // We'll attempt insert with ON CONFLICT DO NOTHING on a unique constraint
-    // First, check capacity from settings
-    const { data: settings } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "booking_capacity_per_slot")
-      .single();
-
-    const capacity = settings?.value?.capacity ?? 10;
-
-    // Check current bookings for this slot
-    const { data: existing, error: countError } = await supabase
-      .from("bookings")
-      .select("id", { count: "exact" })
-      .eq("booking_date", body.booking_date)
-      .eq("booking_time", body.booking_time)
-      .in("status", ["pending", "confirmed"]);
-
-    if (countError) {
-      return new Response(JSON.stringify({ error: "Failed to check availability" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Use count from the query (PostgREST returns count in headers when using select with count)
-    // For simplicity, we'll use the array length (works for small limits)
-    if (existing && existing.length >= capacity) {
-      return new Response(JSON.stringify({ error: "Slot fully booked" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Insert booking (trigger will generate booking_number)
-    const { data, error } = await supabase
-      .from("bookings")
-      .insert({
+    const { data, error } = await supabase.rpc("reserve_booking", {
+      details: {
         customer_name: customerName,
         customer_phone: body.customer_phone,
         customer_email: customerEmail,
         booking_date: body.booking_date,
         booking_time: body.booking_time,
-        guests: guests,
+        guests,
         special_requests: specialRequests,
-        status: "pending",
-      })
-      .select()
-      .single();
+      },
+    });
 
     if (error) {
       // Check for unique constraint violation on slot (if we add one later)
-      if (error.code === "23505") {
+      if (error.code === "P0001") {
         return new Response(JSON.stringify({ error: "Slot fully booked" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -216,25 +167,6 @@ serve(async (req) => {
       }
       console.error("Booking insert error:", error);
       return new Response(JSON.stringify({ error: "Failed to create booking" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  if (req.method === "GET") {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
