@@ -57,3 +57,4 @@ docs: T10 document fresh Supabase setup
 audit: T11 verify admin layouts and document limits
 A1–A4 reconciled the database catalog, added migration 006 and generated the repeatable sample menu seed.
 A5–A8 verified server pricing, corrected the ordering switch and catalog integration, and removed tracked CLI metadata.
+A9–A10 documented migration order, read-only checks and disposable-project smoke tests.

@@ -61,3 +61,4 @@ Embedded PostgreSQL PASS after fixing migration 003 to use gen_random_uuid(). Cl
 | Local metadata | PASS after staged cleanup. .env variants and Supabase CLI metadata are ignored; CLI metadata removed from Git index with local files preserved. |
 | Rate limits | PASS docs. Orders, bookings and menu are per instance. Contact/applications use database counters. Hosted proxy behavior UNVERIFIED. |
 | Browser config | PASS format checked without printing keys. Existing valid URL/key fields preserved. Hosted key validity UNVERIFIED. |
+A9–A10 PASS documentation review. Verification guide covers schema, policies, buckets, publications, functions and anonymous REST. Setup gives fresh and existing sequences and the smoke tests. Hosted commands remain UNVERIFIED and were not run.

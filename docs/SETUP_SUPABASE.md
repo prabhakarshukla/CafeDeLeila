@@ -1,70 +1,148 @@
-# Set up a new Supabase project
+# Set up Café De Leila on Supabase
 
-Use a fresh project dedicated to this branch. All commands below are for you to run. The repository task did not access a hosted Supabase project.
+Use PowerShell from the repo root. Use PowerShell 7 for the smoke-test commands. If Windows resolves the Supabase command to a blocked npm script, use supabase.cmd instead. Only run hosted commands after checking the target project.
 
-1. Create a project in the Supabase dashboard. In PowerShell, navigate to the repo and confirm the CLI account and the **new** project reference. If the CLI is installed through npm on Windows, use supabase.cmd wherever the command below says supabase.
+## 1. Choose the project
 
-   ```powershell
-   cd 'C:\cafe de lelia'
-   git switch feat/admin-backend
-   supabase login
-   $projectRef = Read-Host 'New project reference'
-   supabase link --project-ref $projectRef
-   ```
+For a fresh install, create a Supabase project. For the already edited project, use its existing SQL Editor. Use a separate test project for requests that insert rows.
 
-2. Open **SQL Editor for the new project** and execute each complete file in a separate query in this order. Use Get-Content -Raw to copy each file to the clipboard. Stop if any migration errors. Use this manual setup path consistently, since it does not record CLI migration history.
+## 2. Apply the SQL
 
-   ```powershell
-   Get-Content -Raw supabase/migrations/001_core_schema.sql | Set-Clipboard
-   # Run SQL in the dashboard before copying the next file.
-   Get-Content -Raw supabase/migrations/002_admin_settings.sql | Set-Clipboard
-   Get-Content -Raw supabase/migrations/003_order_status_history.sql | Set-Clipboard
-   Get-Content -Raw supabase/migrations/004_admin_rls_storage_realtime.sql | Set-Clipboard
-   ```
+For a fresh project, copy each file in order from PowerShell and run it in the SQL Editor. Execute each file before copying the next one.
 
-3. In **Storage**, verify 004 created cv-uploads (private, PDF/DOC/DOCX, 2 MB), menu-images and og-images (public, JPEG/PNG/WebP, 2 MB). Keep all three definitions in SQL.
+```powershell
+Get-Content -Raw supabase/migrations/001_core_schema.sql | Set-Clipboard
+Get-Content -Raw supabase/migrations/002_admin_settings.sql | Set-Clipboard
+Get-Content -Raw supabase/migrations/003_order_status_history.sql | Set-Clipboard
+Get-Content -Raw supabase/migrations/004_admin_rls_storage_realtime.sql | Set-Clipboard
+Get-Content -Raw supabase/migrations/006_cleanup_legacy.sql | Set-Clipboard
+```
 
-4. Set the custom origin allowlist and deploy the functions. Add your exact Vercel preview origin if you use one. Trailing slashes and wildcards are not supported. Supabase injects built-in function credentials. [Function environment variables](https://supabase.com/docs/guides/functions/secrets).
+For the reported existing project, reapply current 004 before 006 if the limiter or booking RPC is missing. The reported list lacks both, so use **004 → 006** for that project. 006 preserves existing settings and menu rows and removes known legacy access. Use the read-only verification guide first if the installation differs. There is no deployable 005. Keep manual SQL Editor runs separate from CLI migration history.
 
-   ```powershell
-   supabase secrets set 'ALLOWED_ORIGINS=https://cafedeleila.vercel.app,http://localhost:8080' --project-ref $projectRef
-   foreach ($name in 'orders','bookings','menu','applications','contact') {
-     supabase functions deploy $name --project-ref $projectRef --no-verify-jwt
-     if ($LASTEXITCODE -ne 0) { throw "Deployment failed for $name" }
-   }
-   ```
+## 3. Seed the sample catalog
 
-   On a previously used project only, check the function list for the obsolete endpoint and remove it if present using `supabase functions delete webhooks` on the intended project. This is unnecessary on a new project. [CLI reference](https://supabase.com/docs/reference/cli/global-flags).
+Run the next file in SQL Editor while the catalog is still marked as sample.
 
-5. In **Authentication → Providers → Email**, keep email/password enabled. Disable **Allow new users to sign up** in Authentication settings. Under **Authentication → Users**, create your admin with **Auto Confirm User** on. Copy the new user's UUID.
+```powershell
+Get-Content -Raw supabase/seed/menu_items.sql | Set-Clipboard
+```
 
-6. Grant owner access in SQL Editor using that UUID and a display name. Auth passwords stay in the dashboard.
+The clean seed adds 80 items under 19 categories. Re-running it preserves owner edits for existing sample IDs. Do not rerun it on an approved menu if you have deleted sample rows, since missing rows would be restored.
 
-   ```sql
-   insert into public.admin_users (user_id, role, display_name)
-   values ('REPLACE_WITH_AUTH_USER_UUID', 'owner', 'Café owner');
-   ```
+## 4. Check the buckets and policies
 
-7. In data/config.json set supabase.url and supabase.publishableKey from the new project's Connect/API Keys panel. Use the browser-facing publishable key. From the root run `python -m http.server 8080`, then open http://localhost:8080/admin/ and sign in. Create an available menu item in an active category with a known test price. Confirm ordering is enabled in Settings.
+Open Storage. Expect private CVs at 2 MiB, public menu images at 5 MiB, and public OG images at 2 MiB. Use the [verification checklist](VERIFY_SUPABASE.md) for MIME types, settings, grants and policies.
 
-8. On a disposable project or local stack, run supabase/tests/behavior.sql in SQL Editor. It asserts role and transition behaviour and rolls back the rows. PostgreSQL sequences may advance across rollbacks. Never run archived SQL.
+## 5. Link the CLI
 
-9. Run an anonymous insert and a real order through the Edge Function on the **fresh test project**. Use a test catalog item UUID and fictional customer details. The first command should fail. The second should return an order number and a subtotal equal to the database price × 2, ignoring the supplied subtotal and item price. Compare tax and total with Settings.
+```powershell
+git switch feat/admin-backend
+supabase login
+$projectRef = Read-Host 'Intended project reference'
+supabase link --project-ref $projectRef
+```
 
-   ```powershell
-   $config = Get-Content data/config.json -Raw | ConvertFrom-Json
-   $headers = @{ apikey = $config.supabase.publishableKey; Origin = 'http://localhost:8080' }
-   $itemId = Read-Host 'Available test menu item UUID'
-   $payload = @{
-     customer_name = 'Smoke Test'; customer_phone = '919876543210'; order_type = 'takeaway'
-     items = @(@{ id = $itemId; quantity = 2; price_inr = 1 }); subtotal_inr = 1
-   } | ConvertTo-Json -Depth 4
-   $directInsert = @{
-     customer_name = 'Smoke Test'; customer_phone = '919876543210'; items = @()
-     subtotal_inr = 1; tax_inr = 0; total_inr = 1
-   } | ConvertTo-Json
-   Invoke-RestMethod -Method Post -Uri "$($config.supabase.url)/rest/v1/orders" -Headers $headers -ContentType 'application/json' -Body $directInsert
-   Invoke-RestMethod -Method Post -Uri "$($config.supabase.url)/functions/v1/orders" -Headers $headers -ContentType 'application/json' -Body $payload
-   ```
+## 6. Set the origin allowlist and deploy
 
-10. In the admin panel confirm the test order and check it appears on the dashboard. Repeat with a staff user assigned through Staff, and confirm Settings and Menu are owner-only. Try a booking, an application with a dummy PDF, and a contact message. Inspect the active order row and remove test data from your test project when done.
+```powershell
+supabase secrets set 'ALLOWED_ORIGINS=http://localhost:8080,https://cafedeleila.vercel.app' --project-ref $projectRef
+foreach ($name in 'orders','bookings','menu','applications','contact') {
+  supabase functions deploy $name --project-ref $projectRef --no-verify-jwt --use-api
+  if ($LASTEXITCODE -ne 0) { throw "Deploy failed for $name" }
+}
+supabase functions list --project-ref $projectRef
+```
+
+Supabase injects the built-in runtime credentials. Set only the custom allowlist. Add the exact preview origin when using a Vercel branch preview. Include the scheme and port where applicable. Omit trailing slashes.
+
+If the function list still contains webhooks, run `supabase functions delete webhooks --project-ref $projectRef`.
+
+[Supabase CLI reference](https://supabase.com/docs/reference/cli/supabase-inspect-db-role-configs) · [Function environment variables](https://supabase.com/docs/guides/functions/secrets)
+
+## 7. Create the owner
+
+Disable **Allow new users to sign up** in Authentication settings. Leave email/password sign-in enabled. In Authentication → Users, create the owner with **Auto Confirm User** enabled. Copy their user UUID and run:
+
+```sql
+insert into public.admin_users (user_id, role, display_name)
+values ('REPLACE_WITH_AUTH_USER_UUID', 'owner', 'Café owner');
+```
+
+## 8. Set browser configuration and open the site
+
+Use the project URL and browser publishable key for supabase.url and supabase.publishableKey in data/config.json. Keep private credentials in Supabase.
+
+```powershell
+python -m http.server 8080
+```
+
+Open http://localhost:8080/admin/ and sign in. The storefront is at http://localhost:8080/. Use a second PowerShell window for the tests.
+
+## 9. Run the smoke tests
+
+Run the following on a disposable or local project. Order and CV checks create test data. Use fictional customer details and a dummy PDF. Never print headers or whole response bodies containing personal details, upload links or session tokens.
+
+```powershell
+$config = Get-Content -Raw data/config.json | ConvertFrom-Json
+$base = $config.supabase.url.TrimEnd('/')
+$headers = @{ apikey = $config.supabase.publishableKey; Origin = 'http://localhost:8080' }
+$orders = "$base/rest/v1/orders"
+$anonRead = Invoke-WebRequest "$orders" -Headers $headers
+if ($anonRead.Content.Trim() -ne '[]') { throw 'Anonymous GET must return []' }
+$direct = @{ customer_name='Fixture'; customer_phone='919876543210'; items=@()
+  subtotal_inr=1; tax_inr=0; total_inr=1 } | ConvertTo-Json
+$denied = Invoke-WebRequest "$orders" -Method Post -Headers $headers -ContentType 'application/json' -Body $direct -SkipHttpErrorCheck
+if ([int]$denied.StatusCode -notin 401,403 -or ($denied.Content | ConvertFrom-Json).code -ne '42501') {
+  throw 'Anonymous INSERT must fail with database authorization error 42501'
+}
+$catalog = Invoke-RestMethod "$base/functions/v1/menu" -Headers $headers
+$item = $catalog.items | Select-Object -First 1
+if (!$item) { throw 'Expected an available seeded item' }
+$payload = @{ customer_name='Fixture'; customer_phone='919876543210'; order_type='takeaway'
+  items=@(@{id=$item.id;quantity=2;price_inr=1}); subtotal_inr=1; total_inr=1 } | ConvertTo-Json -Depth 4
+$order = Invoke-RestMethod "$base/functions/v1/orders" -Method Post -Headers $headers -ContentType 'application/json' -Body $payload
+$taxSetting = Invoke-RestMethod "$base/rest/v1/public_settings?key=eq.tax_percent" -Headers $headers
+$subtotal = [int]$item.price_inr * 2
+$tax = [math]::Floor($subtotal * [double]$taxSetting[0].value.value / 100 + 0.5)
+if (!$order.order_number -or $order.subtotal_inr -ne $subtotal -or $order.total_inr -ne ($subtotal + $tax)) {
+  throw 'The order must use catalog price and configured tax'
+}
+```
+
+In Careers, submit a dummy PDF under 2 MiB. Expect a reference and an admin application record with a working CV link. Try an EXE and a valid-type file over 2 MiB. The UI must reject both. Verify the signing endpoint rejects invalid metadata even without browser validation:
+
+```powershell
+foreach ($bad in @(
+  @{fileName='fixture.exe';contentType='application/octet-stream';fileSize=100},
+  @{fileName='fixture.pdf';contentType='application/pdf';fileSize=2097153}
+)) {
+  $rejected = Invoke-WebRequest "$base/functions/v1/applications/get-upload-url" -Method Post -Headers $headers -ContentType 'application/json' -Body ($bad | ConvertTo-Json) -SkipHttpErrorCheck
+  if ([int]$rejected.StatusCode -ne 400) { throw 'Invalid CV metadata must return 400' }
+}
+```
+
+Sign in as owner and confirm the test order. Create an auto-confirmed staff Auth user and add their UUID through **Staff**. In a separate browser session, sign in as staff and try /admin/#settings and /admin/#staff. Both must return to the dashboard view.
+
+Use a password prompt and hold the staff access token in memory to verify REST access. This writes the same value as the current public sample flag if a policy regresses.
+
+```powershell
+$credential = Get-Credential -Message 'Disposable staff account'
+$authBody = @{email=$credential.UserName;password=$credential.GetNetworkCredential().Password} | ConvertTo-Json
+try {
+  $staffSession = Invoke-RestMethod "$base/auth/v1/token?grant_type=password" -Headers $headers -Method Post -ContentType 'application/json' -Body $authBody
+  $staffHeaders = $headers.Clone()
+  $staffHeaders.Authorization = "Bearer $($staffSession.access_token)"
+  $staffHeaders.Prefer = 'return=representation'
+  $currentFlag = Invoke-RestMethod "$base/rest/v1/public_settings?key=eq.menu_is_sample" -Headers $headers
+  $body = @{value=$currentFlag[0].value} | ConvertTo-Json -Depth 4
+  $change = Invoke-WebRequest "$base/rest/v1/settings?key=eq.menu_is_sample" -Headers $staffHeaders -Method Patch -ContentType 'application/json' -Body $body -SkipHttpErrorCheck
+  if ([int]$change.StatusCode -notin 401,403 -and -not ([int]$change.StatusCode -eq 200 -and $change.Content.Trim() -eq '[]')) {
+    throw 'Staff must not update settings'
+  }
+} finally {
+  Remove-Variable credential,authBody,staffSession,staffHeaders -ErrorAction SilentlyContinue
+}
+```
+
+Run supabase/tests/behavior.sql as the SQL Editor role on the disposable database for rollback assertions. It removes fixture rows. Numbering sequences can still advance. Check a booking, a contact message and an order alert before release.
