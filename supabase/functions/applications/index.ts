@@ -119,7 +119,7 @@ serve(async (req) => {
     }
 
     // Validate required fields
-    if (!body.full_name || !body.email || !body.phone || !body.role) {
+    if ([body.full_name, body.email, body.phone, body.role, body.cv_path].some(value => typeof value !== "string" || !value.trim()) || (body.address != null && typeof body.address !== "string")) {
       return new Response(JSON.stringify({ error: "Missing required fields: full_name, email, phone, role" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

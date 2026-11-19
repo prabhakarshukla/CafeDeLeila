@@ -47,3 +47,17 @@ Tracked Supabase CLI metadata and malformed ignore rule were found. The operator
 - PASS 12 expected settings keys counted in migration 002 and copied into 006. A missing key cannot be inferred from the reported count of 12.
 - Existing China category uses slug main-course-chinese. 006 renames it when the target is free, retaining the UUID. If both slugs already exist, 006 retains both rather than moving or deleting owner data.
 Embedded PostgreSQL PASS after fixing migration 003 to use gen_random_uuid(). Clean apply, full replay, simulated legacy cleanup and repeat seed passed using local auth and Storage schema stubs.
+
+## A5–A8
+
+| Check | Result and evidence |
+|---|---|
+| Server prices and unknown/unavailable IDs | PASS mocked actual orders handler in audit/order-contract.cjs. Browser sends only id and quantity per item. |
+| Endpoint payloads and admin queries | PASS source review. Orders use database UUID and integer rupees; booking expects date/time/guests; applications sign then PUT then submit cv_path; contact receives flat fields; public_settings returns key/value; admin queries match 001–004. Hosted response, file upload and role enforcement remain UNVERIFIED. |
+| Source mismatches corrected | Orders read ordering_enabled.value.enabled rather than the wrong nested key. Cart bound now matches 50 per line. Featured items use catalog rows rather than hardcoded local IDs. Admin menu uploads match 5 MiB. |
+| 005 and behavior assertions | PASS embedded PostgreSQL. Active behavior.sql rolls back, with anon read/insert, staff update, status transitions and unique order numbers covered. Old 005 kept as historical text. |
+| Custom origins and gateway variables | PASS http.ts reads only ALLOWED_ORIGINS. No build-time variables found. Setup configures only the custom allowlist and documents old webhook deletion. |
+| Sample label and contact | PASS source. support.js overlays public_settings; main.js preserves sample fallback, calls contact, and uses no removed GET endpoint for personal records. |
+| Local metadata | PASS after staged cleanup. .env variants and Supabase CLI metadata are ignored; CLI metadata removed from Git index with local files preserved. |
+| Rate limits | PASS docs. Orders, bookings and menu are per instance. Contact/applications use database counters. Hosted proxy behavior UNVERIFIED. |
+| Browser config | PASS format checked without printing keys. Existing valid URL/key fields preserved. Hosted key validity UNVERIFIED. |

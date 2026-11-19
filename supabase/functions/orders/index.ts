@@ -1,4 +1,4 @@
-import { cors, readJson, visitorKey } from "../_shared/http.ts";
+import { cors, readJson } from "../_shared/http.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -78,7 +78,7 @@ serve(async (req) => {
     }
 
     // Validate required fields
-    if (typeof body.customer_name !== "string" || !body.customer_name.trim() || typeof body.customer_phone !== "string" || !Array.isArray(body.items) || !body.items.length || body.items.length > 50 || body.items.some((item: any) => !item || !/^[a-f0-9-]{36}$/i.test(item.id))) {
+    if (typeof body.customer_name !== "string" || !body.customer_name.trim() || typeof body.customer_phone !== "string" || !Array.isArray(body.items) || !body.items.length || body.items.length > 50 || body.items.some((item: any) => !item || typeof item.id !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(item.id))) {
       return new Response(JSON.stringify({ error: "Missing required fields: customer_name, customer_phone, items" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -94,7 +94,7 @@ serve(async (req) => {
     }
 
     // Validate email if provided
-    if (body.customer_email && !validateEmail(body.customer_email)) {
+    if (body.customer_email != null && (typeof body.customer_email !== "string" || !validateEmail(body.customer_email))) {
       return new Response(JSON.stringify({ error: "Invalid email address" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -122,7 +122,13 @@ serve(async (req) => {
     }
 
     // Fetch menu items to compute prices server-side
-    const itemIds = body.items.map((i: any) => i.id);
+    if (body.notes != null && typeof body.notes !== "string") {
+      return new Response(JSON.stringify({error: "Notes must be text"}), {status: 400, headers: corsHeaders});
+    }
+    const itemIds = body.items.map((item: {id: string}) => item.id.toLowerCase());
+    if (new Set(itemIds).size !== itemIds.length) {
+      return new Response(JSON.stringify({error: "Each menu item may appear only once"}), {status: 400, headers: corsHeaders});
+    }
     const { data: menuItems, error: menuError } = await supabase
       .from("menu_items")
       .select("id, name, price_inr, veg, is_available, category:menu_categories!inner(is_active)")
@@ -143,7 +149,7 @@ serve(async (req) => {
     const validatedItems = [];
 
     for (const item of body.items) {
-      const menuItem = menuMap.get(item.id);
+      const menuItem = menuMap.get(item.id.toLowerCase());
       if (!menuItem) {
         return new Response(JSON.stringify({ error: `Unknown menu item: ${item.id}` }), {
           status: 400,
@@ -177,27 +183,17 @@ serve(async (req) => {
       });
     }
 
-    // Check if ordering is enabled (from settings)
-    const { data: settings } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "ordering_enabled")
-      .single();
-
-    if (settings?.value?.ordering_enabled === false) {
-      return new Response(JSON.stringify({ error: "Ordering is currently disabled" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get delivery settings
-    const { data: deliverySettings } = await supabase
+    const {data: settings, error: settingsError} = await supabase
       .from("settings")
       .select("key,value")
-      .in("key", ["delivery_enabled", "delivery_fee", "min_order", "tax_percent"]);
-
-    const settingsMap = new Map(deliverySettings?.map((s: any) => [s.key, s.value]) || []);
+      .in("key", ["ordering_enabled", "delivery_enabled", "delivery_fee", "min_order", "tax_percent"]);
+    if (settingsError || !settings) {
+      return new Response(JSON.stringify({error: "Ordering settings are unavailable"}), {status: 503, headers: corsHeaders});
+    }
+    const settingsMap = new Map(settings.map(row => [row.key, row.value]));
+    if (settingsMap.get("ordering_enabled")?.enabled !== true) {
+      return new Response(JSON.stringify({error: "Ordering is currently disabled"}), {status: 403, headers: corsHeaders});
+    }
     const deliveryEnabled = settingsMap.get("delivery_enabled")?.enabled ?? false;
     const deliveryFee = orderType === "delivery" && deliveryEnabled ? (settingsMap.get("delivery_fee")?.amount ?? 0) : 0;
     const minOrder = settingsMap.get("min_order")?.amount ?? 0;
@@ -221,8 +217,6 @@ serve(async (req) => {
     const total = subtotal + deliveryFee + tax;
 
     // Create order with server-computed values
-    const orderNumber = `CDL-${Date.now().toString(36).toUpperCase()}`; // Fallback; trigger will set final
-
     const { data, error } = await supabase
       .from("orders")
       .insert({
@@ -230,7 +224,7 @@ serve(async (req) => {
         customer_phone: body.customer_phone,
         customer_email: body.customer_email ? sanitizeText(body.customer_email, 255) : null,
         order_type: orderType,
-        delivery_address: body.delivery_address || null,
+        delivery_address: orderType === "delivery" ? {full: body.delivery_address.full.trim()} : null,
         items: validatedItems,
         subtotal_inr: subtotal,
         delivery_fee_inr: deliveryFee,

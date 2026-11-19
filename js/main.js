@@ -516,7 +516,7 @@ function loadCart() {
   const items = (state.menu || []).flatMap(c => c.items);
   state.cart = Array.isArray(saved) ? saved.flatMap(row => {
     const item = items.find(i => i.id === row?.id);
-    return item && Number.isInteger(row.quantity) && row.quantity > 0 ? [{...item, quantity: Math.min(row.quantity, 99)}] : [];
+    return item && Number.isInteger(row.quantity) && row.quantity > 0 ? [{...item, quantity: Math.min(row.quantity, 50)}] : [];
   }) : [];
   state.cartNotes = utils.storageGet('cartNotes', '');
   updateCartUI();
@@ -539,7 +539,7 @@ function updateCartUI() {
 function addToCart(item, quantity = 1) {
   const existingIndex = window.cafeState.cart.findIndex(i => i.id === item.id);
   if (existingIndex >= 0) {
-    window.cafeState.cart[existingIndex].quantity = Math.min(99, window.cafeState.cart[existingIndex].quantity + quantity);
+    window.cafeState.cart[existingIndex].quantity = Math.min(50, window.cafeState.cart[existingIndex].quantity + quantity);
   } else {
     window.cafeState.cart.push({
       ...item,
@@ -558,7 +558,7 @@ function updateCartQuantity(itemId, quantity) {
     if (quantity <= 0) {
       window.cafeState.cart.splice(index, 1);
     } else {
-      window.cafeState.cart[index].quantity = Math.min(99, quantity);
+      window.cafeState.cart[index].quantity = Math.min(50, quantity);
     }
     saveCart();
   }
@@ -949,7 +949,10 @@ function populateFeaturedDishes(state) {
   const grid = $('#featured-grid');
   if (!grid || !state.menu) return;
 
-  const featured = ['imc-1','pizza-1','kebab-3','biryani-1','pasta-2','dessert-1'].map(id => state.menu.flatMap(c => c.items).find(i => i.id === id)).filter(Boolean);
+  const items = state.menu.flatMap(category => category.items);
+  const featured = state.onlineCatalog
+    ? [...items.filter(item => item.tags.includes('popular')), ...items.filter(item => !item.tags.includes('popular'))].slice(0, 6)
+    : ['imc-1','pizza-1','kebab-3','biryani-1','pasta-2','dessert-1'].map(id => items.find(item => item.id === id)).filter(Boolean);
 
   grid.innerHTML = featured.map(item => `
     <article class="dish-card" role="listitem">
@@ -1268,6 +1271,10 @@ function initLazyLoading() {
 // ========================================
 
 function openCheckout() {
+  if (state.cart.length > 50) {
+    utils.showToast('Limit each order to 50 different dishes.', 'info');
+    return;
+  }
   if (!state.onlineCatalog || state.config.ordering.enabled === false) {
     utils.showToast('Online ordering is currently unavailable.', 'info');
     return;

@@ -12,8 +12,7 @@ build/
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 
 # IDE/Editor
 .vscode/
@@ -47,5 +46,6 @@ assets/og-image.jpg
 
 # Cache
 .cache/
-*.cachesupabase/.temp/
+*.cache
+supabase/.temp/
 supabase/legacy/local-drafts/
