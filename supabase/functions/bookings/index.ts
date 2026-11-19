@@ -1,4 +1,6 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+import {addCalendarDays, indiaDate, indiaDateTime, isCalendarDate} from "../_shared/india-date.mjs";
+import {bookingRules} from "../_shared/booking-rules.mjs";
 import {fieldError, rateLimiter, requestHandler} from "../_shared/http.ts";
 
 const allowRequest = rateLimiter(30);
@@ -15,15 +17,19 @@ Deno.serve(requestHandler("POST", async (req, body, respond) => {
       !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(customer_email))) {
     return respond(400, fieldError("customer_email", "Enter a valid email address."));
   }
-  const today = new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Kolkata"}).format(new Date());
-  if (typeof booking_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(booking_date) || booking_date < today) {
-    return respond(400, fieldError("booking_date", "Choose today or a future date."));
+  const today = indiaDate();
+  const lastDay = addCalendarDays(today, bookingRules.maxAdvanceDays);
+  if (typeof booking_date !== "string" || !isCalendarDate(booking_date) || booking_date < today || booking_date > lastDay) {
+    return respond(400, fieldError("booking_date", `Choose a valid date within ${bookingRules.maxAdvanceDays} days.`));
   }
-  if (typeof booking_time !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(booking_time)) {
-    return respond(400, fieldError("booking_time", "Use HH:MM."));
+  if (typeof booking_time !== "string" || !bookingRules.timeSlots.includes(booking_time)) {
+    return respond(400, fieldError("booking_time", "Choose a listed time slot."));
   }
-  if (typeof guests !== "number" || !Number.isInteger(guests) || guests < 1 || guests > 20) {
-    return respond(400, fieldError("guests", "Use a whole number from 1 to 20."));
+  if (indiaDateTime(booking_date, booking_time).getTime() < Date.now() + bookingRules.minAdvanceMinutes * 60_000) {
+    return respond(400, fieldError("booking_time", `Book at least ${bookingRules.minAdvanceMinutes} minutes in advance.`));
+  }
+  if (typeof guests !== "number" || !Number.isInteger(guests) || guests < 1 || guests > bookingRules.maxGuests) {
+    return respond(400, fieldError("guests", `Use a whole number from 1 to ${bookingRules.maxGuests}.`));
   }
   if (special_requests != null && (typeof special_requests !== "string" || special_requests.length > 500)) {
     return respond(400, fieldError("special_requests", "Use at most 500 characters."));

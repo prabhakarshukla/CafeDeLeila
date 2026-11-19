@@ -10,8 +10,10 @@ const clean = (value: string) => value.replace(/[<>]/g, "").trim();
 Deno.serve(requestHandler("POST", async (req, body, respond) => {
   if (!allowRequest(req)) return respond(429, {error: "Too many requests. Please slow down."});
   const {customer_name, customer_phone, customer_email, notes, items, delivery_address} = body;
-  if (typeof customer_name !== "string" || !clean(customer_name)) {
-    return respond(400, fieldError("customer_name", "Enter a name."));
+  const customerName = typeof customer_name === "string" ? clean(customer_name) : "";
+  const nameLength = [...customerName].length;
+  if (nameLength < 2 || nameLength > 80) {
+    return respond(400, fieldError("customer_name", "Use 2–80 characters for the name."));
   }
   if (typeof customer_phone !== "string" || !/^91[6-9]\d{9}$/.test(customer_phone)) {
     return respond(400, fieldError("customer_phone", "Enter an Indian mobile number starting with 91."));
@@ -28,7 +30,9 @@ Deno.serve(requestHandler("POST", async (req, body, respond) => {
   if (orderType === "delivery" && (!address || address.length > 500)) {
     return respond(400, fieldError("delivery_address.full", "Enter a delivery address of at most 500 characters."));
   }
-  if (notes != null && typeof notes !== "string") return respond(400, fieldError("notes", "Use text."));
+  if (notes != null && (typeof notes !== "string" || notes.length > 500)) {
+    return respond(400, fieldError("notes", "Use text of at most 500 characters."));
+  }
   if (!Array.isArray(items) || !items.length || items.length > 50) {
     return respond(400, fieldError("items", "Choose 1–50 menu items."));
   }
@@ -76,10 +80,10 @@ Deno.serve(requestHandler("POST", async (req, body, respond) => {
   const tax = Math.round(subtotal * ((settingsMap.get("tax_percent")?.value ?? 0) / 100));
 
   const {data, error} = await supabase.from("orders").insert({
-    customer_name: clean(customer_name).slice(0, 100), customer_phone, customer_email: customer_email ?? null,
+    customer_name: customerName, customer_phone, customer_email: customer_email ?? null,
     order_type: orderType, delivery_address: delivery ? {full: address} : null, items: validatedItems,
     subtotal_inr: subtotal, delivery_fee_inr: deliveryFee, tax_inr: tax, total_inr: subtotal + deliveryFee + tax,
-    notes: notes ? clean(notes).slice(0, 500) : null, payment_status: "unpaid", status: "pending",
+    notes: notes ? clean(notes) : null, payment_status: "unpaid", status: "pending",
   }).select().single();
   if (error) throw new Error("Order insert failed");
   return respond(200, data);
