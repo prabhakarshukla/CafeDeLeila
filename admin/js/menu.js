@@ -31,10 +31,10 @@ export async function render({client, projectUrl, view, role, notice}) {
           }))),
         el('h2', {}, 'Categories'),
         editor('menu_categories', null, categories),
-        categories.length ? categories.map(row => editor('menu_categories', row, categories)) : el('p', {}, 'No categories yet.'),
+        ...(categories.length ? categories.map(row => editor('menu_categories', row, categories)) : [el('p', {}, 'No categories yet.')]),
         el('h2', {}, 'Items'),
         categories.length ? editor('menu_items', null, categories) : el('p', {}, 'Create a category before adding items.'),
-        items.length ? items.map(row => editor('menu_items', row, categories)) : el('p', {}, 'No items yet.'));
+        ...(items.length ? items.map(row => editor('menu_items', row, categories)) : [el('p', {}, 'No items yet.')]));
     } catch (error) {
       body.replaceChildren(el('p', {role:'alert'}, error.message), button('Retry', load));
     }
