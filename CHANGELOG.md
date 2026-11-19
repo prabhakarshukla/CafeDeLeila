@@ -55,3 +55,4 @@ feat(admin): T8 manage bookings applications and messages
 feat(admin): T9 add owner settings staff and export
 docs: T10 document fresh Supabase setup
 audit: T11 verify admin layouts and document limits
+A1–A4 reconciled the database catalog, added migration 006 and generated the repeatable sample menu seed.

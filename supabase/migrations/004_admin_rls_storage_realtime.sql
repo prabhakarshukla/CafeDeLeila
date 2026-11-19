@@ -112,8 +112,10 @@ CREATE POLICY "Public read menu images" ON storage.objects
 
 -- Admins can upload/manage menu images
 DROP POLICY IF EXISTS "Admins can manage menu images" ON storage.objects;
-CREATE POLICY "Admins can manage menu images" ON storage.objects
-  FOR ALL USING (bucket_id = 'menu-images' AND is_owner());
+DROP POLICY IF EXISTS "Owners can manage menu images" ON storage.objects;
+CREATE POLICY "Owners can manage menu images" ON storage.objects
+  FOR ALL TO authenticated USING (bucket_id = 'menu-images' AND is_owner())
+  WITH CHECK (bucket_id = 'menu-images' AND is_owner());
 
 -- ========== CV UPLOADS (private, admin read via signed URL) ==========
 -- Authenticated users (applicants) can upload to their own folder
@@ -130,8 +132,10 @@ CREATE POLICY "Public read og images" ON storage.objects
   FOR SELECT USING (bucket_id = 'og-images');
 
 DROP POLICY IF EXISTS "Admins can manage og images" ON storage.objects;
-CREATE POLICY "Admins can manage og images" ON storage.objects
-  FOR ALL USING (bucket_id = 'og-images' AND is_owner());
+DROP POLICY IF EXISTS "Owners can manage og images" ON storage.objects;
+CREATE POLICY "Owners can manage og images" ON storage.objects
+  FOR ALL TO authenticated USING (bucket_id = 'og-images' AND is_owner())
+  WITH CHECK (bucket_id = 'og-images' AND is_owner());
 
 -- ============================================
 -- REALTIME PUBLICATIONS
@@ -290,7 +294,7 @@ GRANT EXECUTE ON FUNCTION get_admin_dashboard_stats() TO authenticated;
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
  ('cv-uploads', 'cv-uploads', false, 2097152, ARRAY['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document']),
- ('menu-images', 'menu-images', true, 2097152, ARRAY['image/jpeg','image/png','image/webp']),
+ ('menu-images', 'menu-images', true, 5242880, ARRAY['image/jpeg','image/png','image/webp']),
  ('og-images', 'og-images', true, 2097152, ARRAY['image/jpeg','image/png','image/webp'])
 ON CONFLICT (id) DO UPDATE SET public = excluded.public,
   file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;

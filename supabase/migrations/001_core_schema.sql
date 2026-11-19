@@ -132,7 +132,7 @@ CREATE POLICY "Public read menu categories" ON menu_categories
 
 DROP POLICY IF EXISTS "Public read menu items" ON menu_items;
 CREATE POLICY "Public read menu items" ON menu_items 
-  FOR SELECT USING (is_available = true);
+  FOR SELECT USING (is_available = true AND EXISTS (SELECT 1 FROM menu_categories c WHERE c.id = category_id AND c.is_active));
 
 -- No public INSERT policies - inserts happen only via Edge Functions with service role
 
@@ -254,17 +254,18 @@ INSERT INTO menu_categories (name, slug, description, display_order) VALUES
   ('Pizza', 'pizza', 'Stone-baked thin crust pizzas with premium toppings', 5),
   ('Sandwiches & Burgers', 'sandwiches-burgers', 'Gourmet sandwiches and juicy burgers served with fries', 6),
   ('Rice & Noodles', 'rice-noodles', 'Asian-inspired rice and noodle bowls', 7),
-  ('Main Course Chinese', 'main-course-chinese', 'Authentic Chinese mains with bold flavors', 8),
-  ('Raita', 'raita', 'Cooling yogurt accompaniments', 9),
-  ('Special Breads', 'special-breads', 'Freshly baked Indian breads from the tandoor', 10),
-  ('Varieties of Rice', 'varieties-rice', 'Aromatic rice preparations', 11),
-  ('Varieties of Biryani', 'varieties-biryani', 'Slow-cooked layered rice dishes with aromatic spices', 12),
-  ('Indian Main Course (Chicken and Mutton)', 'indian-main-course-chicken-mutton', 'Rich and flavorful North Indian curries', 13),
-  ('South Indian', 'south-indian', 'Authentic flavors from the south', 14),
-  ('Indian Kebabs', 'indian-kebabs', 'Tandoor-grilled delicacies marinated in aromatic spices', 15),
-  ('Tandoori Appetizers', 'tandoori-appetizers', 'Charcoal-grilled starters from the clay oven', 16),
-  ('Salads', 'salads', 'Fresh, crisp, and nutritious', 17),
-  ('Soups', 'soups', 'Warming bowls of comfort', 18)
+  ('Main Course', 'main-course', 'Sample vegetarian mains', 8),
+  ('Chinese', 'chinese', 'Authentic Chinese mains with bold flavors', 9),
+  ('Raita', 'raita', 'Cooling yogurt accompaniments', 10),
+  ('Special Breads', 'special-breads', 'Freshly baked Indian breads from the tandoor', 11),
+  ('Varieties of Rice', 'varieties-rice', 'Aromatic rice preparations', 12),
+  ('Varieties of Biryani', 'varieties-biryani', 'Slow-cooked layered rice dishes with aromatic spices', 13),
+  ('Indian Main Course (Chicken and Mutton)', 'indian-main-course-chicken-mutton', 'Rich and flavorful North Indian curries', 14),
+  ('South Indian', 'south-indian', 'Authentic flavors from the south', 15),
+  ('Indian Kebabs', 'indian-kebabs', 'Tandoor-grilled delicacies marinated in aromatic spices', 16),
+  ('Tandoori Appetizers', 'tandoori-appetizers', 'Charcoal-grilled starters from the clay oven', 17),
+  ('Salads', 'salads', 'Fresh, crisp, and nutritious', 18),
+  ('Soups', 'soups', 'Warming bowls of comfort', 19)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================

@@ -1,7 +1,7 @@
 import {action, button, el, field, result, rupees} from './ui.js';
 
 const supported = ['image/jpeg','image/png','image/webp'];
-const imageLimit = 2 * 1024 * 1024;
+const imageLimit = 5 * 1024 * 1024;
 
 export async function render({client, view, role, notice}) {
   if (role !== 'owner') return;
@@ -56,7 +56,7 @@ export async function render({client, view, role, notice}) {
     if (isItem) {
       if (row) category.value = row.category_id;
       form.append(field('Category', category), field('Price in rupees', price), field('Vegetarian', veg),
-        field('Tags separated by commas', tags), field('Replace image (JPEG, PNG or WebP, up to 2 MB)', photo));
+        field('Tags separated by commas', tags), field('Replace image (JPEG, PNG or WebP, up to 5 MB)', photo));
     } else form.append(field('URL slug (lowercase letters, digits and hyphens)', slug));
     const submit = el('button', {}, row ? 'Save changes' : 'Create ' + (isItem ? 'item' : 'category'));
     form.append(submit);
@@ -71,7 +71,7 @@ export async function render({client, view, role, notice}) {
             tags:tags.value.split(',').map(tag => tag.trim()).filter(Boolean), is_available:active.checked});
           const file = photo.files[0];
           if (file) {
-            if (!supported.includes(file.type) || file.size < 1 || file.size > imageLimit) throw new Error('Choose a JPEG, PNG or WebP image up to 2 MB.');
+            if (!supported.includes(file.type) || file.size < 1 || file.size > imageLimit) throw new Error('Choose a JPEG, PNG or WebP image up to 5 MB.');
             const extension = {'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
             imagePath = crypto.randomUUID() + '.' + extension;
             const bucket = client.storage.from('menu-images');
