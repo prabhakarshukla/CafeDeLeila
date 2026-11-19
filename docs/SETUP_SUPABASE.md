@@ -18,7 +18,7 @@ Get-Content -Raw supabase/migrations/004_admin_rls_storage_realtime.sql | Set-Cl
 Get-Content -Raw supabase/migrations/006_cleanup_legacy.sql | Set-Clipboard
 ```
 
-For the reported existing project, reapply current 004 before 006 if the limiter or booking RPC is missing. The reported list lacks both, so use **004 → 006** for that project. 006 preserves existing settings and menu rows and removes known legacy access. Use the read-only verification guide first if the installation differs. There is no deployable 005. Keep manual SQL Editor runs separate from CLI migration history.
+For the reported existing project, reapply current 004 before 006 if the limiter or booking RPC is missing. The reported list lacks both, so use **004 → 006** for that project. 006 preserves existing settings and menu rows and removes known legacy access. Use the metadata queries in the verification guide first if the installation differs. There is no deployable 005. Keep manual SQL Editor runs separate from CLI migration history.
 
 ## 3. Seed the sample catalog
 
@@ -145,4 +145,4 @@ try {
 }
 ```
 
-Run supabase/tests/behavior.sql as the SQL Editor role on the disposable database for rollback assertions. It removes fixture rows. Numbering sequences can still advance. Check a booking, a contact message and an order alert before release.
+Run supabase/tests/behavior.sql as the SQL Editor role on the disposable database for rollback assertions. It removes fixture rows. Numbering sequences can still advance. Check a booking, a contact message and an order alert before release. Run the [full verification checklist](VERIFY_SUPABASE.md) for function origins, signup, all anonymous inserts, and staff status and protected-column updates.
