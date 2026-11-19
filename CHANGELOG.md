@@ -50,3 +50,4 @@ T-A corrected setup and readiness claims and recorded the branch handover.
 T-B repaired migration ordering, origin allowlisting, private write endpoints, public settings, storage limits and customer API contracts.
 feat(admin): T5 add guarded admin and dashboard
 feat(admin): T6 manage orders and alerts
+feat(admin): T7 manage catalog and sample pricing
