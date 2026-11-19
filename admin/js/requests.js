@@ -1,3 +1,4 @@
+import {formatIndiaDate, isCalendarDate} from '../../supabase/functions/_shared/india-date.mjs';
 import {action, button, changeStatus, el, field, labelOf, localTime, result} from './ui.js';
 
 const sections = {
@@ -29,7 +30,10 @@ export async function render({client, view, key, notice}) {
       let query = client.from(section.table).select('*',{count:'exact'}).order('created_at',{ascending:false})
         .order('id').range(page * size, (page + 1) * size - 1);
       if (select.value !== 'all') query = query.eq('status',select.value);
-      if (key === 'bookings' && date.value) query = query.eq('booking_date',date.value);
+      if (key === 'bookings' && date.value) {
+        if (!isCalendarDate(date.value)) throw new Error('Choose a valid booking date.');
+        query = query.eq('booking_date',date.value);
+      }
       const {data,error,count} = await query;
       if (error) throw new Error(error.message);
       if (current !== request) return;
@@ -45,7 +49,7 @@ export async function render({client, view, key, notice}) {
   function card(row) {
     const title = row.booking_number || row.application_number || row.subject || 'Message';
     const summary = key === 'bookings' ? [
-      row.customer_name + ' · ' + row.customer_phone, row.booking_date + ' · ' + row.booking_time + ' IST',
+      row.customer_name + ' · ' + row.customer_phone, formatIndiaDate(row.booking_date) + ' · ' + row.booking_time + ' IST',
       row.guests + ' guests', row.special_requests,
     ] : key === 'applications' ? [row.full_name, row.role, row.email, row.phone, row.address]
       : [row.name, row.email, row.phone, row.message];

@@ -1,3 +1,5 @@
+import {addCalendarDays, indiaDate, indiaDateTime, isCalendarDate} from './india-date.mjs';
+
 // Sample schedule. Update this list when the café confirms its booking slots.
 export const bookingRules = {
   timeSlots: [
@@ -9,3 +11,13 @@ export const bookingRules = {
   minAdvanceMinutes: 30,
   maxAdvanceDays: 60,
 };
+
+export function bookingDateAllowed(value, now = new Date()) {
+  const today = indiaDate(now);
+  return isCalendarDate(value) && value >= today && value <= addCalendarDays(today, bookingRules.maxAdvanceDays);
+}
+
+export function bookingSlotAvailable(date, time, now = new Date()) {
+  return bookingDateAllowed(date, now) && bookingRules.timeSlots.includes(time) &&
+    indiaDateTime(date, time).getTime() >= now.getTime() + bookingRules.minAdvanceMinutes * 60_000;
+}

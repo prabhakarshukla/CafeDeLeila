@@ -1,3 +1,4 @@
+import {addCalendarDays, indiaDateTime, isCalendarDate} from '../../supabase/functions/_shared/india-date.mjs';
 import {action, button, changeStatus, el, field, labelOf, localTime, result, rupees} from './ui.js';
 
 const next = {
@@ -66,9 +67,10 @@ export async function render({client, view, role, notice}) {
           : query.ilike('order_number', '%' + term + '%');
       }
       if (date.value) {
-        const start = new Date(date.value + 'T00:00:00+05:30');
+        if (!isCalendarDate(date.value)) throw new Error('Choose a valid date.');
+        const start = indiaDateTime(date.value);
         query = query.gte('created_at', start.toISOString())
-          .lt('created_at', new Date(start.getTime() + 86400000).toISOString());
+          .lt('created_at', indiaDateTime(addCalendarDays(date.value, 1)).toISOString());
       }
       const {data, error, count} = await query;
       if (error) throw new Error(error.message);

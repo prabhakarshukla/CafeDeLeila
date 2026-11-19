@@ -171,41 +171,11 @@ const utils = (function() {
     };
   }
 
-  function formatDate(date, options = {}) {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-IN', {
-      weekday: options.weekday || 'short',
-      day: 'numeric',
-      month: options.month || 'short',
-      year: options.year ? 'numeric' : undefined
-    });
-  }
-
   function formatTime(time) {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  }
-
-  function isPastDate(date) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return new Date(date) < today;
-  }
-
-  function getAvailableDates(maxDays = 60) {
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i <= maxDays; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push({
-        value: indiaDate(date),
-        label: formatDate(date, { weekday: 'short', month: 'short' })
-      });
-    }
-    return dates;
   }
 
   // ACCESSIBILITY UTILITIES
@@ -341,7 +311,7 @@ const utils = (function() {
     createEl, $, $$, on, delegate, storageGet, storageSet, storageRemove,
     formatPrice, formatPhone, validateIndianPhone, validateEmail, validateRequired, validateFile,
     generateId, generateOrderId, debounce, throttle,
-    formatDate, formatTime, isPastDate, getAvailableDates,
+    formatTime,
     trapFocus, announce, prefersReducedMotion, animate,
     initLazyLoading, showToast, escapeHtml,
     apiRequest
@@ -386,10 +356,7 @@ window.generateId = utils.generateId;
 window.generateOrderId = utils.generateOrderId;
 window.debounce = utils.debounce;
 window.throttle = utils.throttle;
-window.formatDate = utils.formatDate;
 window.formatTime = utils.formatTime;
-window.isPastDate = utils.isPastDate;
-window.getAvailableDates = utils.getAvailableDates;
 window.trapFocus = utils.trapFocus;
 window.announce = utils.announce;
 window.prefersReducedMotion = utils.prefersReducedMotion;
@@ -1592,7 +1559,6 @@ function initBookingPage() {
   if (!document.body.classList.contains('booking-page')) return;
   if (!state.config) return;
 
-  bookingState.config = state.config;
   _initBookingPage();
 }
 
@@ -1605,8 +1571,7 @@ function _initBookingPage() {
   initLazyLoading();
 }
 
-let bookingState = {
-  config: null,
+const bookingState = {
   availableDates: [],
   timeSlots: [],
   selectedDate: null,
@@ -1614,31 +1579,21 @@ let bookingState = {
   selectedGuests: 2
 };
 
+let bookingDates;
+let bookingRules;
+
 function loadBookingConfig() {
-  const config = bookingState.config?.booking || {};
-  bookingState.timeSlots = config.timeSlots || [
-    "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-    "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-    "20:00", "20:30", "21:00"
-  ];
-  bookingState.maxGuests = config.maxGuests || 20;
-  bookingState.maxAdvanceDays = config.maxAdvanceDays || 60;
-  bookingState.minAdvanceMinutes = config.minAdvanceMinutes || 30;
-
-  const today = new Date();
-  bookingState.availableDates = [];
-  for (let i = 0; i <= bookingState.maxAdvanceDays; i++) {
-    const date = new Date(indiaDate(today) + 'T12:00:00+05:30');
-    date.setUTCDate(date.getUTCDate() + i);
-    bookingState.availableDates.push({
-      value: indiaDate(date),
-      label: formatDate(date, { weekday: 'short', month: 'short' }),
-      fullLabel: formatDate(date, { weekday: 'long', month: 'long', day: 'numeric' })
-    });
-  }
-
-  bookingState.selectedDate = bookingState.availableDates[0].value;
+  Object.assign(bookingState, bookingRules.bookingRules);
+  const today = bookingDates.indiaDate();
+  bookingState.availableDates = Array.from({length: bookingState.maxAdvanceDays + 1}, (_, offset) => {
+    const value = bookingDates.addCalendarDays(today, offset);
+    return {
+      value,
+      label: bookingDates.formatIndiaDate(value, {weekday: 'short', month: 'short'}),
+      fullLabel: bookingDates.formatIndiaDate(value, {weekday: 'long', month: 'long', day: 'numeric'}),
+    };
+  });
+  bookingState.selectedDate = today;
 }
 
 function renderDateOptions() {
@@ -1652,7 +1607,7 @@ function renderDateOptions() {
             aria-pressed="${date.value === bookingState.selectedDate}"
             role="button"
             aria-label="${date.fullLabel}">
-      <span class="date-option__day">${new Date(date.value).getDate()}</span>
+      <span class="date-option__day">${Number(date.value.slice(-2))}</span>
       <span class="date-option__label">${date.label}</span>
     </button>
   `).join('');
@@ -1667,13 +1622,13 @@ function renderTimeSlots() {
   const container = $('#booking-time');
   if (!container) return;
 
-  const today = indiaDate(new Date());
-  const currentTime = new Intl.DateTimeFormat('en-GB', {timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(Date.now() + bookingState.minAdvanceMinutes * 60000));
-
-  const slots = bookingState.timeSlots.map(time => {
-    const isPast = bookingState.selectedDate === today && time <= currentTime;
-    return { time, isPast };
-  });
+  const now = new Date();
+  const slots = bookingState.timeSlots.map(time => ({
+    time, isPast: !bookingRules.bookingSlotAvailable(bookingState.selectedDate, time, now),
+  }));
+  if (!slots.some(slot => slot.time === bookingState.selectedTime && !slot.isPast)) {
+    bookingState.selectedTime = slots.find(slot => !slot.isPast)?.time ?? null;
+  }
 
   container.innerHTML = slots.map(slot => `
     <button type="button"
@@ -1687,13 +1642,6 @@ function renderTimeSlots() {
     </button>
   `).join('');
 
-  if (!bookingState.selectedTime) {
-    const firstAvailable = slots.find(s => !s.isPast);
-    if (firstAvailable) {
-      bookingState.selectedTime = firstAvailable.time;
-      container.querySelector(`[data-time="${firstAvailable.time}"]`)?.classList.add('is-selected');
-    }
-  }
 }
 
 function renderGuestOptions() {
@@ -1746,14 +1694,9 @@ function bookingValidateField(input) {
     message = 'Please enter a valid 10-digit Indian mobile number';
   } else if (input.type === 'email' && input.value && !validateEmail(input.value)) {
     valid = false; message = 'Please enter a valid email address';
-  } else if (input.type === 'date' && input.value) {
-    const selected = new Date(input.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selected < today) {
-      valid = false;
-      message = 'Date cannot be in the past';
-    }
+  } else if (input.type === 'date' && input.value && !bookingRules.bookingDateAllowed(input.value)) {
+    valid = false;
+    message = 'Choose a valid booking date';
   }
 
   if (group) {
@@ -1785,12 +1728,12 @@ async function bookingHandleSubmit(e) {
     }
   });
 
-  if (!bookingState.availableDates.some(d => d.value === bookingState.selectedDate) || bookingState.selectedDate < indiaDate(new Date())) {
+  if (!bookingRules.bookingDateAllowed(bookingState.selectedDate)) {
     showToast('Please select a date', 'error');
     allValid = false;
   }
 
-  if (!bookingState.timeSlots.includes(bookingState.selectedTime) || Date.parse(bookingState.selectedDate + 'T' + bookingState.selectedTime + ':00+05:30') < Date.now() + bookingState.minAdvanceMinutes * 60000) {
+  if (!bookingRules.bookingSlotAvailable(bookingState.selectedDate, bookingState.selectedTime)) {
     showToast('Please select a time', 'error');
     allValid = false;
   }
@@ -1862,7 +1805,7 @@ function showBookingConfirmation(booking) {
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Date'),
-            createEl('span', { class: 'booking-success__value' }, formatDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' }))
+            createEl('span', { class: 'booking-success__value' }, bookingDates.formatIndiaDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' }))
           ),
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Time'),
@@ -2605,6 +2548,10 @@ async function init() {
       initMenuPage();
     }
     if (document.body.classList.contains('booking-page')) {
+      [bookingDates, bookingRules] = await Promise.all([
+        import('../supabase/functions/_shared/india-date.mjs'),
+        import('../supabase/functions/_shared/booking-rules.mjs'),
+      ]);
       initBookingPage();
     }
     if (document.body.classList.contains('careers-page')) {

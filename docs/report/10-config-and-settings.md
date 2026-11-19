@@ -18,7 +18,7 @@
 | `ordering.types`, `defaultType`, `minOrderDelivery`, `deliveryFee`, `note` | UI choices, preferences and estimates. Server rules control accepted orders. |
 | `menu.is_sample`, `note` | Default sample state and note. The live public setting can override the flag. |
 | `careers.allowedFileTypes`, `maxFileSizeMB`, `roles`, `_sample` | CV UI validation and sample roles. Handler and bucket also limit uploads. |
-| `booking.timeSlots`, `maxGuests`, `minAdvanceMinutes`, `maxAdvanceDays`, `_sample`, `note` | Date/time options and booking limits shown in UI. Times await owner confirmation. |
+| Shared `booking-rules.mjs` | Date/time options and booking limits used by the site and booking function. Times await owner confirmation. |
 | `payment.note`, `methods` | Descriptive fields for manual arrangements. No payment integration. |
 | `seo.defaultTitle`, `defaultDescription`, `ogImage`, `twitterHandle` | Configuration metadata. Active page titles and descriptions are in HTML. |
 | `supabase.url`, `publishableKey` | Public endpoint and browser key used by storefront and admin. No private keys belong here. |

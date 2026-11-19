@@ -1,3 +1,5 @@
+import {formatIndiaDate, indiaDate} from '../../supabase/functions/_shared/india-date.mjs';
+
 export function el(tag, attributes = {}, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attributes)) {
@@ -15,10 +17,9 @@ export function button(label, action, attributes = {}) {
 }
 
 const money = new Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'});
-const indiaTime = new Intl.DateTimeFormat('en-IN', {timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short'});
 export const rupees = value => money.format(value);
-export const localTime = value => indiaTime.format(new Date(value));
-export const today = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata'}).format(new Date());
+export const localTime = value => formatIndiaDate(value, {dateStyle: 'medium', timeStyle: 'short'});
+export const today = indiaDate;
 export const labelOf = value => String(value ?? '').replaceAll('_', ' ');
 export const field = (label, input) => el('label', {}, label, input);
 

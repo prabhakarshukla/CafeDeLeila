@@ -1,8 +1,4 @@
 // Shared helpers for the existing buildless application.
-function indiaDate(date) {
-  return new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit'}).format(date);
-}
-
 function verifiedWhatsAppUrl(contact) {
   const number = contact?.whatsapp;
   return contact?.whatsappVerified === true && typeof number === 'string' && /^91\d{10}$/.test(number)

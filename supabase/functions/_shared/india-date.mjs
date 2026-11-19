@@ -2,12 +2,7 @@ const indiaZone = 'Asia/Kolkata';
 const calendar = new Intl.DateTimeFormat('en-CA', {
   timeZone: indiaZone, year: 'numeric', month: '2-digit', day: '2-digit',
 });
-const clock = new Intl.DateTimeFormat('en-GB', {
-  timeZone: indiaZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-});
-
 export const indiaDate = (date = new Date()) => calendar.format(date);
-export const indiaTime = (date = new Date()) => clock.format(date);
 export const indiaDateTime = (value, time = '00:00') => new Date(value + 'T' + time + ':00+05:30');
 
 export function isCalendarDate(value) {
