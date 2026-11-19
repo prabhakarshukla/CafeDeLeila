@@ -63,3 +63,9 @@ Embedded PostgreSQL PASS after fixing migration 003 to use gen_random_uuid(). Cl
 | Browser config | PASS format checked without printing keys. Existing valid URL/key fields preserved. Hosted key validity UNVERIFIED. |
 A9–A10 PASS documentation review. Verification guide covers schema, policies, buckets, publications, functions and anonymous REST. Setup gives fresh and existing sequences and the smoke tests. Hosted commands remain UNVERIFIED and were not run.
 Numbering regression PASS. A 1,100-insert rollback loop reproduced duplicate IDs when the fixed-width padding truncated four digits. Fresh installs and 006 now preserve the full sequence. Embedded PostgreSQL replay passed after the fix.
+
+## Part B
+
+PASS document structure checks. The index links 15 chapters and records 14 numbered corrections. Each chapter has How it works and Where to look. The longest chapter is under 600 lines. The database chapter transcribes all columns, callers, rules and 25 final policy definitions. The coverage script is run against the final index.
+
+UNVERIFIED full Supabase stack and hosted operations. Docker and Deno were unavailable. No project, function, database, user or Storage request targeted the existing hosted project.
