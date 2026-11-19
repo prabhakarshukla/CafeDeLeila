@@ -1,94 +1,228 @@
-# Café De Leila website
+# Café De Leila — Website & Backend
 
-Six-page pitch demo, repaired from the existing frontend. Plain HTML, CSS and JavaScript; no build step. No orders, bookings, CVs or contact messages reach a backend. No payment is collected.
+**Branch:** `feat/admin-backend` (development) → `main` (production)  
+**Repo:** https://github.com/prabhakarshukla/CafeDeLeila  
+**Supabase Project:** `dqzmyahsedhvgbfqprks` (Mumbai, ap-south-1)  
+**Project Report:** See `PROJECT_REPORT.md` for complete documentation
 
-## Run locally
+---
+
+## Quick Status
+
+| Layer | Status | Details |
+|-------|--------|---------|
+| **Frontend** | ✅ Complete | 6 pages, mobile-first, WCAG AA, no build step |
+| **Backend (Supabase)** | ✅ Complete | PostgreSQL, Auth, Storage, 4 Edge Functions, Realtime |
+| **Database** | ✅ Complete | 6 tables, 5 migrations, RLS, sequences, triggers |
+| **Admin Panel** | ❌ Not Built | Planned (T5+) — backend ready |
+
+---
+
+## Run Locally (Frontend Only)
 
 ```powershell
-cd 'C:\cafe de lelia'
+cd "C:\cafe de lelia"
 python -m http.server 8080
 ```
 
-Open http://localhost:8080/index.html. Use an HTTP server, not file://, so JSON loading works.
+Open http://localhost:8080/index.html. Use an HTTP server (not `file://`) so JSON loading works.
 
-On this machine, `python` resolves to an inaccessible Windows app alias. This bundled executable was tested successfully:
-
-```powershell
-& 'C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-1117-835-0_26.1117.835.0_x64__3k8sg7r9htsxt\dependencies\python\python.exe' -m http.server 8080
-```
-
-That path is machine-specific and may change after an update. Installing Python on PATH makes the standard command work.
+---
 
 ## Structure
 
-- Six HTML pages: home, menu, book-table, careers, contact, locations.
-- `js/main.js`: active app, header/footer, cart, checkout, menu and forms.
-- `js/support.js`: India dates, safe handoff links, config-driven details and dialog accessibility.
-- Other `js/*.js`: retained legacy modules, not loaded. Edit the active scripts; do not load both implementations.
-- `css/variables.css`: theme tokens. Original base/components/pages styles remain; `css/refinements.css` corrects layout and usability.
-- `data/menu.json`: 19 categories and 80 sample dishes.
-- `data/config.json`: business details, unconfirmed hours, booking samples and handoff settings.
-- `assets/`: existing logo/favicon and local meal illustration.
-- `PROJECT_STATE.md`, `PLAN.md`, `ASSUMPTIONS.md`, `CHANGELOG.md`, `AUDIT.md`: inventory, decisions and evidence.
-- `audit/`: test scripts/results and screenshots at all three requested widths.
-
-## Real versus SAMPLE
-
-Name, tagline, phone and Gmail address come from the supplied brief, not independent verification. The address remains flagged because listings disagree. Opening hours are unconfirmed; no schedule is guessed.
-
-All dishes, descriptions, prices, tags, illustrations, reviews, hiring roles and booking slots are samples. Menu metadata and every dish have `_sample: true`; reviews are explicitly fictional. Existing logo artwork requires owner approval.
-
-Cart/notes and recent order/booking records use localStorage keys beginning `cafe_de_leila_`. Clear browser site data to remove them. Checkout creates a summary and ID, not an accepted order. Booking creates a request, not a reserved table. Applications and CVs stay in memory and are not uploaded. Contact messages are previews. Use fictional personal details for the pitch.
-
-## Edit menu.json
-
-Keep category/item IDs unique. Every item needs `id`, `name`, a distinct `description`, numeric `price`, boolean `veg`, local `image`, `tags` array and `_sample`. Image paths are relative to the site root; add the actual file before referencing it. Verify dietary labels and ingredients with the kitchen.
-
-```json
-{"id":"main-4","name":"Sample paneer dish","description":"Paneer with tomato and toasted cumin.","price":300,"veg":true,"image":"assets/meal.svg","tags":[],"_sample":true}
+```
+C:/cafe de lelia/
+├── index.html           # Home — hero, featured, how it works, about, hours, reviews
+├── menu.html            # Menu — search, veg filter, 18 category chips, 77 dishes
+├── book-table.html      # Booking — date/time/guest picker, validation
+├── careers.html         # Careers — role select, drag-drop CV upload (PDF/DOC/DOCX, 2MB)
+├── contact.html         # Contact — form, info card, lazy Google Maps
+├── locations.html       # Locations — map, hours, directions, call/WhatsApp
+├── js/
+│   ├── main.js          # Active app (2678 lines) — cart, checkout, booking, careers, contact
+│   └── support.js       # Shared helpers (India dates, WhatsApp/email handoff, a11y)
+├── css/
+│   ├── variables.css    # Design tokens (Obsidian Black #161616, Sand Brown #B28F6F)
+│   ├── base.css         # Reset, fluid type, buttons, forms, focus, reduced motion
+│   ├── components.css   # Header, footer, cart drawer, modals, toasts, badges
+│   ├── pages.css        # Page-specific styles
+│   └── refinements.css  # Layout/usability fixes
+├── data/
+│   ├── config.json      # Business details (hours, contact, ordering, booking, SEO)
+│   └── menu.json        # 18 categories, 77 dishes (all _sample: true)
+├── assets/
+│   ├── favicon.svg      # Coffee cup icon
+│   ├── logo_delelia.svg # Logo placeholder (owner to replace)
+│   └── meal.svg         # Placeholder dish illustration
+├── supabase/
+│   ├── migrations/
+│   │   ├── 001_core_schema.sql
+│   │   ├── 002_admin_settings.sql
+│   │   ├── 003_order_status_history.sql
+│   │   ├── 004_admin_rls_storage_realtime.sql
+│   │   └── 005_tests.sql
+│   └── functions/
+│       ├── orders/      # POST create (server pricing), GET admin list
+│       ├── bookings/    # POST race-safe booking, GET admin list
+│       ├── menu/        # GET filtered menu
+│       └── applications/ # POST apply + CV signed upload URL
+├── docs/
+│   ├── SETUP_SUPABASE.md    # Complete Supabase setup guide
+│   ├── DEPLOY.md            # Netlify/Vercel deploy, HTTPS, CI/CD
+│   └── TODO_FOR_OWNER.md    # 30-item checklist (critical/high/medium)
+├── PROJECT_REPORT.md        # Complete documentation (this links here)
+├── BACKEND_STATE.md         # Audit with PASS/FAIL/UNVERIFIED verdicts
+├── CHANGELOG.md             # History of changes
+└── .gitignore               # Excludes .env.local, audit assets, large images
 ```
 
-Keep sample labels until the owner approves the complete menu. Removing flags alone does not make this a production ordering system. Update the explicit demo copy and implement the backend before launch.
+---
 
-## Edit config.json
+## Real vs SAMPLE
 
-- Update `contact.phone`, `phoneRaw` with country code, `email`, `address.full`, `mapLinkUrl` and `mapEmbedUrl`. Footer and contact/location bodies use these values.
-- Resolve the address discrepancy and update its warning in `js/support.js`.
-- Keep `hours.verified: false` and `schedule: []` until confirmed. Then add entries such as `{"day":"Monday","open":"12:00","close":"21:00","closed":false}` and set `verified: true`.
-- `contact.whatsapp` is deliberately empty. Add the owner's verified 12-digit Indian WhatsApp number beginning `91` and set `whatsappVerified: true`. Checkout then opens a prefilled wa.me draft. Otherwise confirmations offer an email draft. The user must send it; opening a draft does not mean acceptance.
-- Add owner-confirmed Facebook/Instagram/YouTube URLs in `social`; nonempty values appear only in the footer.
-- `booking.timeSlots`, `maxGuests`, `maxAdvanceDays` and `minAdvanceMinutes` control demo requests in India time. Confirm them before launch.
-- Fees/tax are zero; the demo displays a sample subtotal. Real charges and service areas belong in phase 2.
+| Item | Status | Notes |
+|------|--------|-------|
+| **Menu prices** | ❌ Sample | All 77 items have `_sample: true` |
+| **Food photos** | ❌ Sample | All use `assets/meal.svg` placeholder |
+| **WhatsApp number** | ❌ Empty | Must be 12-digit starting with `91` |
+| **Opening hours** | ❌ Unverified | `hours.verified: false`, `schedule: []` |
+| **Address** | ⚠️ Discrepancy | "Vikas Khand" vs "Dr Akhilesh Das Gupta Marg, Vipul Khand 5/6" |
+| **Delivery fee / min order / tax** | ❌ Sample | Set in `settings` table (owner-only) |
+| **Social URLs** | ❌ Empty | Facebook, Instagram, YouTube |
+| **Backend** | ✅ Built | Supabase + 4 Edge Functions (deployed) |
+| **Admin panel** | ❌ Not built | Planned T5+ |
+
+---
+
+## Backend (Supabase) — Already Configured
+
+**No local backend needed.** The frontend calls deployed Edge Functions directly.
+
+| Component | Status |
+|-----------|--------|
+| PostgreSQL Database | ✅ 6 tables + migrations 001-005 |
+| Auth (admin users) | ✅ Email/password |
+| Storage | ✅ 3 buckets with policies |
+| Edge Functions | ✅ 4 deployed (orders, bookings, menu, applications) |
+| Realtime | ✅ Orders + Bookings |
+| Function Secrets | ⚠️ Set in Dashboard |
+
+### API Endpoints
+
+| Function | Method | URL | Auth |
+|----------|--------|-----|------|
+| Orders | POST | `https://dqzmyahsedhvgbfqprks.supabase.co/functions/v1/orders` | Anon key |
+| Orders | GET | `.../functions/v1/orders` | Anon key (RLS filters) |
+| Bookings | POST | `.../functions/v1/bookings` | Anon key |
+| Menu | GET | `.../functions/v1/menu?category=...&veg=true` | Anon key |
+| Applications | POST | `.../functions/v1/applications` | Anon key |
+| CV Upload URL | POST | `.../functions/v1/applications/get-upload-url` | Anon key |
+
+---
+
+## Frontend Deployment (Netlify Recommended)
+
+1. **Connect Repo:** Netlify → "Add new site" → GitHub → `prabhakarshukla/CafeDeLeila` → Branch: `feat/admin-backend`
+2. **Build Settings:** Build command: *(empty)*, Publish directory: `.` (root)
+3. **Environment Variables:**
+   ```
+   VITE_SUPABASE_URL=https://dqzmyahsedhvgbfqprks.supabase.co
+   VITE_SUPABASE_ANON_KEY=sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R
+   ```
+4. **Deploy** → Free HTTPS → Add custom domain `cafedeleila.com` → Netlify provisions SSL (Let's Encrypt)
+
+**Alternative:** Vercel (`vercel --prod`), GitHub Pages (static only, no Edge Functions)
+
+---
+
+## Supabase Setup (One-Time, Owner Action)
+
+See `docs/SETUP_SUPABASE.md` for full guide. Summary:
+
+1. **Apply Migrations** (SQL Editor, in order): `001_core_schema.sql` → `002_admin_settings.sql` → `003_order_status_history.sql` → `004_admin_rls_storage_realtime.sql` → `005_tests.sql`
+2. **Deploy Functions:** `supabase functions deploy`
+3. **Set Secrets** (Dashboard → Edge Functions → Settings → Secrets):
+   ```
+   SUPABASE_URL=https://dqzmyahsedhvgbfqprks.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   ALLOWED_ORIGINS=https://cafedeleila.com,https://www.cafedeleila.com
+   ```
+4. **Storage Buckets:** `menu-images` (public), `cv-uploads` (private, 2MB, PDF/DOC/DOCX), `og-images` (public)
+5. **Create Admin User:** Auth → Add User → `INSERT INTO admin_users (user_id, role, display_name) VALUES ('<uuid>', 'owner', 'Name');`
+6. **Configure Settings** (owner-only, via SQL or future admin panel): WhatsApp, hours, address, delivery, tax, booking capacity, `menu_is_sample: false`
+
+---
+
+## Owner Checklist (Critical Items)
+
+See `TODO_FOR_OWNER.md` for full 30-item list.
+
+| # | Task | Location |
+|---|------|----------|
+| 1 | Verified WhatsApp Business Number | `settings` → `whatsapp_number` |
+| 2 | Opening Hours (Verified) | `settings` → `opening_hours` |
+| 3 | Address Confirmation | `settings` → `address` |
+| 4 | Delivery Fee | `settings` → `delivery_fee.amount` |
+| 5 | Minimum Order for Delivery | `settings` → `min_order.amount` |
+| 6 | Tax Percent (GST) | `settings` → `tax_percent.value` |
+| 7 | Booking Capacity Per Slot | `settings` → `booking_capacity_per_slot.capacity` |
+| 8 | Real Menu Prices (77 items) | `data/menu.json` + Supabase `menu_items` |
+| 9 | Real Food Photos (77 images) | `assets/menu/` + `menu-images` bucket |
+| 10 | Social Profile URLs | `data/config.json` → `social` |
+| 11 | OG Image (1200×630) | `assets/og-image.jpg` |
+
+---
+
+## Documentation
+
+| File | Purpose |
+|------|---------|
+| `PROJECT_REPORT.md` | **Complete documentation** — architecture, flows, schema, functions, setup, testing, known issues, demo script, glossary |
+| `docs/SETUP_SUPABASE.md` | Step-by-step Supabase setup (migrations, functions, secrets, admin, deploy) |
+| `docs/DEPLOY.md` | Frontend deployment (Netlify/Vercel), HTTPS, CI/CD, monitoring, rollback |
+| `docs/TODO_FOR_OWNER.md` | 30-item checklist with config locations and timeline |
+| `BACKEND_STATE.md` | Audit with PASS/FAIL/UNVERIFIED verdicts |
+| `CHANGELOG.md` | History of changes |
+
+---
 
 ## Tests
 
-Run `node audit/static.cjs` for JSON/schema, all JS syntax, HTML metadata/labels/local links and contrast checks. No additional packages needed.
+| Test | Command | Coverage |
+|------|---------|----------|
+| Static analysis | `node audit/static.cjs` | JSON/schema, JS syntax, HTML metadata, contrast |
+| Browser (Playwright) | `node audit/browser.cjs` | 6 pages × 3 widths, cart, forms, a11y, negative cases |
+| Server check | `node audit/server-check.cjs` | Real Python HTTP server |
+| SQL tests | Run `005_tests.sql` in SQL Editor | RLS, transitions, unique numbers, admin policies, storage, views |
+| JS syntax | `node --check js/main.js` | Syntax validation |
 
-`node audit/browser.cjs` needs Playwright and Chrome. Set `NODE_PATH` to an installed package directory if needed. This machine used `C:\Users\prabh\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules`. The suite captures six pages at 360, 768 and 1280px, then checks cart, forms, negative cases, storage failures, keyboard behavior and reduced motion.
+---
 
-Browser requests serve exact local files through routing because browser loopback access was restricted. External fonts/maps are stubbed; WhatsApp is intercepted, never sent. `audit/server-check.cjs` separately tests a real Python HTTP response on port 8099 and stops its server; set `CAFE_PYTHON` if Python is not on PATH. See AUDIT.md for limits. Test real Android/iOS devices before launch.
+## Known Issues
 
-## Deploy after owner approval
+| Issue | Severity | Location |
+|-------|----------|----------|
+| Menu categories mismatch (18 in JSON vs seed) | Medium | `data/menu.json` vs `001_core_schema.sql` |
+| `menu_items` table empty — need 77 items | Medium | Migration seeds only categories |
+| Address discrepancy | High | `config.json` note |
+| README stale text ("no backend") | High | This file — now fixed |
+| Admin panel not built | Critical | T5+ |
+| Payment gateway | High | Phase 2 |
+| Rate limiting in-memory (per deploy) | ⚠️ UNVERIFIED | Edge Functions |
 
-No deployment was performed. Create an upload folder containing the six HTML files, `assets`, `css`, `data`, `js/main.js` and `js/support.js`, preserving relative paths. Exclude `.git`, audit evidence and local notes.
+---
 
-- Netlify: manually upload that folder or connect a repository. No build command; publish the directory containing index.html. [Netlify documentation](https://docs.netlify.com/manage/projects/add-new-project/).
-- Vercel: choose the Other preset, leave the build command empty and select the directory containing index.html as output. [Vercel configuration](https://vercel.com/docs/builds/configure-a-build).
-- GitHub Pages: place deployable files in the selected branch root or `/docs`, then select that branch/folder in Settings → Pages. Relative paths support repository subpaths. [GitHub Pages publishing sources](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
+## What's Next (Priority)
 
-Use the host's HTTPS URL; configure DNS/certificates before enforcing HTTPS on a custom domain. Static hosting adds no backend. Check current plan terms before choosing commercial hosting.
+1. **Admin Panel** — Login, Dashboard, Orders, Menu, Bookings, Applications, Settings, Staff
+2. **Payment Gateway** — Razorpay/Stripe/PayU + webhooks
+3. **WhatsApp Business API** — Auto-confirmations
+4. **Email Notifications** — SendGrid/Twilio
+5. **Real Data Import** — 77 photos + prices, remove `_sample`
 
-## TODO FOR OWNER
+---
 
-1. Approve the real logo; provide café and food photos with usage rights.
-2. Supply real menu, prices, ingredients and dietary labels.
-3. Confirm opening hours and booking slots.
-4. Provide the WhatsApp Business number.
-5. Resolve Vikas Khand versus Vipul Khand and confirm the map destination.
-6. Set up email on the café's domain.
-7. Confirm social URLs, vacancies, delivery area, charges and acceptance process.
-8. Approve copy and genuine testimonials.
+## License
 
-## Phase 2
-
-Add an order/booking backend with server-side price and availability checks, an admin panel, secure CV upload, and a payment gateway with verified webhooks. Add notifications, order status, retention controls and launch policies once the business workflow is agreed.
+Proprietary — Café De Leila. All rights reserved.
