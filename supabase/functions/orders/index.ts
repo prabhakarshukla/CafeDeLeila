@@ -1,257 +1,86 @@
-import { cors, readJson } from "../_shared/http.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+import {fieldError, isObject, rateLimiter, requestHandler} from "../_shared/http.ts";
 
+type MenuItem = {id: string; name: string; price_inr: number; veg: boolean; is_available: boolean};
+type Setting = {enabled?: boolean; amount?: number; value?: number};
 
-const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute per IP
+const allowRequest = rateLimiter(30);
+const clean = (value: string) => value.replace(/[<>]/g, "").trim();
 
-// Simple in-memory rate limiter (per deployment instance)
-const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now });
-    return true;
+Deno.serve(requestHandler("POST", async (req, body, respond) => {
+  if (!allowRequest(req)) return respond(429, {error: "Too many requests. Please slow down."});
+  const {customer_name, customer_phone, customer_email, notes, items, delivery_address} = body;
+  if (typeof customer_name !== "string" || !clean(customer_name)) {
+    return respond(400, fieldError("customer_name", "Enter a name."));
   }
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return false;
+  if (typeof customer_phone !== "string" || !/^91[6-9]\d{9}$/.test(customer_phone)) {
+    return respond(400, fieldError("customer_phone", "Enter an Indian mobile number starting with 91."));
   }
-  entry.count++;
-  return true;
-}
-
-function validateIndianPhone(phone: string): boolean {
-  return /^91[6-9]\d{9}$/.test(phone);
-}
-
-function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function sanitizeText(text: string, maxLen: number): string {
-  return text.slice(0, maxLen).replace(/[<>]/g, "");
-}
-
-serve(async (req) => {
-  const corsHeaders = Object.fromEntries(cors(req, "POST"));
-  if (req.headers.has("origin") && !corsHeaders["access-control-allow-origin"]) return new Response(null, {status: 403, headers: corsHeaders});
-  if (req.method === "OPTIONS") return new Response(null, {status: 204, headers: corsHeaders});
-  if (req.method !== "POST") return new Response(null, {status: 405, headers: corsHeaders});
-  // Rate limiting
-  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(clientIp)) {
-    return new Response(JSON.stringify({ error: "Too many requests. Please slow down." }), {
-      status: 429,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  if (customer_email != null && (typeof customer_email !== "string" || customer_email.length > 254 ||
+      !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(customer_email))) {
+    return respond(400, fieldError("customer_email", "Enter a valid email address."));
+  }
+  const orderType = body.order_type === undefined ? "dine_in" : body.order_type;
+  if (orderType !== "dine_in" && orderType !== "takeaway" && orderType !== "delivery") {
+    return respond(400, fieldError("order_type", "Choose dine_in, takeaway, or delivery."));
+  }
+  const address = isObject(delivery_address) && typeof delivery_address.full === "string" ? clean(delivery_address.full) : "";
+  if (orderType === "delivery" && (!address || address.length > 500)) {
+    return respond(400, fieldError("delivery_address.full", "Enter a delivery address of at most 500 characters."));
+  }
+  if (notes != null && typeof notes !== "string") return respond(400, fieldError("notes", "Use text."));
+  if (!Array.isArray(items) || !items.length || items.length > 50) {
+    return respond(400, fieldError("items", "Choose 1–50 menu items."));
+  }
+  const requested: {id: string; quantity: number}[] = [];
+  const ids = new Set<string>();
+  for (const [index, item] of items.entries()) {
+    if (!isObject(item) || typeof item.id !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(item.id)) {
+      return respond(400, fieldError(`items.${index}.id`, "Choose a valid menu item."));
+    }
+    if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 50) {
+      return respond(400, fieldError(`items.${index}.quantity`, "Use a whole number from 1 to 50."));
+    }
+    const id = item.id.toLowerCase();
+    if (ids.has(id)) return respond(400, fieldError(`items.${index}.id`, "Each menu item may appear only once."));
+    ids.add(id);
+    requested.push({id, quantity: item.quantity});
   }
 
-  // CORS preflight
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const {data: menuItems, error: menuError} = await supabase.from("menu_items")
+    .select("id, name, price_inr, veg, is_available, category:menu_categories!inner(is_active)")
+    .eq("category.is_active", true).in("id", [...ids]);
+  if (menuError || !menuItems) throw new Error("Catalog unavailable");
+  const menu = new Map(menuItems.map((item): [string, MenuItem] => [item.id, item]));
 
-  // Body size limit
-  const contentLength = req.headers.get("content-length");
-  if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
-    return new Response(JSON.stringify({ error: "Request body too large" }), {
-      status: 413,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  let subtotal = 0;
+  const validatedItems = [];
+  for (const [index, item] of requested.entries()) {
+    const entry = menu.get(item.id);
+    if (!entry?.is_available) return respond(400, fieldError(`items.${index}.id`, "This item is unavailable."));
+    subtotal += entry.price_inr * item.quantity;
+    validatedItems.push({id: entry.id, name: entry.name, price_inr: entry.price_inr, quantity: item.quantity, veg: entry.veg});
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  const {data: settings, error: settingsError} = await supabase.from("settings").select("key,value")
+    .in("key", ["ordering_enabled", "delivery_enabled", "delivery_fee", "min_order", "tax_percent"]);
+  if (settingsError || !settings) throw new Error("Ordering settings unavailable");
+  const settingsMap = new Map(settings.map((row): [string, Setting] => [row.key, row.value]));
+  if (settingsMap.get("ordering_enabled")?.enabled !== true) return respond(403, {error: "Ordering is currently disabled"});
+  const delivery = orderType === "delivery";
+  if (delivery && settingsMap.get("delivery_enabled")?.enabled !== true) return respond(403, {error: "Delivery is currently unavailable"});
+  const deliveryFee = delivery ? (settingsMap.get("delivery_fee")?.amount ?? 0) : 0;
+  const minOrder = settingsMap.get("min_order")?.amount ?? 0;
+  if (delivery && subtotal < minOrder) return respond(400, fieldError("items", `Minimum order for delivery is ₹${minOrder}.`));
+  const tax = Math.round(subtotal * ((settingsMap.get("tax_percent")?.value ?? 0) / 100));
 
-  if (req.method === "POST") {
-    let body: any;
-    try {
-      body = await readJson(req);
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate required fields
-    if (typeof body.customer_name !== "string" || !body.customer_name.trim() || typeof body.customer_phone !== "string" || !Array.isArray(body.items) || !body.items.length || body.items.length > 50 || body.items.some((item: any) => !item || typeof item.id !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(item.id))) {
-      return new Response(JSON.stringify({ error: "Missing required fields: customer_name, customer_phone, items" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate phone
-    if (!validateIndianPhone(body.customer_phone)) {
-      return new Response(JSON.stringify({ error: "Invalid phone number. Must be 12-digit Indian number starting with 91" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate email if provided
-    if (body.customer_email != null && (typeof body.customer_email !== "string" || !validateEmail(body.customer_email))) {
-      return new Response(JSON.stringify({ error: "Invalid email address" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate order_type
-    const validOrderTypes = ["dine_in", "takeaway", "delivery"];
-    const orderType = body.order_type || "dine_in";
-    if (!validOrderTypes.includes(orderType)) {
-      return new Response(JSON.stringify({ error: "Invalid order_type. Must be dine_in, takeaway, or delivery" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Validate delivery address for delivery orders
-    if (orderType === "delivery") {
-      if (typeof body.delivery_address?.full !== "string" || !body.delivery_address.full.trim() || body.delivery_address.full.length > 500) {
-        return new Response(JSON.stringify({ error: "Delivery address required for delivery orders" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
-
-    // Fetch menu items to compute prices server-side
-    if (body.notes != null && typeof body.notes !== "string") {
-      return new Response(JSON.stringify({error: "Notes must be text"}), {status: 400, headers: corsHeaders});
-    }
-    const itemIds = body.items.map((item: {id: string}) => item.id.toLowerCase());
-    if (new Set(itemIds).size !== itemIds.length) {
-      return new Response(JSON.stringify({error: "Each menu item may appear only once"}), {status: 400, headers: corsHeaders});
-    }
-    const { data: menuItems, error: menuError } = await supabase
-      .from("menu_items")
-      .select("id, name, price_inr, veg, is_available, category:menu_categories!inner(is_active)")
-      .eq("category.is_active", true)
-      .in("id", itemIds);
-
-    if (menuError) {
-      return new Response(JSON.stringify({ error: "Failed to fetch menu items" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const menuMap = new Map(menuItems.map((m: any) => [m.id, m]));
-
-    // Validate each item and compute totals
-    let subtotal = 0;
-    const validatedItems = [];
-
-    for (const item of body.items) {
-      const menuItem = menuMap.get(item.id.toLowerCase());
-      if (!menuItem) {
-        return new Response(JSON.stringify({ error: `Unknown menu item: ${item.id}` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (!menuItem.is_available) {
-        return new Response(JSON.stringify({ error: `Item not available: ${menuItem.name}` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const qty = item.quantity;
-      if (!Number.isInteger(qty) || qty < 1 || qty > 50) {
-        return new Response(JSON.stringify({ error: `Invalid quantity for ${menuItem.name}: must be 1-50` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const lineTotal = menuItem.price_inr * qty;
-      subtotal += lineTotal;
-
-      validatedItems.push({
-        id: menuItem.id,
-        name: menuItem.name,
-        price_inr: menuItem.price_inr,
-        quantity: qty,
-        veg: menuItem.veg,
-      });
-    }
-
-    const {data: settings, error: settingsError} = await supabase
-      .from("settings")
-      .select("key,value")
-      .in("key", ["ordering_enabled", "delivery_enabled", "delivery_fee", "min_order", "tax_percent"]);
-    if (settingsError || !settings) {
-      return new Response(JSON.stringify({error: "Ordering settings are unavailable"}), {status: 503, headers: corsHeaders});
-    }
-    const settingsMap = new Map(settings.map(row => [row.key, row.value]));
-    if (settingsMap.get("ordering_enabled")?.enabled !== true) {
-      return new Response(JSON.stringify({error: "Ordering is currently disabled"}), {status: 403, headers: corsHeaders});
-    }
-    const deliveryEnabled = settingsMap.get("delivery_enabled")?.enabled ?? false;
-    const deliveryFee = orderType === "delivery" && deliveryEnabled ? (settingsMap.get("delivery_fee")?.amount ?? 0) : 0;
-    const minOrder = settingsMap.get("min_order")?.amount ?? 0;
-    const taxPercent = settingsMap.get("tax_percent")?.value ?? 0;
-
-    if (orderType === "delivery" && !deliveryEnabled) {
-      return new Response(JSON.stringify({ error: "Delivery is currently unavailable" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (orderType === "delivery" && subtotal < minOrder) {
-      return new Response(JSON.stringify({ error: `Minimum order for delivery is ₹${minOrder}` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const tax = Math.round(subtotal * (taxPercent / 100));
-    const total = subtotal + deliveryFee + tax;
-
-    // Create order with server-computed values
-    const { data, error } = await supabase
-      .from("orders")
-      .insert({
-        customer_name: sanitizeText(body.customer_name, 100),
-        customer_phone: body.customer_phone,
-        customer_email: body.customer_email ? sanitizeText(body.customer_email, 255) : null,
-        order_type: orderType,
-        delivery_address: orderType === "delivery" ? {full: body.delivery_address.full.trim()} : null,
-        items: validatedItems,
-        subtotal_inr: subtotal,
-        delivery_fee_inr: deliveryFee,
-        tax_inr: tax,
-        total_inr: total,
-        notes: body.notes ? sanitizeText(body.notes, 500) : null,
-        payment_status: "unpaid",
-        status: "pending",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Order insert error:", error);
-      return new Response(JSON.stringify({ error: "Failed to create order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // TODO: Send WhatsApp via Business API (async, don't block response)
-    // await sendWhatsAppOrder(data);
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response("Method not allowed", { status: 405, headers: corsHeaders });
-});
+  const {data, error} = await supabase.from("orders").insert({
+    customer_name: clean(customer_name).slice(0, 100), customer_phone, customer_email: customer_email ?? null,
+    order_type: orderType, delivery_address: delivery ? {full: address} : null, items: validatedItems,
+    subtotal_inr: subtotal, delivery_fee_inr: deliveryFee, tax_inr: tax, total_inr: subtotal + deliveryFee + tax,
+    notes: notes ? clean(notes).slice(0, 500) : null, payment_status: "unpaid", status: "pending",
+  }).select().single();
+  if (error) throw new Error("Order insert failed");
+  return respond(200, data);
+}));
