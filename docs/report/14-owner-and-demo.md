@@ -12,7 +12,7 @@ Show a test storefront and an admin account with fictional records. A customer c
 | 3–4 | Table booking and Messages, or one fictional CV | The same dashboard gives the team somewhere to review requests. |
 | 4–5 | Menu editor, business settings and staff access | The owner sets real prices and details and chooses who handles requests. |
 
-If the hosted smoke tests are unfinished, show the sample catalog and the existing admin screenshots and describe which steps are demonstrations. Keep pricing, photographs, WhatsApp, hours and delivery terms marked as sample or awaiting confirmation.
+If the hosted smoke tests are unfinished, show the sample catalog and admin screenshots from the mocked Playwright suite and describe which steps are demonstrations. Keep pricing, photographs, WhatsApp, hours and delivery terms marked as sample or awaiting confirmation.
 
 ## Where to look
 

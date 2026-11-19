@@ -6,8 +6,8 @@ Run checks from the repository root. Keep all destructive or write tests pointed
 
 | Check | Command and coverage | Evidence status |
 |---|---|---|
-| Static storefront | `node audit/static.cjs` validates page tags, assets, labels, the JSON catalog and palette contrast | Run on a previous revision. Syntax and JSON rerun separately. Its assumptions about an unconfigured demo can become stale. |
-| Historical browser suite | `node audit/browser.cjs` uses Playwright and Chrome to capture viewport layouts and exercise cart and form behavior via request routing | Historical screenshots and JSON. Checkout expectations predate the current backend. Do not run it against a configured hosted endpoint. |
+| Static storefront | `node audit/static.cjs` validates page tags, assets, labels, the JSON catalog and palette contrast | PASS. Prints results without writing the tracked historical snapshot. |
+| Storefront browser suite | `node audit/browser.cjs` captures six pages at three widths and checks cart persistence, all four form successes and failures, verified WhatsApp contact, safe image fallback and 44 px contact controls | PASS with all requests intercepted. Screenshots go to a temporary directory. |
 | Local HTTP server | `node audit/server-check.cjs` starts Python and checks the storefront HTTP response | Historical result in server-results.json. The prior admin turn verified both storefront and admin routes separately. |
 | Admin browser suite | `node audit/admin-browser.cjs` runs 27 captures, owner/staff/guest navigation, order status/payment, print visibility, Realtime callback/audio toggle, menu create/edit and sample status, CSV contents, and the CV signing call | PASS with populated mocks. Hosted authentication, writes, Storage signing and Realtime delivery still need a disposable Supabase run. The OS print dialog and real audio output are outside the browser fixture. |
 | Generator | `node audit/generate-menu-seed.cjs --check` compares the SQL seed with menu JSON | PASS. 80 items and 19 category mappings. |

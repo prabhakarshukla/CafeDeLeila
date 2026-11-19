@@ -1,5 +1,7 @@
 # Starting handover state
 
+Historical file inventory. Base the current path list on the [file guide](report/03-file-guide.md). The old screenshots are recoverable from commit `0d011ee`.
+
 Checked 20 November 2026 on feat/admin-backend at 6372e1a. The six customer pages load static CSS and JavaScript. The sample JSON has 19 categories and 80 flagged dishes. Four Edge Functions and four intended migrations exist. There is no admin directory. Previous frontend screenshots describe an earlier revision. Live branch routing, business facts and deployed functions remain unverified.
 
 | Issue | Initial verdict | Evidence |

@@ -2,7 +2,7 @@
 
 This replaces the unsupported previous checklist. PASS applies to the stated demo scope, not production readiness.
 
-Evidence: **S** = audit/static-results.json and static.cjs; **B** = audit/browser-results.json and browser.cjs; **L** = audit/layout-results.json; **V** = audit/screenshots plus visual inspection of home mobile/desktop, booking mobile and the 18-view contact sheet; **H** = audit/server-results.json.
+Evidence: **S** = audit/static-results.json and static.cjs; **B** = audit/browser-results.json and browser.cjs; **L** = audit/layout-results.json; **V** = historical screenshots from commit `0d011ee` and visual inspection of the home, booking and contact-sheet captures; **H** = audit/server-results.json.
 
 | Requirement | Status | Evidence |
 |---|---|---|

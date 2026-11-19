@@ -14,8 +14,6 @@ The folders separate browser code, database and function source, documentation a
 | `admin/js/` | Admin page modules | Admin entry point | Supabase browser client |
 | `assets/` | Public visual files | HTML and CSS | Local SVG |
 | `audit/` | Runnable checks and historical evidence | Reviewers | Node, optionally Chrome/Python/embedded Postgres |
-| `audit/admin-screenshots/` | Admin renders at three widths | Reviewers | Mocked Playwright suite |
-| `audit/screenshots/` | Historical storefront screenshots | Reviewers | Storefront Playwright suite |
 | `css/` | Static presentation styles | Six customer pages | Design tokens |
 | `data/` | Public fallback catalog and settings | Storefront, admin, generator | JSON |
 | `docs/` | Deployment, operator and historical docs | Contributors and operator | Project files and tests |
@@ -57,33 +55,6 @@ The folders separate browser code, database and function source, documentation a
 | `assets/logo_delelia.svg` | Brand art | Site header markup | SVG |
 | `assets/meal.svg` | Fallback illustration for menu dishes | Menu/home renderers | SVG |
 | `audit/admin-browser.cjs` | Checks admin layouts and role navigation | Playwright | Chrome, mocked client, admin page |
-| `audit/admin-screenshots/applications-1280.png` | Historical capture of applications-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/applications-360.png` | Historical capture of applications-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/applications-768.png` | Historical capture of applications-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/bookings-1280.png` | Historical capture of bookings-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/bookings-360.png` | Historical capture of bookings-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/bookings-768.png` | Historical capture of bookings-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/dashboard-1280.png` | Historical capture of dashboard-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/dashboard-360.png` | Historical capture of dashboard-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/dashboard-768.png` | Historical capture of dashboard-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/login-1280.png` | Historical capture of login-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/login-360.png` | Historical capture of login-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/login-768.png` | Historical capture of login-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/menu-1280.png` | Historical capture of menu-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/menu-360.png` | Historical capture of menu-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/menu-768.png` | Historical capture of menu-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/messages-1280.png` | Historical capture of messages-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/messages-360.png` | Historical capture of messages-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/messages-768.png` | Historical capture of messages-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/orders-1280.png` | Historical capture of orders-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/orders-360.png` | Historical capture of orders-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/orders-768.png` | Historical capture of orders-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/settings-1280.png` | Historical capture of settings-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/settings-360.png` | Historical capture of settings-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/settings-768.png` | Historical capture of settings-768 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/staff-1280.png` | Historical capture of staff-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/staff-360.png` | Historical capture of staff-360 | Visual QA and reviewers | audit/admin-browser.cjs |
-| `audit/admin-screenshots/staff-768.png` | Historical capture of staff-768 | Visual QA and reviewers | audit/admin-browser.cjs |
 | `audit/browser-results.json` | Historical browser flow outcomes | Historical audit | Corresponding command in audit/ |
 | `audit/browser.cjs` | Historical storefront QA and screenshot workflow | Playwright | Chrome, static files and intercepted requests |
 | `audit/check-report-coverage.cjs` | Asserts one guide row per tracked file | Node and report review | Git index and this file |
@@ -91,25 +62,6 @@ The folders separate browser code, database and function source, documentation a
 | `audit/generate-menu-seed.cjs` | Produces/verifies sample insert SQL | Node and database maintainers | data/menu.json |
 | `audit/layout-results.json` | Historical viewport measurements | Historical audit | Corresponding command in audit/ |
 | `audit/order-contract.cjs` | Runs validation and pricing checks on the actual handler | Node and checkout reviewers | Node TS stripper, orders function and mocked catalog |
-| `audit/screenshots/book-table-1280.png` | Historical capture of book-table-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/book-table-360.png` | Historical capture of book-table-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/book-table-768.png` | Historical capture of book-table-768 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/careers-1280.png` | Historical capture of careers-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/careers-360.png` | Historical capture of careers-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/careers-768.png` | Historical capture of careers-768 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/contact-1280.png` | Historical capture of contact-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/contact-360.png` | Historical capture of contact-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/contact-768.png` | Historical capture of contact-768 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/contact-sheet.png` | Historical capture of contact-sheet | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/index-1280.png` | Historical capture of index-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/index-360.png` | Historical capture of index-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/index-768.png` | Historical capture of index-768 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/locations-1280.png` | Historical capture of locations-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/locations-360.png` | Historical capture of locations-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/locations-768.png` | Historical capture of locations-768 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/menu-1280.png` | Historical capture of menu-1280 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/menu-360.png` | Historical capture of menu-360 | Visual QA and reviewers | audit/browser.cjs |
-| `audit/screenshots/menu-768.png` | Historical capture of menu-768 | Visual QA and reviewers | audit/browser.cjs |
 | `audit/server-check.cjs` | Checks HTTP response from local Python server | Node and frontend reviewers | Python, index.html and loopback |
 | `audit/server-results.json` | Historical localhost HTTP result | Historical audit | Corresponding command in audit/ |
 | `audit/static-results.json` | Historical static checks and contrast | Historical audit | Corresponding command in audit/ |
