@@ -1,0 +1,191 @@
+# File and folder guide
+
+## How it works
+
+The folders separate browser code, database and function source, documentation and evidence. Historical browser screenshots and archived SQL document earlier revisions. The current HTML entry points and migration directory identify what runs.
+
+## Where to look
+
+### Folders
+
+| File or folder | Purpose | Used by | Depends on |
+|---|---|---|---|
+| `admin/` | Private admin UI assets | Admin browser | Supabase Auth and API |
+| `admin/js/` | Admin page modules | Admin entry point | Supabase browser client |
+| `assets/` | Public visual files | HTML and CSS | Local SVG |
+| `audit/` | Runnable checks and historical evidence | Reviewers | Node, optionally Chrome/Python/embedded Postgres |
+| `audit/admin-screenshots/` | Admin renders at three widths | Reviewers | Mocked Playwright suite |
+| `audit/screenshots/` | Historical storefront screenshots | Reviewers | Storefront Playwright suite |
+| `css/` | Static presentation styles | Six customer pages | Design tokens |
+| `data/` | Public fallback catalog and settings | Storefront, admin, generator | JSON |
+| `docs/` | Deployment, operator and historical docs | Contributors and operator | Project files and tests |
+| `docs/report/` | Full report chapters | Report index | Source and evidence |
+| `js/` | Storefront JavaScript | Main storefront HTML | Browser and Supabase |
+| `supabase/` | Database and endpoint source | Supabase CLI and operator | PostgreSQL and managed services |
+| `supabase/functions/` | Five HTTP handlers and shared code | Storefront | Supabase runtime |
+| `supabase/functions/_shared/` | Common HTTP utility | All function handlers | Deno and browser-standard APIs |
+| `supabase/functions/applications/` | Public applications HTTP endpoint files | Supabase CLI | Shared HTTP and Supabase |
+| `supabase/functions/bookings/` | Public bookings HTTP endpoint files | Supabase CLI | Shared HTTP and Supabase |
+| `supabase/functions/contact/` | Public contact HTTP endpoint files | Supabase CLI | Shared HTTP and Supabase |
+| `supabase/functions/menu/` | Public menu HTTP endpoint files | Supabase CLI | Shared HTTP and Supabase |
+| `supabase/functions/orders/` | Public orders HTTP endpoint files | Supabase CLI | Shared HTTP and Supabase |
+| `supabase/legacy/` | Historical SQL only | Reviewers | Earlier project history |
+| `supabase/migrations/` | Ordered deployable SQL | Operator and tests | PostgreSQL plus Supabase schemas |
+| `supabase/seed/` | Sample catalog SQL | Operator and tests | Current categories |
+| `supabase/tests/` | Manual rollback SQL | Local tests and operator | Database role and trigger setup |
+
+### Tracked files
+
+| File or folder | Purpose | Used by | Depends on |
+|---|---|---|---|
+| `.gitignore` | Git exclusion rules for local metadata and artifacts | Git add/status | Repository layout |
+| `ASSUMPTIONS.md` | Pointer to current assumptions | Contributors | docs/ASSUMPTIONS.md |
+| `CHANGELOG.md` | Change history | Contributors | Commit history |
+| `PROJECT_REPORT.md` | Report index, status and corrections | Developers and café operator | docs/report/ and REPORT_AUDIT.md |
+| `README.md` | Local entry point, setup and current evidence | Contributors | PROJECT_REPORT.md, docs/ |
+| `REPORT_AUDIT.md` | Baseline claims and evidence from this task | Reviewers | Source files and test runs |
+| `admin/admin.css` | Admin layout, focus and print styles | admin/index.html | css/variables.css |
+| `admin/index.html` | Admin page, login form and navigation host | Browser at /admin/ | admin.css and admin/js/app.js |
+| `admin/js/app.js` | Session and route guard | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/dashboard.js` | Dashboard RPC and metrics | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/menu.js` | Menu and image editing | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/orders.js` | Order filters, realtime, actions and print | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/requests.js` | Booking, CV and contact queues | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/settings.js` | Settings, staff and export | Admin app or modules | Supabase and admin UI modules |
+| `admin/js/ui.js` | Shared controls and conditional updates | Admin app or modules | Supabase and admin UI modules |
+| `assets/favicon.svg` | Browser tab icon | Root HTML pages | SVG |
+| `assets/logo_delelia.svg` | Brand art | Site header markup | SVG |
+| `assets/meal.svg` | Fallback illustration for menu dishes | Menu/home renderers | SVG |
+| `audit/admin-browser.cjs` | Checks admin layouts and role navigation | Playwright | Chrome, mocked client, admin page |
+| `audit/admin-screenshots/applications-1280.png` | Historical capture of applications-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/applications-360.png` | Historical capture of applications-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/applications-768.png` | Historical capture of applications-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/bookings-1280.png` | Historical capture of bookings-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/bookings-360.png` | Historical capture of bookings-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/bookings-768.png` | Historical capture of bookings-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/dashboard-1280.png` | Historical capture of dashboard-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/dashboard-360.png` | Historical capture of dashboard-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/dashboard-768.png` | Historical capture of dashboard-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/login-1280.png` | Historical capture of login-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/login-360.png` | Historical capture of login-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/login-768.png` | Historical capture of login-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/menu-1280.png` | Historical capture of menu-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/menu-360.png` | Historical capture of menu-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/menu-768.png` | Historical capture of menu-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/messages-1280.png` | Historical capture of messages-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/messages-360.png` | Historical capture of messages-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/messages-768.png` | Historical capture of messages-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/orders-1280.png` | Historical capture of orders-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/orders-360.png` | Historical capture of orders-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/orders-768.png` | Historical capture of orders-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/settings-1280.png` | Historical capture of settings-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/settings-360.png` | Historical capture of settings-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/settings-768.png` | Historical capture of settings-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/staff-1280.png` | Historical capture of staff-1280 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/staff-360.png` | Historical capture of staff-360 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/admin-screenshots/staff-768.png` | Historical capture of staff-768 | Visual QA and reviewers | audit/admin-browser.cjs |
+| `audit/browser-results.json` | Historical browser flow outcomes | Historical audit | Corresponding command in audit/ |
+| `audit/browser.cjs` | Historical storefront QA and screenshot workflow | Playwright | Chrome, static files and intercepted requests |
+| `audit/check-report-coverage.cjs` | Asserts one guide row per tracked file | Node and report review | Git index and this file |
+| `audit/db-replay.cjs` | Runs clean, repeat and simulated legacy SQL | Node and database reviewers | PGlite and Supabase SQL with platform stubs |
+| `audit/generate-menu-seed.cjs` | Produces/verifies sample insert SQL | Node and database maintainers | data/menu.json |
+| `audit/layout-results.json` | Historical viewport measurements | Historical audit | Corresponding command in audit/ |
+| `audit/order-contract.cjs` | Runs validation and pricing checks on the actual handler | Node and checkout reviewers | Node TS stripper, orders function and mocked catalog |
+| `audit/screenshots/book-table-1280.png` | Historical capture of book-table-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/book-table-360.png` | Historical capture of book-table-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/book-table-768.png` | Historical capture of book-table-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/careers-1280.png` | Historical capture of careers-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/careers-360.png` | Historical capture of careers-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/careers-768.png` | Historical capture of careers-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/contact-1280.png` | Historical capture of contact-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/contact-360.png` | Historical capture of contact-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/contact-768.png` | Historical capture of contact-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/contact-sheet.png` | Historical capture of contact-sheet | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/index-1280.png` | Historical capture of index-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/index-360.png` | Historical capture of index-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/index-768.png` | Historical capture of index-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/locations-1280.png` | Historical capture of locations-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/locations-360.png` | Historical capture of locations-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/locations-768.png` | Historical capture of locations-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/menu-1280.png` | Historical capture of menu-1280 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/menu-360.png` | Historical capture of menu-360 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/screenshots/menu-768.png` | Historical capture of menu-768 | Visual QA and reviewers | audit/browser.cjs |
+| `audit/server-check.cjs` | Checks HTTP response from local Python server | Node and frontend reviewers | Python, index.html and loopback |
+| `audit/server-results.json` | Historical localhost HTTP result | Historical audit | Corresponding command in audit/ |
+| `audit/static-results.json` | Historical static checks and contrast | Historical audit | Corresponding command in audit/ |
+| `audit/static.cjs` | Checks static markup, data and contrast | Node and frontend reviewers | HTML, data, CSS and local links |
+| `book-table.html` | Date, time and reservation form | Browser navigation | css/, js/main.js and js/support.js |
+| `careers.html` | Application form and CV picker | Browser navigation | css/, js/main.js and js/support.js |
+| `contact.html` | Message form and business details | Browser navigation | css/, js/main.js and js/support.js |
+| `css/base.css` | Typography, reset and general form styles | Storefront HTML | Cascade and CSS design tokens |
+| `css/components.css` | Shared components and chrome | Storefront HTML | Cascade and CSS design tokens |
+| `css/pages.css` | Page layouts | Storefront HTML | Cascade and CSS design tokens |
+| `css/refinements.css` | Responsive and accessibility improvements | Storefront HTML | Cascade and CSS design tokens |
+| `css/variables.css` | Design tokens | Storefront HTML | Cascade and CSS design tokens |
+| `data/config.json` | Public fallback settings and Supabase browser config | loadConfig and admin start | Site and Supabase project settings |
+| `data/menu.json` | 80 sample dishes in 19 categories | loadMenu and SQL seed generator | assets/meal.svg and sample catalog |
+| `docs/ASSUMPTIONS.md` | Constraints and migration assumptions | Contributors and operator | Project source and audit history |
+| `docs/AUDIT.md` | Prior storefront verification | Contributors and operator | Project source and audit history |
+| `docs/BACKEND_AUDIT.md` | Prior admin and backend evidence | Contributors and operator | Project source and audit history |
+| `docs/BACKEND_STATE.md` | Historical security/backend review | Contributors and operator | Project source and audit history |
+| `docs/DEPLOY.md` | Static deployment and rate limit guidance | Contributors and operator | Project source and audit history |
+| `docs/HANDOVER_STATE.md` | Earlier branch and inventory handover | Contributors and operator | Project source and audit history |
+| `docs/PLAN.md` | Prior frontend work plan | Contributors and operator | Project source and audit history |
+| `docs/PROJECT_REPORT.md` | Pointer to current report index | Contributors and operator | Project source and audit history |
+| `docs/PROJECT_STATE.md` | Early frontend architecture and audit | Contributors and operator | Project source and audit history |
+| `docs/SETUP_SUPABASE.md` | Numbered setup and smoke commands | Contributors and operator | Project source and audit history |
+| `docs/TODO_FOR_OWNER.md` | Owner confirmation checklist | Contributors and operator | Project source and audit history |
+| `docs/VERIFY_SUPABASE.md` | Read-only metadata and authorization expectations | Contributors and operator | Project source and audit history |
+| `docs/report/01-overview.md` | Reference chapter for overview | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/02-architecture.md` | Reference chapter for architecture | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/03-file-guide.md` | Reference chapter for file guide | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/04-frontend.md` | Reference chapter for frontend | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/05-flows.md` | Reference chapter for workflow | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/06-database.md` | Reference chapter for database | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/07-edge-functions.md` | Reference chapter for Edge Function contracts | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/08-admin-panel.md` | Reference chapter for admin | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/09-security.md` | Reference chapter for security | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/10-config-and-settings.md` | Reference chapter for configuration | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/11-setup-and-deploy.md` | Reference chapter for deployment | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/12-testing.md` | Reference chapter for testing | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/13-troubleshooting.md` | Reference chapter for troubleshooting | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/14-owner-and-demo.md` | Reference chapter for owner demonstration | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `docs/report/15-glossary-and-next.md` | Reference chapter for glossary and priorities | PROJECT_REPORT.md | Current implementation, SQL and tests |
+| `index.html` | Home and featured dishes | Browser navigation | css/, js/main.js and js/support.js |
+| `js/app.js` | Historical app module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/booking.js` | Historical booking module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/careers.js` | Historical careers module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/contact.js` | Historical contact module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/home.js` | Historical home module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/locations.js` | Historical locations module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/main.js` | Active storefront orchestration and forms | Six storefront pages | js/support.js, data files and Edge routes |
+| `js/menu.js` | Historical menu module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
+| `js/utils.js` | Historical utils module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
+| `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
+| `menu.html` | Search, category filters and menu | Browser navigation | css/, js/main.js and js/support.js |
+| `supabase/config.toml` | Local project and five function entries | Supabase CLI | Function source directories |
+| `supabase/functions/_shared/http.ts` | Origin checks, streamed JSON and visitor hash | Public function handlers | Deno environment, request body and Web Crypto |
+| `supabase/functions/applications/.npmrc` | Per-function registry settings for applications | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/applications/deno.json` | Per-function Deno import configuration for applications | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/applications/index.ts` | HTTP handler for applications | Customer browser requests | Shared HTTP helper, Supabase database or Storage |
+| `supabase/functions/bookings/.npmrc` | Per-function registry settings for bookings | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/bookings/deno.json` | Per-function Deno import configuration for bookings | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/bookings/index.ts` | HTTP handler for bookings | Customer browser requests | Shared HTTP helper, Supabase database or Storage |
+| `supabase/functions/contact/index.ts` | HTTP handler for contact | Customer browser requests | Shared HTTP helper, Supabase database or Storage |
+| `supabase/functions/menu/.npmrc` | Per-function registry settings for menu | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/menu/deno.json` | Per-function Deno import configuration for menu | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/menu/index.ts` | HTTP handler for menu | Customer browser requests | Shared HTTP helper, Supabase database or Storage |
+| `supabase/functions/orders/.npmrc` | Per-function registry settings for orders | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/orders/deno.json` | Per-function Deno import configuration for orders | Supabase CLI bundler | Registered function configuration |
+| `supabase/functions/orders/index.ts` | HTTP handler for orders | Customer browser requests | Shared HTTP helper, Supabase database or Storage |
+| `supabase/legacy/005_original_checks.txt` | Archived earlier SQL checks, retained as text | Historical review | Earlier schema |
+| `supabase/legacy/README.md` | Labels legacy files as historical | Operators | Active setup docs |
+| `supabase/legacy/supabase-schema.sql` | Old schema retained for comparison | Historical review only | Early Supabase shape |
+| `supabase/migrations/001_core_schema.sql` | Core tables, menu defaults, RLS and numbers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/migrations/002_admin_settings.sql` | Roles and 12 settings | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/migrations/003_order_status_history.sql` | Status transition and history triggers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/migrations/004_admin_rls_storage_realtime.sql` | Access grants, buckets, dashboard, limiter and booking lock | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/migrations/006_cleanup_legacy.sql` | Legacy policy cleanup, bucket convergence and complete numbers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/seed/menu_items.sql` | Generated, repeatable sample catalog inserts | Operator SQL Editor and replay test | 006 category slugs and data/menu.json |
+| `supabase/tests/behavior.sql` | Rollback role, transition and reference assertions | Embedded replay or disposable SQL Editor | Migrations, auth.users stub or service |

@@ -1,13 +1,22 @@
 # Café De Leila
 
-Six customer pages and a static Supabase admin panel. Backend and admin code are present. Run the database, Auth, Storage and Realtime smoke checks before using this with customer data.
+The branch contains six static customer pages, an eight-view admin panel, five Supabase Edge Functions, database migrations and a sample menu seed. The report separates implemented features from verification. [Read the project report](PROJECT_REPORT.md).
 
-Run from the root with `python -m http.server 8080`. Open http://localhost:8080/ for customers and http://localhost:8080/admin/ for admin. If the Windows Python alias points to the Microsoft Store, install Python on PATH or use an existing Python executable.
+## Run locally
 
-- data/config.json holds the URL and publishable key. Blank values leave the storefront in sample preview mode.
-- data/menu.json has 19 categories and 80 sample dishes. Orders use the database catalog and database prices.
-- admin/js contains standalone ES modules. Owner tools cover catalog, finance, settings, staff and CSV export. Staff can review operational records and update permitted statuses.
-- supabase/migrations holds 001–004. Migration 004 creates the buckets. supabase/tests/behavior.sql is a manual rollback test. Skip supabase/legacy.
-- docs/SETUP_SUPABASE.md gives the numbered setup and smoke checks. docs/DEPLOY.md explains preview hosting. BACKEND_AUDIT.md distinguishes source, mock and runtime evidence.
+```powershell
+python -m http.server 8080
+```
 
-Real hours, address, catalogue, prices, delivery fee/minimum, tax, WhatsApp and other business details need owner input. See TODO_FOR_OWNER.md. Payment tracking is manual and there is no payment gateway.
+Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ for admin. If the Windows Python alias opens the Microsoft Store, use a working Python executable. The browser reads the project URL and publishable key from data/config.json. The menu can fall back to the 80-dish local sample. Checkout requires an available database catalog.
+
+## Set up the database
+
+- Fresh project: apply 001, 002, 003, 004 and 006, then supabase/seed/menu_items.sql. Do not run the archive.
+- Existing early project: verify the limiter and booking routine. If missing, reapply current 004 before 006. Run the seed while preparing a sample catalog.
+- Configure the function origin allowlist, deploy the five functions, disable public sign-up and create an owner. Use the [numbered setup guide](docs/SETUP_SUPABASE.md) and [verification guide](docs/VERIFY_SUPABASE.md).
+- Run the anonymous access, order, CV and admin/staff smoke tests on a disposable project.
+
+Embedded PostgreSQL passed clean and repeat migration runs, simulated legacy cleanup, seed replay and rollback assertions. The order-handler test passed with a stubbed database. Hosted Auth, Storage, Realtime, end-to-end customer requests and the Vercel deployment remain **UNVERIFIED**. [Audit results](REPORT_AUDIT.md)
+
+The 80 dishes and their prices are samples. Hours, address, WhatsApp, photos, tax and delivery terms need confirmation. Payments are tracked manually. [Owner checklist](docs/TODO_FOR_OWNER.md)

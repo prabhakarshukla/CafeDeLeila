@@ -59,3 +59,4 @@ A1–A4 reconciled the database catalog, added migration 006 and generated the r
 A5–A8 verified server pricing, corrected the ordering switch and catalog integration, and removed tracked CLI metadata.
 A9–A10 documented migration order, read-only checks and disposable-project smoke tests.
 Preserved full numbering sequences after 999 and tested 1,100 order inserts in a rollback.
+Part B split the full report into 15 chapters, reconciled documentation moves, and added tracked-file coverage.
