@@ -48,3 +48,4 @@ External maps/fonts, real message delivery and owner-provided content remain unv
 - T2: Part A Honesty Fixes (A9, A10) — Replaced "WhatsApp shortly" with "We'll confirm shortly", added sample menu notice banner, removed hardcoded taxRate, added menu.is_sample config, updated confirmations
 T-A corrected setup and readiness claims and recorded the branch handover.
 T-B repaired migration ordering, origin allowlisting, private write endpoints, public settings, storage limits and customer API contracts.
+feat(admin): T5 add guarded admin and dashboard
