@@ -42,7 +42,7 @@ DO $$
 DECLARE numbers text[] := ARRAY[]::text[];
         code text;
 BEGIN
-  FOR i IN 1..100 LOOP
+  FOR i IN 1..1100 LOOP
     INSERT INTO orders (customer_name, customer_phone, items, subtotal_inr, tax_inr, total_inr)
     VALUES ('Rollback loop', '919876543210', '[]', 10, 0, 10)
     RETURNING order_number INTO code;

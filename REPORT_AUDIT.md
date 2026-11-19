@@ -62,3 +62,4 @@ Embedded PostgreSQL PASS after fixing migration 003 to use gen_random_uuid(). Cl
 | Rate limits | PASS docs. Orders, bookings and menu are per instance. Contact/applications use database counters. Hosted proxy behavior UNVERIFIED. |
 | Browser config | PASS format checked without printing keys. Existing valid URL/key fields preserved. Hosted key validity UNVERIFIED. |
 A9–A10 PASS documentation review. Verification guide covers schema, policies, buckets, publications, functions and anonymous REST. Setup gives fresh and existing sequences and the smoke tests. Hosted commands remain UNVERIFIED and were not run.
+Numbering regression PASS. A 1,100-insert rollback loop reproduced duplicate IDs when the fixed-width padding truncated four digits. Fresh installs and 006 now preserve the full sequence. Embedded PostgreSQL replay passed after the fix.

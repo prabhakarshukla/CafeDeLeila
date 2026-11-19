@@ -79,4 +79,45 @@ DROP POLICY IF EXISTS "Public read menu items" ON public.menu_items;
 CREATE POLICY "Public read menu items" ON public.menu_items FOR SELECT
   USING (is_available AND EXISTS (SELECT 1 FROM public.menu_categories c WHERE c.id = category_id AND c.is_active));
 
+-- Keep the complete sequence after it exceeds three digits. Existing references stay intact.
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TRIGGER AS $$
+DECLARE
+  today_str TEXT;
+  seq_num BIGINT;
+BEGIN
+  -- Use Asia/Kolkata timezone for date
+  today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
+  seq_num := nextval('order_seq');
+  NEW.order_number := 'CDL-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION generate_booking_number()
+RETURNS TRIGGER AS $$
+DECLARE
+  today_str TEXT;
+  seq_num BIGINT;
+BEGIN
+  today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
+  seq_num := nextval('booking_seq');
+  NEW.booking_number := 'BK-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION generate_application_number()
+RETURNS TRIGGER AS $$
+DECLARE
+  today_str TEXT;
+  seq_num BIGINT;
+BEGIN
+  today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
+  seq_num := nextval('application_seq');
+  NEW.application_number := 'APP-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 COMMIT;

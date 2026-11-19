@@ -169,12 +169,12 @@ CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER AS $$
 DECLARE
   today_str TEXT;
-  seq_num INT;
+  seq_num BIGINT;
 BEGIN
   -- Use Asia/Kolkata timezone for date
   today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
   seq_num := nextval('order_seq');
-  NEW.order_number := 'CDL-' || today_str || '-' || LPAD(seq_num::text, 3, '0');
+  NEW.order_number := 'CDL-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -187,11 +187,11 @@ CREATE OR REPLACE FUNCTION generate_booking_number()
 RETURNS TRIGGER AS $$
 DECLARE
   today_str TEXT;
-  seq_num INT;
+  seq_num BIGINT;
 BEGIN
   today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
   seq_num := nextval('booking_seq');
-  NEW.booking_number := 'BK-' || today_str || '-' || LPAD(seq_num::text, 3, '0');
+  NEW.booking_number := 'BK-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -204,11 +204,11 @@ CREATE OR REPLACE FUNCTION generate_application_number()
 RETURNS TRIGGER AS $$
 DECLARE
   today_str TEXT;
-  seq_num INT;
+  seq_num BIGINT;
 BEGIN
   today_str := to_char(timezone('Asia/Kolkata', now()), 'YYYYMMDD');
   seq_num := nextval('application_seq');
-  NEW.application_number := 'APP-' || today_str || '-' || LPAD(seq_num::text, 3, '0');
+  NEW.application_number := 'APP-' || today_str || '-' || LPAD(seq_num::text, GREATEST(3, length(seq_num::text)), '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
