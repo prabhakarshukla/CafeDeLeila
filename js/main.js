@@ -246,50 +246,6 @@ const utils = (function() {
     });
   }
 
-  // WHATSAPP UTILITIES
-  function getWhatsAppUrl(phone, message) {
-    const encoded = encodeURIComponent(message);
-    return `https://wa.me/${phone}?text=${encoded}`;
-  }
-
-  function openWhatsAppOrder(order, whatsappNumber) {
-    const lines = [
-      `*New Order - ${order.id}*`,
-      `*Type:* ${order.type}`,
-      `*Customer:* ${order.customer.name}`,
-      `*Phone:* ${order.customer.phone}`,
-      '',
-      '*Items:*'
-    ];
-
-    order.items.forEach(item => {
-      lines.push(`• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`);
-    });
-
-    lines.push('', `*Subtotal:* ${formatPrice(order.subtotal)}`);
-    if (order.deliveryFee > 0) {
-      lines.push(`*Delivery Fee:* ${formatPrice(order.deliveryFee)}`);
-    }
-    if (order.tax > 0) {
-      lines.push(`*Tax:* ${formatPrice(order.tax)}`);
-    }
-    lines.push(`*Total:* ${formatPrice(order.total)}`);
-
-    if (order.type === 'delivery' && order.address) {
-      lines.push('', `*Delivery Address:* ${order.address}`);
-    }
-
-    if (order.notes) {
-      lines.push('', `*Notes:* ${order.notes}`);
-    }
-
-    lines.push('', 'Thank you for ordering from Café De Leila!');
-
-    const url = getWhatsAppUrl(whatsappNumber, lines.join('\n'));
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
-  // API REQUEST UTILITY
   async function apiRequest(functionName, body) {
     return publicSupabase('/functions/v1/' + functionName, {method: 'POST', body: JSON.stringify(body)});
   }
@@ -387,7 +343,7 @@ const utils = (function() {
     generateId, generateOrderId, debounce, throttle,
     formatDate, formatTime, isPastDate, getAvailableDates,
     trapFocus, announce, prefersReducedMotion, animate,
-    getWhatsAppUrl, openWhatsAppOrder, initLazyLoading, showToast, escapeHtml,
+    initLazyLoading, showToast, escapeHtml,
     apiRequest
   };
 })();
@@ -438,8 +394,6 @@ window.trapFocus = utils.trapFocus;
 window.announce = utils.announce;
 window.prefersReducedMotion = utils.prefersReducedMotion;
 window.animate = utils.animate;
-window.getWhatsAppUrl = utils.getWhatsAppUrl;
-window.openWhatsAppOrder = utils.openWhatsAppOrder;
 window.initLazyLoading = utils.initLazyLoading;
 window.showToast = utils.showToast;
 window.escapeHtml = utils.escapeHtml;
@@ -909,6 +863,7 @@ function renderFooter() {
                   <a class="footer-contact__value" href="mailto:${utils.escapeHtml(config.contact?.email)}">${utils.escapeHtml(config.contact?.email)}</a>
                 </div>
               </div>
+              ${verifiedWhatsAppUrl(config.contact) ? '<div class="footer-contact__item"><a class="footer-contact__value" href="' + verifiedWhatsAppUrl(config.contact) + '">WhatsApp</a></div>' : ''}
               <div class="footer-contact__item">
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <div>
@@ -1947,29 +1902,6 @@ function closeBookingConfirmation() {
     modal.classList.remove('is-open');
     setTimeout(() => modal.remove(), 250);
   }
-}
-
-function bookingBuildWhatsAppMessage(booking) {
-  const lines = [
-    `*New Table Booking - ${booking.id}*`,
-    `*Date:* ${formatDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' })}`,
-    `*Time:* ${formatTime(booking.time)}`,
-    `*Guests:* ${booking.guests}`,
-    `*Name:* ${booking.customer.name}`,
-    `*Phone:* ${booking.customer.phone}`,
-  ];
-
-  if (booking.customer.email) {
-    lines.push(`*Email:* ${booking.customer.email}`);
-  }
-
-  if (booking.notes) {
-    lines.push(`*Notes:* ${booking.notes}`);
-  }
-
-  lines.push('', 'Thank you for booking with Café De Leila!');
-
-  return lines.join('\n');
 }
 
 function initCareersPage() {

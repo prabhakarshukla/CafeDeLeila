@@ -1514,30 +1514,6 @@
   justify-content: center;
 }
 
-.confirmation__whatsapp {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-xl);
-  background: var(--color-sand-light);
-  color: var(--color-text-primary);
-  border-radius: var(--radius-full);
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
-
-.confirmation__whatsapp:hover {
-  background: var(--color-sand-light);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  color: var(--color-text-primary);
-}
-
-.confirmation__whatsapp:focus-visible {
-  outline: 2px solid var(--color-sand-light);
-  outline-offset: 2px;
-}
-
 .confirmation__note {
   margin-top: var(--space-xl);
   font-size: var(--text-sm);

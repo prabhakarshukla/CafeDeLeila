@@ -8,7 +8,7 @@ The branch contains six static customer pages, an eight-view admin panel, five S
 python -m http.server 8080
 ```
 
-Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ for admin. If the Windows Python alias opens the Microsoft Store, use a working Python executable. The browser reads the project URL and publishable key from data/config.json. The menu can fall back to the 80-dish local sample. Checkout requires an available database catalog.
+Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ for admin. If the Windows Python alias opens the Microsoft Store, use a working Python executable. The browser reads the project URL and publishable key from data/config.json. The six customer pages load `js/support.js` and `js/main.js`. The previous unreferenced storefront modules were removed. The menu can fall back to the 80-dish local sample. Checkout requires an available database catalog.
 
 ## Set up the database
 
@@ -19,4 +19,4 @@ Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ 
 
 Embedded PostgreSQL passed clean and repeat migration runs, simulated legacy cleanup, seed replay and rollback assertions. The order-handler test passed with a stubbed database. Hosted Auth, Storage, Realtime, end-to-end customer requests and the Vercel deployment remain **UNVERIFIED**. [Audit results](REPORT_AUDIT.md)
 
-The 80 dishes and their prices are samples. Hours, address, WhatsApp, photos, tax and delivery terms need confirmation. Payments are tracked manually. [Owner checklist](docs/TODO_FOR_OWNER.md)
+The 80 dishes and their prices are samples. Hours, address, WhatsApp, photos, tax and delivery terms need confirmation. Payments are tracked manually. WhatsApp appears only as an optional contact link when the configured Indian number is verified. Requests are submitted through the site. [Owner checklist](docs/TODO_FOR_OWNER.md)

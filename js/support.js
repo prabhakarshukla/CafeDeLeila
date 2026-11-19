@@ -3,12 +3,10 @@ function indiaDate(date) {
   return new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit'}).format(date);
 }
 
-function handoffUrl(message) {
-  const contact = window.cafeState.config.contact;
-  if (contact.whatsappVerified && /^91[6-9]\d{9}$/.test(contact.whatsapp)) {
-    return 'https://wa.me/' + contact.whatsapp + '?text=' + encodeURIComponent(message);
-  }
-  return 'mailto:' + contact.email + '?subject=' + encodeURIComponent('Café De Leila demo request') + '&body=' + encodeURIComponent(message);
+function verifiedWhatsAppUrl(contact) {
+  const number = contact?.whatsapp;
+  return contact?.whatsappVerified === true && typeof number === 'string' && /^91\d{10}$/.test(number)
+    ? 'https://wa.me/' + number : '';
 }
 
 function syncPickers() {

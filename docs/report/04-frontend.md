@@ -12,13 +12,13 @@
 8. Contact uses `contactInitFormValidation`, `contactValidateField` and `contactHandleSubmit`. It checks required fields, email and mobile, shows validation feedback and only resets after a successful write. Contact and Locations use their map-loading initializers for map elements.
 9. `renderHeader` and `renderFooter` output shared navigation and business information. Drawer functions toggle cart or mobile navigation. `initHeaderScroll`, `initLazyLoading` and home initializers cover scroll treatment, images and displayed content.
 
-The IIFE at the top of `main.js` supplies DOM, storage, number formatting, date, validation, event and Toast helpers. Its `apiRequest` delegates POSTs to `publicSupabase`. The alternate `js/app.js` and page modules are retained earlier code. See the HTML script tags for the active entry points.
+The IIFE at the top of `main.js` supplies DOM, storage, number formatting, date, validation, event and Toast helpers. Its `apiRequest` delegates POSTs to `publicSupabase`. The alternate storefront modules were removed after checking the script tags and import paths. The admin has a separate entry point.
 
 ## Where to look
 
 | File | Responsibility |
 |---|---|
-| `js/support.js` | `indiaDate` uses India time; `syncPickers` updates controls; `populateBusinessDetails` binds contact and map details; `installDialogAccessibility` traps and restores focus and associates field errors; `publicSupabase`, `loadPublicSettings` and `catalogFromDatabase` handle public integration. `handoffUrl` remains a draft helper. |
+| `js/support.js` | `indiaDate` uses India time; `syncPickers` updates controls; `populateBusinessDetails` binds contact and map details; `installDialogAccessibility` traps and restores focus and associates field errors; `publicSupabase`, `loadPublicSettings` and `catalogFromDatabase` handle public integration. `verifiedWhatsAppUrl` accepts only an explicitly verified 12-digit number starting with 91. |
 | `css/variables.css` | Palette, spacing, type stacks and motion tokens |
 | `css/base.css` | Browser normalization, typography, forms and general utilities |
 | `css/components.css` | Header, drawers, Footer and shared widgets |

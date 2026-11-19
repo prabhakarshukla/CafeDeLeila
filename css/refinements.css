@@ -103,8 +103,6 @@ label,.form-error,.cart-item__name,.cart-item__price,.footer-brand__description,
 .confirmation__actions .btn,.booking-success__actions .btn { white-space: normal; padding: 16px; }
 .confirmation__order-id,.booking-success__value { overflow-wrap: anywhere; }
 .booking-success__detail,.confirmation__item { gap: 12px; }
-.confirmation__whatsapp { background: var(--color-sand); color: var(--color-obsidian); }
-.confirmation__whatsapp:hover { background: var(--color-sand-light); color: var(--color-obsidian); }
 .toast-container { left: 12px; right: 12px; bottom: 12px; pointer-events: none; }
 .toast { min-width: 0; width: 100%; max-width: 440px; padding: 12px; pointer-events: auto; }
 .footer-grid { grid-template-columns: minmax(0,1fr); }

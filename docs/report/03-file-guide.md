@@ -152,16 +152,8 @@ The folders separate browser code, database and function source, documentation a
 | `docs/report/14-owner-and-demo.md` | Reference chapter for owner demonstration | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `docs/report/15-glossary-and-next.md` | Reference chapter for glossary and priorities | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `index.html` | Home and featured dishes | Browser navigation | css/, js/main.js and js/support.js |
-| `js/app.js` | Historical app module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
-| `js/booking.js` | Historical booking module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
-| `js/careers.js` | Historical careers module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
-| `js/contact.js` | Historical contact module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
-| `js/home.js` | Historical home module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
-| `js/locations.js` | Historical locations module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
 | `js/main.js` | Active storefront orchestration and forms | Six storefront pages | js/support.js, data files and Edge routes |
-| `js/menu.js` | Historical menu module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
 | `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
-| `js/utils.js` | Historical utils module, retained outside the active HTML path | Prior frontend implementation | Earlier utility and page module contracts |
 | `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
 | `menu.html` | Search, category filters and menu | Browser navigation | css/, js/main.js and js/support.js |
 | `supabase/config.toml` | Local project and five function entries | Supabase CLI | Function source directories |

@@ -113,7 +113,7 @@
     "note": "Sample slots only, not confirmed opening hours or availability."
   },
   "payment": {
-    "note": "Phase 2: Integrate real payment gateway (Razorpay/Stripe/PayU). Current implementation uses WhatsApp for order confirmation only.",
+    "note": "Online payment is not configured. The café arranges payment separately.",
     "methods": [
       "cash",
       "upi",
