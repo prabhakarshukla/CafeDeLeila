@@ -1,5 +1,7 @@
 # BACKEND STATE AUDIT — Café De Leila
 
+This snapshot describes the starting state. Migration 003 now records status history for orders only and validates transitions for bookings and applications. See the [current database reference](report/06-database.md).
+
 **Audit Date:** 2026-11-18  
 **Auditor:** Agent (T0)  
 **Repo:** https://github.com/prabhakarshukla/CafeDeLeila  

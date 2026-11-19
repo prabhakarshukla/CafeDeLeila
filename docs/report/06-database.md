@@ -4,7 +4,7 @@
 
 1. Migration 001 creates the six core tables. A sequence is a database counter that hands out a new number on request. Separate counters serve orders, bookings and applications. A trigger is a database hook that runs when a row changes. Before inserts, the three numbering triggers take an Asia/Kolkata date and attach the full sequence value with a minimum width of three digits.
 2. Migration 002 connects `admin_users.user_id` to `auth.users.id`. `is_admin` checks for staff or owner membership, and `is_owner` checks the owner role. `public_settings` exposes a whitelist of 12 settings rows as key/value pairs.
-3. Migration 003 validates order, booking and application status changes. A separate order trigger records the old and new status and actor in `order_status_history` when the status changes.
+3. Migration 003 validates order, booking and application status changes. Only orders keep a status history. An order trigger records the previous status, new status and actor in `order_status_history`. Bookings and applications retain their current status without a history table.
 4. Migration 004 grants narrowly scoped updates, creates Storage policies and buckets, and publishes order and booking changes. It adds the dashboard queries, a shared rate limiter and the booking reservation function.
 5. Migration 006 removes known legacy policies, upserts bucket definitions and inserts missing settings or categories. It also installs the staff column guard and narrows direct access to stats and trigger functions. A legacy Chinese category is renamed by slug when that preserves the existing ID. The seed uses category slugs to resolve foreign keys and deterministic IDs to avoid overwrites.
 

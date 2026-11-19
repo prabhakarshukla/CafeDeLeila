@@ -132,10 +132,24 @@ BEGIN
   EXCEPTION WHEN check_violation OR raise_exception THEN
     IF SQLERRM = 'Illegal transition succeeded' THEN RAISE; END IF;
   END;
+  IF has_function_privilege('public.insert_order_status_history()', 'EXECUTE')
+    OR has_function_privilege('public.validate_order_status_transition()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'Authenticated can execute the order history or transition function directly';
+  END IF;
   UPDATE orders SET status = 'confirmed' WHERE customer_name = 'Rollback fixture';
   IF NOT FOUND THEN RAISE EXCEPTION 'Staff could not confirm fixture'; END IF;
   UPDATE orders SET payment_status = 'paid' WHERE customer_name = 'Rollback fixture';
   IF NOT FOUND THEN RAISE EXCEPTION 'Staff could not update payment status'; END IF;
+  IF (SELECT count(*) FROM public.order_status_history h
+      JOIN public.orders o ON o.id = h.order_id
+      WHERE o.customer_name = 'Rollback fixture') <> 1
+    OR NOT EXISTS (
+      SELECT 1 FROM public.order_status_history h JOIN public.orders o ON o.id = h.order_id
+      WHERE o.customer_name = 'Rollback fixture' AND h.from_status = 'pending'
+        AND h.to_status = 'confirmed' AND h.changed_by = auth.uid()
+    ) THEN
+    RAISE EXCEPTION 'Order history did not record exactly one staff status transition';
+  END IF;
   UPDATE bookings SET status = 'confirmed' WHERE customer_name = 'Rollback fixture';
   IF NOT FOUND THEN RAISE EXCEPTION 'Staff could not confirm booking fixture'; END IF;
   UPDATE job_applications SET status = 'reviewing' WHERE full_name = 'Rollback fixture';

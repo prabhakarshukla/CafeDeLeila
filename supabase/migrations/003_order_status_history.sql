@@ -1,6 +1,7 @@
 -- ============================================
 -- CAFÉ DE LEILA — MIGRATION 003
--- Order status history, validated transitions, updated_at triggers
+-- Persist status history for orders only. Validate transitions for orders,
+-- bookings and applications. Bookings and applications retain current status.
 -- Run in Supabase SQL Editor AFTER 002_admin_settings.sql
 -- ============================================
 
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 -- Enable RLS
 ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
--- Admins can read all history
+-- Migration 004 adds the admin SELECT policy for order history.
 
 
 -- ============================================

@@ -13,7 +13,7 @@ Run checks from the repository root. Keep all destructive or write tests pointed
 | Generator | `node audit/generate-menu-seed.cjs --check` compares the SQL seed with menu JSON | PASS. 80 items and 19 category mappings. |
 | Order handler | `node audit/order-contract.cjs` loads the actual handler with database and network stubs | PASS unknown/unavailable UUID, duplicates, quantity, disabled ordering, and server subtotal/tax/total. Node 24 or compatible type-stripping support required. |
 | Embedded Postgres | Install `@electric-sql/pglite@0.3.15` into a temp prefix and point `NODE_PATH` at that package directory, then `node audit/db-replay.cjs` | PASS clean apply, reapply, simulated legacy repair, repeated seed, edited-price preservation and rollback SQL. Stubbed Auth and Storage schemas, so uses real PostgreSQL semantics with no Supabase service processes. |
-| SQL behavior | Run `supabase/tests/behavior.sql` on a disposable DB as the SQL Editor role | PASS inside embedded suite. Asserts anonymous read/write isolation, staff settings denial, invalid/valid status and unique order numbers across 1,100 writes. Sequence counters can advance despite rollback. |
+| SQL behavior | Run `supabase/tests/behavior.sql` on a disposable DB as the SQL Editor role | PASS inside embedded suite. Asserts anonymous read/write isolation, staff settings denial, invalid/valid status, order-history writes after trigger EXECUTE revocation, and unique order numbers across 1,100 writes. Sequence counters can advance despite rollback. |
 | JS and TS syntax | `node --check` per module | PASS across source. Node syntax is not a Deno type or dependency check. |
 | Report completeness | `node audit/check-report-coverage.cjs` | Compares all tracked paths against the guide rows. |
 
