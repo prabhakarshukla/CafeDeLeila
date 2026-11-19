@@ -41,7 +41,8 @@ The folders separate browser code, database and function source, documentation a
 | `CHANGELOG.md` | Change history | Contributors | Commit history |
 | `PROJECT_REPORT.md` | Report index, status and corrections | Developers and café operator | docs/report/ and REPORT_AUDIT.md |
 | `README.md` | Local entry point, setup and current evidence | Contributors | PROJECT_REPORT.md, docs/ |
-| `REPORT_AUDIT.md` | Baseline claims and evidence from this task | Reviewers | Source files and test runs |
+| `REPORT_AUDIT.md` | Historical report baseline | Reviewers | Earlier source and test runs |
+| `VERIFICATION_REPORT.md` | Current checklist results and hosted verification outstanding | Reviewers and operator | Source, local checks and verification guide |
 | `admin/admin.css` | Admin layout, focus and print styles | admin/index.html | css/variables.css |
 | `admin/index.html` | Admin page, login form and navigation host | Browser at /admin/ | admin.css and admin/js/app.js |
 | `admin/js/app.js` | Session and route guard | Admin app or modules | Supabase and admin UI modules |
@@ -54,14 +55,15 @@ The folders separate browser code, database and function source, documentation a
 | `assets/favicon.svg` | Browser tab icon | Root HTML pages | SVG |
 | `assets/logo_delelia.svg` | Brand art | Site header markup | SVG |
 | `assets/meal.svg` | Fallback illustration for menu dishes | Menu/home renderers | SVG |
-| `audit/admin-browser.cjs` | Checks admin layouts and role navigation | Playwright | Chrome, mocked client, admin page |
+| `audit/admin-browser.cjs` | Checks admin layouts, roles and populated workflows | Playwright | Chrome, mocked client, admin page |
+| `audit/booking-timezone.cjs` | Compares booking behavior across browser timezones | Playwright | Chrome and the booking page |
 | `audit/browser-results.json` | Historical browser flow outcomes | Historical audit | Corresponding command in audit/ |
-| `audit/browser.cjs` | Historical storefront QA and screenshot workflow | Playwright | Chrome, static files and intercepted requests |
+| `audit/browser.cjs` | Storefront form, cart and layout tests | Playwright | Chrome, static files and intercepted requests |
 | `audit/check-report-coverage.cjs` | Asserts one guide row per tracked file | Node and report review | Git index and this file |
 | `audit/db-replay.cjs` | Runs clean, repeat and simulated legacy SQL | Node and database reviewers | PGlite and Supabase SQL with platform stubs |
 | `audit/generate-menu-seed.cjs` | Produces/verifies sample insert SQL | Node and database maintainers | data/menu.json |
 | `audit/layout-results.json` | Historical viewport measurements | Historical audit | Corresponding command in audit/ |
-| `audit/order-contract.cjs` | Runs validation and pricing checks on the actual handler | Node and checkout reviewers | Node TS stripper, orders function and mocked catalog |
+| `audit/order-contract.cjs` | Checks HTTP, booking and order contracts with the actual handlers | Node and checkout reviewers | Node TS stripper and database stubs |
 | `audit/server-check.cjs` | Checks HTTP response from local Python server | Node and frontend reviewers | Python, index.html and loopback |
 | `audit/server-results.json` | Historical localhost HTTP result | Historical audit | Corresponding command in audit/ |
 | `audit/static-results.json` | Historical static checks and contrast | Historical audit | Corresponding command in audit/ |
@@ -87,7 +89,7 @@ The folders separate browser code, database and function source, documentation a
 | `docs/PROJECT_STATE.md` | Early frontend architecture and audit | Contributors and operator | Project source and audit history |
 | `docs/SETUP_SUPABASE.md` | Numbered setup and smoke commands | Contributors and operator | Project source and audit history |
 | `docs/TODO_FOR_OWNER.md` | Owner confirmation checklist | Contributors and operator | Project source and audit history |
-| `docs/VERIFY_SUPABASE.md` | Read-only metadata and authorization expectations | Contributors and operator | Project source and audit history |
+| `docs/VERIFY_SUPABASE.md` | Hosted metadata queries, authorization probes and expected results | Contributors and operator | Project source and audit history |
 | `docs/report/01-overview.md` | Reference chapter for overview | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `docs/report/02-architecture.md` | Reference chapter for architecture | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `docs/report/03-file-guide.md` | Reference chapter for file guide | PROJECT_REPORT.md | Current implementation, SQL and tests |
@@ -104,12 +106,15 @@ The folders separate browser code, database and function source, documentation a
 | `docs/report/14-owner-and-demo.md` | Reference chapter for owner demonstration | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `docs/report/15-glossary-and-next.md` | Reference chapter for glossary and priorities | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `index.html` | Home and featured dishes | Browser navigation | css/, js/main.js and js/support.js |
+| `js/menu-image.mjs` | Validates menu image paths and project Storage URLs | Storefront and admin Menu | Browser URL parser |
 | `js/main.js` | Active storefront orchestration and forms | Six storefront pages | js/support.js, data files and Edge routes |
 | `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
 | `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
 | `menu.html` | Search, category filters and menu | Browser navigation | css/, js/main.js and js/support.js |
 | `supabase/config.toml` | Local project and five function entries | Supabase CLI | Function source directories |
-| `supabase/functions/_shared/http.ts` | Origin checks, streamed JSON and visitor hash | Public function handlers | Deno environment, request body and Web Crypto |
+| `supabase/functions/_shared/booking-rules.mjs` | Sample slots, advance limits and shared validation | Booking page and handler | Shared India calendar |
+| `supabase/functions/_shared/http.ts` | Request wrapper, streamed JSON, response and rate limits | Public function handlers | Deno environment, request body and Web Crypto |
+| `supabase/functions/_shared/india-date.mjs` | India date labels and calendar operations | Storefront, admin and bookings handler | Intl.DateTimeFormat |
 | `supabase/functions/applications/.npmrc` | Per-function registry settings for applications | Supabase CLI bundler | Registered function configuration |
 | `supabase/functions/applications/deno.json` | Per-function Deno import configuration for applications | Supabase CLI bundler | Registered function configuration |
 | `supabase/functions/applications/index.ts` | HTTP handler for applications | Customer browser requests | Shared HTTP helper, Supabase database or Storage |

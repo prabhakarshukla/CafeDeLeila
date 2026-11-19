@@ -29,4 +29,4 @@ Cross-Origin Resource Sharing, or CORS, tells a browser which website origins ma
 
 ## Where to look
 
-`publicSupabase` in `js/support.js`, `start` and `access` in `admin/js/app.js`, `cors` in `supabase/functions/_shared/http.ts`, and the publication and RLS statements in migration 004. The operator reports Vercel serves the main branch. That routing was not verified during this task.
+`publicSupabase` in `js/support.js`, `start` and `access` in `admin/js/app.js`, `requestHandler` in `supabase/functions/_shared/http.ts`, and the publication and RLS statements in migration 004. The operator reports Vercel serves the main branch. That routing was not verified during this task.

@@ -17,6 +17,6 @@ Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ 
 - Configure the function origin allowlist, deploy the five functions, disable public sign-up and create an owner. Use the [numbered setup guide](docs/SETUP_SUPABASE.md) and [verification guide](docs/VERIFY_SUPABASE.md).
 - Run the anonymous access, order, CV and admin/staff smoke tests on a disposable project.
 
-Embedded PostgreSQL passed clean and repeat migration runs, simulated legacy cleanup, seed replay and rollback assertions. The order-handler test passed with a stubbed database. Hosted Auth, Storage, Realtime, end-to-end customer requests and the Vercel deployment remain **UNVERIFIED**. [Audit results](REPORT_AUDIT.md)
+Embedded PostgreSQL passed clean and repeat migration runs, simulated legacy cleanup, seed replay and rollback assertions. Tests with a stubbed database exercise all five handlers and verify server-side pricing. Mocked browser tests cover form failures and populated admin workflows. Hosted Auth, Storage, Realtime, end-to-end customer requests and the Vercel deployment remain **UNVERIFIED**. [Audit results](VERIFICATION_REPORT.md)
 
 The 80 dishes and their prices are samples. Hours, address, WhatsApp, photos, tax and delivery terms need confirmation. Payments are tracked manually. WhatsApp appears only as an optional contact link when the configured Indian number is verified. Requests are submitted through the site. [Owner checklist](docs/TODO_FOR_OWNER.md)

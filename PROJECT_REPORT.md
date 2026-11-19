@@ -5,12 +5,14 @@ The storefront, owner tools and database source are in this branch. The report d
 | Area | Status | Evidence |
 |---|---|---|
 | Static storefront and menu | Built | Six pages, filters, fallback and 80 sample dishes. |
-| Admin panel | Built | Eight routes. Prior browser tests use mocked sessions. |
+| Admin panel | Built | Eight routes. Populated browser fixtures cover order status and payment, menu edits, CSV, print, CV signing and Realtime callbacks. |
 | Schema, cleanup and seed | Built | Clean and repeat applies passed in embedded PostgreSQL with Supabase schema stubs. |
-| Customer requests and admin queues | Partly | Handlers and UI exist. Order pricing and database behavior have local proof. Hosted journeys are pending. |
+| Customer requests and admin queues | Partly | Handlers and UI exist. Local checks cover request schemas, order pricing, forms and database behavior. Hosted journeys are pending. |
 | Live Auth, Storage, Realtime and Gateway | UNVERIFIED | Setup smoke tests remain for the operator. |
 | Final café content | Partly | Sample catalog, hours, address, fees, tax and WhatsApp need owner approval. |
 | Online payment and automated notifications | Not built | The admin panel records payment status manually. |
+
+The [verification report](VERIFICATION_REPORT.md) records each requirement and the remaining hosted checks.
 
 ## How it works
 

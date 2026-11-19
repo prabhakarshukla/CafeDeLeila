@@ -13,18 +13,18 @@
 
 1. `loadBookingConfig` builds date and time options. `bookingHandleSubmit` validates the fields and sends contact details, the chosen date and time, and guest count.
 2. The booking handler validates the request and calls `reserve_booking`. The database serializes requests for the same slot before checking capacity and inserting.
-3. The response includes the booking number. `showBookingConfirmation` presents the request. A full slot or backend error produces feedback and keeps the form available.
+3. The response includes the booking number. `showBookingConfirmation` presents the request. A full slot or backend error keeps the form available and shows the café phone.
 
 ### Submit a CV
 
 1. `handleFileSelect` checks file type and size. `careersHandleSubmit` asks the applications upload route for a signed URL and path.
 2. The browser puts the file to the signed URL. Storage applies its own type and size limits. If the write fails, the application request is not sent.
 3. The browser submits a second request with `cv_path`. The function checks the object exists, writes `job_applications.cv_url` as the path and returns the application number.
-4. The UI shows a reference on success and a toast on failure. A successful upload followed by a failed application insert can leave an orphaned file.
+4. The UI shows a reference on success and an inline message with the café phone on failure. A successful upload followed by a failed application insert can leave an orphaned file.
 
 ### Send a contact message
 
-`contactHandleSubmit` sends name, email, phone, subject and message to `contact`. It validates and stores a `new` row and returns `received: true`. The browser resets after success. Validation or rate-limit errors leave the form filled.
+`contactHandleSubmit` sends name, email, phone, subject and message to `contact`. It validates and stores a `new` row and returns `received: true`. The browser resets after success. Validation or rate-limit errors leave the form filled and show the café phone.
 
 ### Handle a new order
 

@@ -1,5 +1,7 @@
 # Report audit
 
+This is a historical baseline. See the [current verification report](VERIFICATION_REPORT.md) for the latest checklist and test evidence.
+
 ## Baseline before changes
 
 Branch feat/admin-backend at c8d80d0. Reviewed moved documentation from docs and inspected the tracked inventory. The config URL and publishable-key formats match Supabase conventions. No values were printed. Hosted facts below come from the operator and remain independently unverified.

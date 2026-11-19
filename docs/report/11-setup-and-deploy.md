@@ -12,4 +12,4 @@
 
 ## Where to look
 
-[Numbered setup and all copy-paste commands](../SETUP_SUPABASE.md), [read-only verification and expected results](../VERIFY_SUPABASE.md), [deployment notes](../DEPLOY.md), `supabase/config.toml` and `data/config.json`.
+[Numbered setup and all copy-paste commands](../SETUP_SUPABASE.md), [hosted verification commands and expected results](../VERIFY_SUPABASE.md), [deployment notes](../DEPLOY.md), `supabase/config.toml` and `data/config.json`.

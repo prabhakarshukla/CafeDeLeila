@@ -11,7 +11,8 @@ Run checks from the repository root. Keep all destructive or write tests pointed
 | Local HTTP server | `node audit/server-check.cjs` starts Python and checks the storefront HTTP response | Historical result in server-results.json. The prior admin turn verified both storefront and admin routes separately. |
 | Admin browser suite | `node audit/admin-browser.cjs` runs 27 captures, owner/staff/guest navigation, order status/payment, print visibility, Realtime callback/audio toggle, menu create/edit and sample status, CSV contents, and the CV signing call | PASS with populated mocks. Hosted authentication, writes, Storage signing and Realtime delivery still need a disposable Supabase run. The OS print dialog and real audio output are outside the browser fixture. |
 | Generator | `node audit/generate-menu-seed.cjs --check` compares the SQL seed with menu JSON | PASS. 80 items and 19 category mappings. |
-| Order handler | `node audit/order-contract.cjs` loads the actual handler with database and network stubs | PASS unknown/unavailable UUID, duplicates, quantity, disabled ordering, and server subtotal/tax/total. Node 24 or compatible type-stripping support required. |
+| Edge handlers | `node audit/order-contract.cjs` loads all five actual handlers with database stubs | PASS method and origin checks, invalid JSON, oversized bodies, field validation, generic error shape, India date boundaries and server pricing. Node 24 or compatible TypeScript transformation support required. |
+| Browser calendar | `node audit/booking-timezone.cjs` compares date labels and validity in Los Angeles and Kolkata | PASS under a fixed instant spanning two different local calendar days. |
 | Embedded Postgres | Install `@electric-sql/pglite@0.3.15` into a temp prefix and point `NODE_PATH` at that package directory, then `node audit/db-replay.cjs` | PASS clean apply, reapply, simulated legacy repair, repeated seed, edited-price preservation and rollback SQL. Stubbed Auth and Storage schemas, so uses real PostgreSQL semantics with no Supabase service processes. |
 | SQL behavior | Run `supabase/tests/behavior.sql` on a disposable DB as the SQL Editor role | PASS inside embedded suite. Asserts anonymous read/write isolation, staff settings denial, invalid/valid status, order-history writes after trigger EXECUTE revocation, and unique order numbers across 1,100 writes. Sequence counters can advance despite rollback. |
 | JS and TS syntax | `node --check` per module | PASS across source. Node syntax is not a Deno type or dependency check. |
@@ -30,4 +31,4 @@ Actual Supabase gateway, Auth credentials, Storage, Realtime and Vercel deployme
 
 ## Where to look
 
-[Current audit](../../REPORT_AUDIT.md), [prior backend audit](../BACKEND_AUDIT.md), `audit/`, `supabase/tests/behavior.sql` and [smoke-test commands](../SETUP_SUPABASE.md#9-run-the-smoke-tests).
+[Current audit](../../VERIFICATION_REPORT.md), [prior backend audit](../BACKEND_AUDIT.md), `audit/`, `supabase/tests/behavior.sql` and [smoke-test commands](../SETUP_SUPABASE.md#9-run-the-smoke-tests).

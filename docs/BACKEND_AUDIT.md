@@ -1,5 +1,7 @@
 # Backend audit
 
+This is a historical snapshot. See the [current verification report](../VERIFICATION_REPORT.md) for replay, browser, and hosted verification status.
+
 PASS indicates the scope stated in the evidence column. Real Supabase integration remains unverified. No hosted database, function, Auth or Storage operation was run.
 
 | Task | Verdict | Evidence |
