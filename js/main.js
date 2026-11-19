@@ -401,6 +401,8 @@ async function loadConfig() {
   }
 }
 
+let menuImageUrl;
+
 async function loadMenu() {
     try {
     if (state.config?.supabase?.url) {
@@ -415,7 +417,12 @@ async function loadMenu() {
     const response = await fetch('data/menu.json');
     if (!response.ok) throw new Error('Failed to load menu');
     const data = await response.json();
-    state.menu = data.categories;
+    state.menu = data.categories.map(category => ({
+      ...category,
+      items: category.items.map(item => ({
+        ...item, image: menuImageUrl(item.image, state.config?.supabase?.url) || 'assets/meal.svg',
+      })),
+    }));
   } catch (error) {
     console.error('Menu load failed:', error);
     utils.showToast('Failed to load menu', 'error');
@@ -2531,6 +2538,7 @@ function initEventDelegation() {
 async function init() {
 
   try {
+    ({menuImageUrl} = await import('./menu-image.mjs'));
     // Render shared header/footer first
     renderHeader();
     await loadConfig();

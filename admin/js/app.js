@@ -16,6 +16,7 @@ const pages = {
   staff:['Staff', './settings.js', true],
 };
 let client;
+let projectUrl;
 let user;
 let role;
 let dispose;
@@ -46,7 +47,7 @@ async function showPage() {
   notice('Loading…');
   try {
     const module = await import(pages[key][1]);
-    const cleanup = await module.render({client, view:stage, role, user, key, notice: message => {
+    const cleanup = await module.render({client, projectUrl, view:stage, role, user, key, notice: message => {
       if (generation === current) notice(message);
     }});
     if (generation !== current) cleanup?.();
@@ -89,7 +90,8 @@ async function start() {
   const {supabase} = await response.json();
   if (!supabase?.url || !supabase.publishableKey) throw new Error('Add the Supabase URL and publishable key in data/config.json to enable sign in.');
   const {createClient} = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm');
-  client = createClient(supabase.url, supabase.publishableKey);
+  projectUrl = supabase.url;
+  client = createClient(projectUrl, supabase.publishableKey);
   client.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') setTimeout(() => access(null), 0);
   });

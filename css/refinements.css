@@ -81,7 +81,9 @@ label,.form-error,.cart-item__name,.cart-item__price,.footer-brand__description,
 .location-card { max-width: 960px; margin: auto; }
 .location-card__map { min-height: 260px; }
 .location-card__hours { margin-top: 20px; font-size: 16px; }
-.contact-map__link, .footer-links a, .footer-contact a { display: inline-flex; align-items: center; min-height: 44px; }
+.contact-map__link, a.contact-info__value, .footer-links a, .footer-contact a,
+.submission-error a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.contact-page main :is(input, select, textarea, button) { min-height: 44px; }
 .address-note,.demo-notice { font-size: 16px; color: var(--color-text-secondary); line-height: 1.6; margin: 12px 0 20px; }
 .demo-notice { padding: 12px 16px; border-left: 2px solid var(--color-sand); background: var(--color-obsidian-card); }
 .cart-item { grid-template-columns: 48px minmax(0,1fr); gap: 12px; margin-bottom: 12px; }

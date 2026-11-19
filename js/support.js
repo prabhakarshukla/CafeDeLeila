@@ -158,7 +158,7 @@ function catalogFromDatabase({categories, items}) {
       const image = item.image_url;
       return {
         id: item.id, name: item.name, description: item.description ?? '', price: item.price_inr,
-        veg: item.veg, image: /^https:\/\/[\w./%?=&-]+$/.test(image) ? image : 'assets/meal.svg',
+        veg: item.veg, image: menuImageUrl(image, window.CAFE_CONFIG?.supabase?.url) || 'assets/meal.svg',
         tags: item.tags ?? [],
       };
     }),

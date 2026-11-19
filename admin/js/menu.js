@@ -1,9 +1,10 @@
+import {menuImageUrl} from '../../js/menu-image.mjs';
 import {action, button, el, field, result, rupees} from './ui.js';
 
 const supported = ['image/jpeg','image/png','image/webp'];
 const imageLimit = 5 * 1024 * 1024;
 
-export async function render({client, view, role, notice}) {
+export async function render({client, projectUrl, view, role, notice}) {
   if (role !== 'owner') return;
   const body = el('div');
   view.replaceChildren(el('h1', {}, 'Menu manager'), body);
@@ -52,11 +53,13 @@ export async function render({client, view, role, notice}) {
     const slug = el('input', {required:true, pattern:'[a-z0-9]+(?:-[a-z0-9]+)*', maxlength:100, value:row?.slug ?? ''});
     const veg = el('input', {type:'checkbox', checked:row?.veg ?? true});
     const tags = el('input', {maxlength:300, value:(row?.tags || []).join(', ')});
+    const image = el('input', {name:'image_url', maxlength:500, value:row?.image_url ?? ''});
     const photo = el('input', {type:'file', accept:supported.join(',')});
     if (isItem) {
       if (row) category.value = row.category_id;
       form.append(field('Category', category), field('Price in rupees', price), field('Vegetarian', veg),
-        field('Tags separated by commas', tags), field('Replace image (JPEG, PNG or WebP, up to 5 MB)', photo));
+        field('Tags separated by commas', tags), field('Image path or project Storage URL', image),
+        field('Replace image (JPEG, PNG or WebP, up to 5 MB)', photo));
     } else form.append(field('URL slug (lowercase letters, digits and hyphens)', slug));
     const submit = el('button', {}, row ? 'Save changes' : 'Create ' + (isItem ? 'item' : 'category'));
     form.append(submit);
@@ -75,8 +78,14 @@ export async function render({client, view, role, notice}) {
             const extension = {'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
             imagePath = crypto.randomUUID() + '.' + extension;
             const bucket = client.storage.from('menu-images');
+            const url = menuImageUrl(bucket.getPublicUrl(imagePath).data.publicUrl, projectUrl);
+            if (!url) throw new Error('Could not use this project’s public Storage URL.');
             await result(bucket.upload(imagePath,file,{contentType:file.type}));
-            fields.image_url = bucket.getPublicUrl(imagePath).data.publicUrl;
+            fields.image_url = url;
+          } else {
+            const url = menuImageUrl(image.value, projectUrl);
+            if (image.value.trim() && !url) throw new Error('Use a local image path or this project’s public Storage URL.');
+            fields.image_url = url || null;
           }
         } else Object.assign(fields, {slug:slug.value, is_active:active.checked});
         const query = client.from(table);
