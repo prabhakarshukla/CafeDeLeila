@@ -7,7 +7,7 @@
 | Public access to customer records | RLS policies in 001–004 and legacy cleanup in 006; no GET on write functions | Embedded PostgreSQL checks pass for anon order read/write. Run hosted REST check. |
 | Customer changes item prices | Orders maps DB UUIDs to current `price_inr` and ignores client cost fields | Mock order handler tests pass. Hosted order receipt pending. |
 | Staff changes settings or grants access | Owner-only settings and admin_users policies plus owner route restrictions | Embedded SQL proves staff settings update is denied or affects no rows. Hosted session and REST verification pending. |
-| Staff edits order customer data or payment | Column grants limit updates, payment trigger checks owner | Hosted permissions pending. |
+| Staff edits totals, line items, customer details or payment IDs | Migration 006 runs `guard_staff_columns` before other update triggers. Order status and payment status are allowed. | Embedded rollback tests cover allowed staff status and payment changes, blocked protected fields, and owner edits. Hosted REST remains unverified. |
 | Unwanted public file writes | 006 drops legacy upload policies and limits MIME/size at bucket level; CV writes use a signed path | Actual Storage enforcement and file inspection remain unverified. MIME and extension checks alone cannot detect malicious document contents. |
 | Browser from unapproved origin | Exact origin allowlist; server still validates data; machine clients can omit Origin | Origin filtering is not authentication or a general abuse controls system. |
 | Burst submissions | Per-instance limit for orders/bookings/menu, database limits for applications/contact | Proxy IP selection and shared NAT behavior need hosted checks. |

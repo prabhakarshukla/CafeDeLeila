@@ -69,3 +69,7 @@ Numbering regression PASS. A 1,100-insert rollback loop reproduced duplicate IDs
 PASS document structure checks. The index links 15 chapters and records 14 numbered corrections. Each chapter has How it works and Where to look. The longest chapter is under 600 lines. The database chapter transcribes all columns, callers, rules and 25 final policy definitions. The coverage script is run against the final index.
 
 UNVERIFIED full Supabase stack and hosted operations. Docker and Deno were unavailable. No project, function, database, user or Storage request targeted the existing hosted project.
+
+## B1–B4 live-review follow-up
+
+Embedded PostgreSQL PASS. Migration 006 installs a BEFORE UPDATE column guard on all four operational tables. Staff status and payment-status changes succeed, protected-field updates fail with 42501, and owner edits succeed. The earlier payment trigger is removed in 006. Anonymous catalog reads succeed and anonymous order reads return zero rows. Anonymous direct use of the stats views, dashboard RPC, and generators is denied. The service role still generates order, booking, and application references through existing insert triggers. Membership helpers are stable SQL with a locked search path and retain anonymous/authenticated execution. Both migration seeds and the public whitelist use the same 12 keys. Hosted REST remains unverified.

@@ -6,7 +6,7 @@
 2. Migration 002 connects `admin_users.user_id` to `auth.users.id`. `is_admin` checks for staff or owner membership, and `is_owner` checks the owner role. `public_settings` exposes a whitelist of 12 settings rows as key/value pairs.
 3. Migration 003 validates order, booking and application status changes. A separate order trigger records the old and new status and actor in `order_status_history` when the status changes.
 4. Migration 004 grants narrowly scoped updates, creates Storage policies and buckets, and publishes order and booking changes. It adds the dashboard queries, a shared rate limiter and the booking reservation function.
-5. Migration 006 removes known legacy policies, upserts bucket definitions and inserts missing settings or categories. A legacy Chinese category is renamed by slug when that preserves the existing ID. The seed uses category slugs to resolve foreign keys and deterministic IDs to avoid overwrites.
+5. Migration 006 removes known legacy policies, upserts bucket definitions and inserts missing settings or categories. It also installs the staff column guard and narrows direct access to stats and trigger functions. A legacy Chinese category is renamed by slug when that preserves the existing ID. The seed uses category slugs to resolve foreign keys and deterministic IDs to avoid overwrites.
 
 ### Sequences, triggers and routines
 
@@ -17,15 +17,15 @@
 | `generate_booking_number` / `trigger_generate_booking_number` | Before bookings INSERT, writes BK-date-sequence into `booking_number`. |
 | `generate_application_number` / `trigger_generate_application_number` | Before application INSERT, writes APP-date-sequence into `application_number`. |
 | `update_updated_at_column` | Sets updated_at on UPDATE. Triggers are `update_menu_items_updated_at`, `update_orders_updated_at`, `update_bookings_updated_at`, `update_applications_updated_at`. |
-| `is_admin`, `is_owner` | Read the Auth user membership as the function owner so policies can evaluate membership without recursion. |
+| `is_admin`, `is_owner` | Stable SQL functions read membership as the function owner, with an empty search path and qualified references. Anonymous and authenticated callers can execute both. |
 | `validate_order_status_transition` / `trigger_validate_order_status_transition` | Pending → confirmed. Confirmed → preparing/ready/cancelled. Preparing → ready/cancelled. Ready → out for delivery/completed/cancelled. Out for delivery → completed. |
 | `insert_order_status_history` / `trigger_insert_order_status_history` | After a changed order status, writes order_id, from_status, to_status and the authenticated actor. |
 | `validate_booking_status_transition` / `trigger_validate_booking_status_transition` | Pending → confirmed/cancelled. Confirmed → completed/cancelled/no show. |
 | `validate_application_status_transition` / `trigger_validate_application_status_transition` | Pending → reviewing/rejected. Reviewing → shortlisted/rejected. Shortlisted → hired/rejected. |
-| `protect_payment_update` function and same-name trigger | Blocks authenticated non-owners from changing an order's payment status. |
+| `guard_staff_columns` / `aa_guard_staff_columns` | Runs before the other update triggers on orders, bookings, applications, and messages. It protects all columns from staff edits except order status and payment status, status on the other tables, and `updated_at` where present. Owners and callers without an Auth UID bypass this guard. Migration 006 removes the older `protect_payment_update` trigger. |
 | `reserve_booking(details)` | Rejects past India-time slots, acquires a transaction lock derived from the date/time, counts pending and confirmed bookings against capacity, then inserts and returns the booking. |
 | `allow_submission(endpoint, visitor)` | Counts arrivals per hashed visitor and endpoint in minute buckets. Applications and contact have a limit of 10 each. Deletes buckets older than 10 minutes. |
-| `get_admin_dashboard_stats` | Checks membership and aggregates the four admin views into JSON. |
+| `get_admin_dashboard_stats` | Accepts authenticated calls, rejects non-admins with `42501`, and aggregates the four admin views into JSON. |
 
 ### Views
 
@@ -44,8 +44,8 @@ S = SELECT, I = INSERT, U = UPDATE, D = DELETE. A dash means no access through t
 | Relation | Anonymous | Signed in without membership | Staff | Owner |
 |---|---|---|---|---|
 | menu_categories / menu_items | S active / available in active category | Same | Same | S/I/U/D |
-| orders | S empty, I denied | S empty | S/U status | S/U status and payment status/D |
-| bookings / job_applications / contact_messages | S empty, I denied | S empty | S/U status | S/U status/D |
+| orders | S empty, I denied | S empty | S/U status, payment status and timestamp | S/U/D |
+| bookings / job_applications / contact_messages | S empty, I denied | S empty | S/U status and timestamp where present | S/U/D |
 | order_status_history | — | — | S | S |
 | admin_users | — | S own row if present | S own row | S/I/U/D |
 | settings | — | — | — | S/I/U/D |
@@ -55,6 +55,8 @@ S = SELECT, I = INSERT, U = UPDATE, D = DELETE. A dash means no access through t
 | storage.objects / cv-uploads | — | — | S | S |
 
 Public function routes use built-in privileged credentials for allowed writes. Those credentials bypass RLS, so handlers must validate input. A specific signed upload authorizes writing a named CV object. Bucket settings enforce private CVs at 2 MiB with PDF/DOC/DOCX, public menu images at 5 MiB with JPEG/PNG/WebP, and public OG images at 2 MiB with the same image formats.
+
+The four admin stats views use `security_invoker` and grant browser access only to the authenticated role. The underlying row policies still apply. Anonymous and authenticated roles cannot execute the number generators directly. Inserts with the service role still get references through the existing triggers.
 
 ## Where to look
 

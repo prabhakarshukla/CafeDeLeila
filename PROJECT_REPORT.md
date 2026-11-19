@@ -40,7 +40,7 @@ Read the overview for the café workflow, then use the architecture chapter to f
 
 1. The checkout now has a generated sample database catalog in addition to the 80-item JSON fallback. A hosted empty catalog remains an operator-reported starting state.
 2. The SQL catalog uses 19 category slugs, including separate Main Course and Chinese entries. Existing Chinese IDs survive a rename where possible.
-3. The expected settings count is 12. No undocumented thirteenth key was added.
+3. The seed defines exactly 12 expected settings keys. The `public_settings` whitelist exposes the same 12 keys, and the operator confirmed all are present.
 4. The applied order is 001–004 then 006, and the sample seed is separate. There is no deployable 005.
 5. Recorded distinct proof for embedded SQL, stubbed order-handler tests, historical mock browser runs and unverified hosted services.
 6. Removed the obsolete UUID extension dependency from migration 003 so fresh SQL can apply.
@@ -52,3 +52,6 @@ Read the overview for the café workflow, then use the architecture chapter to f
 12. Confirmed that the browser config already contains a public-format URL and publishable key without exposing them. Local CLI metadata was removed from tracking and ignore rules fixed.
 13. Updated links to the moved historical audits and owner checklist. The latest audit lives beside this report.
 14. Separated operator-reported Vercel and database state from locally verified code and data.
+15. Migration 006 adds an early column guard on orders, bookings, applications, and messages. Staff can update the allowed fields, including order payment status. The guard bypasses owners and callers without an Auth UID, while the existing transition checks still apply.
+16. Migration 006 records the stats view and RPC grants and blocks direct browser execution of the number generators. Anonymous catalog reads and service-role numbering are covered by the rollback tests.
+17. Migration 006 hardens `is_admin()` and `is_owner()` with stable SQL, an empty search path, and qualified references. Both functions remain callable by anonymous and authenticated roles for policy checks.

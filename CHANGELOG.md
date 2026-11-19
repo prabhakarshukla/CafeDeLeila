@@ -60,3 +60,4 @@ A5–A8 verified server pricing, corrected the ordering switch and catalog integ
 A9–A10 documented migration order, read-only checks and disposable-project smoke tests.
 Preserved full numbering sequences after 999 and tested 1,100 order inserts in a rollback.
 Part B split the full report into 15 chapters, reconciled documentation moves, and added tracked-file coverage.
+B1–B4 recorded staff column limits, stats and generator privileges, hardened membership helpers, and added read-only permission checks.

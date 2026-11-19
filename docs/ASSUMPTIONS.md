@@ -16,6 +16,6 @@ Existing untracked SQL drafts were moved intact to the ignored supabase/legacy/l
 ## Migration and report assumptions
 
 - Migration 006 targets the known legacy policy names. Unexpected hosted policies must be reviewed with the read-only verification queries.
-- Migration 002 defines 12 settings keys. No thirteenth key was inferred.
+- Migrations 002 and 006 seed the same 12 keys that the public settings view exposes.
 - If both Chinese category slugs exist, preserve both for owner review. Use deterministic UUIDs for sample items and keep existing edits on seed replay. Run the sample seed only while preparing a sample catalog.
 - The configured browser URL and publishable key were supplied in the working tree. Verification checked their format without printing values or sending requests to the project.

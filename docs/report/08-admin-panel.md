@@ -9,7 +9,7 @@
 | Route | Module | Reads and writes |
 |---|---|---|
 | Dashboard | `dashboard.js` | Reads `get_admin_dashboard_stats`, renders daily counts and top dishes. |
-| Orders | `orders.js` | Reads paginated orders by status, search and India date. Subscribes to inserts, supports sound, opens order details and prints a kitchen slip. Updates permitted status changes, with payment updates reserved for the owner. |
+| Orders | `orders.js` | Reads paginated orders by status, search and India date. Subscribes to inserts, supports sound, opens order details and prints a kitchen slip. The page shows payment controls to owners. At the database level, migration 006 also allows staff to change `payment_status`. |
 | Menu | `menu.js` | Owner creates, edits and deletes categories and items, sets order, toggles availability and updates the sample marker. Image upload uses the JPEG/PNG/WebP 5 MiB check and `menu-images` bucket. |
 | Bookings | `requests.js` | Reads date/status pages and updates eligible booking states. |
 | Applications | `requests.js` | Reads applications, changes review status and creates a 60-second download URL for `cv_url` in `cv-uploads`. |
