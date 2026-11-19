@@ -16,8 +16,8 @@
 | `.gitignore` covers secrets | ✅ PASS | Lines 13-16: `.env`, `.env.local`, `.env.*.local` ignored |
 | `.env.local` tracked in git | ✅ PASS | `git log --all --full-history -- .env.local` returns empty; file listed in `git ls-files --others --ignored` |
 | Secrets ever pushed | ✅ PASS (never pushed) | No history for `.env.local`; no service-role keys in tracked files |
-| VITE_* in docs | ✅ PASS | No `VITE_*` in any `.md` file; only in `.env.local` (ignored) |
-| VITE_* in HTML | ✅ PASS | Supabase client loaded via module script in HTML, not Vite |
+| build-time variables in docs | ✅ PASS | No `build-time variables` in any `.md` file; only in `.env.local` (ignored) |
+| build-time variables in HTML | ✅ PASS | Supabase client loaded via module script in HTML, not Vite |
 
 **A1 Verdict:** ✅ PASS — No secrets tracked, .gitignore correct, no key rotation needed.
 
@@ -135,7 +135,7 @@
 | Hide WhatsApp buttons when number empty | ⚠️ UNVERIFIED | `support.js` line 8 checks `whatsappVerified` but buttons may still render |
 | Restore `_sample: true` on all menu items | ✅ PASS | `menu.json` has `_sample: true` on all 77 items + meta |
 | Show "Sample menu for preview" notice driven by `menu_is_sample` | ❌ FAIL | No `menu_is_sample` in config; "sample" label hardcoded in JS lines 961, 1190 |
-| Replace VITE_* mentions in docs | ✅ PASS | No VITE_* in docs |
+| Replace build-time variables mentions in docs | ✅ PASS | No build-time variables in docs |
 | Tax: no hardcoded rates, read from settings | ❌ FAIL | `config.json` line 58: `"taxRate": 0` with `_sample: true`; no settings table |
 
 ### A10: Unverified Claims
