@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 2 | 0 | 2 | 3 |
-| **Total** | **53** | **0** | **4** | **3** |
+| H. Live Supabase | 5 | 0 | 1 | 1 |
+| **Total** | **56** | **0** | **3** | **1** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -76,7 +76,7 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 |---|---|---|
 | C23 | PASS | `audit/db-replay.cjs` applied 001–004 and 006 in order to empty embedded PostgreSQL with Supabase schema stubs, replayed the full sequence, and replayed 006 over simulated manual changes. Full managed Supabase parity remains unverified. |
 | C24 | PASS | `006_cleanup_legacy.sql:4–34` removes the four legacy INSERT and three upload policies, makes menu/OG writes owner-only and upserts bucket MIME/size. Lines 202–208 apply view privileges. Lines 232–242 explicitly revoke the three generators, five named trigger functions and dashboard access from the specified roles, with dashboard restored to authenticated. |
-| C25 | PARTIAL | No listed legacy policy is created by 001 or 004. Clean and simulated upgrade replay passed. Actual equality with the user-edited live database is unproven until the SQL export is evaluated. |
+| C25 | PARTIAL | No listed legacy policy is created by 001 or 004. Clean and simulated upgrade replay passed. The post-migration SQL export passed 90 of 95 checks. The five table-column checks differ only in legacy defaults. Policies, triggers, bucket metadata, publication and the compared privilege matrix passed. |
 | C26 | PASS | `006_cleanup_legacy.sql:124–139,232` declares stable SECURITY DEFINER SQL with empty search_path and qualified `public.admin_users` and `auth.uid()`, granting EXECUTE to anon and authenticated. Current rollback exercised helper access and membership checks. |
 | C27 | PASS | `006_cleanup_legacy.sql:163–200` guards four BEFORE UPDATE triggers. Allowed fields are `status`, order `payment_status`, and `updated_at` where defined; NULL UID and owner bypass the guard. `behavior.sql:113–182` confirms permitted status/payment and forbidden protected changes, plus owner edits. |
 | C28 | PASS | `002_admin_settings.sql:91–129` declares the 12-key view and matching seed; `006_cleanup_legacy.sql:63–76` backfills the same keys. Replay returned 12 rows in both settings and public_settings, and current docs did not assert 13. |
@@ -132,10 +132,10 @@ Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found p
 
 | No. | Status | Operator check and exact pointer |
 |---|---|---|
-| H.a | PARTIAL (LIVE) | The post-migration smoke report confirms 19 active categories, 80 available items and Soups. The initial SQL export predates the repair. Rerun the export to confirm the full table inventory, exact row counts and RLS flags. |
-| H.b | PARTIAL (LIVE) | The post-migration anonymous checks returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. The earlier SQL export showed INSERT grants on the four operational tables. Patched 006 ran successfully. Repeat the SQL export to verify the effective grants and review the policies. Use a disposable project for direct REST POST denial probes. |
-| H.c | UNVERIFIED (LIVE) | Run the Storage policy and bucket SQL at the top of `docs/VERIFY_SUPABASE.md`. Compare public flags, upload policies, MIME types and byte limits to the listed expected values. |
-| H.d | UNVERIFIED (LIVE) | Run **Check staff guards and dashboard privileges** in `docs/VERIFY_SUPABASE.md`. Compare anon and authenticated EXECUTE and SELECT flags to the expected results for the trigger helpers, generators, stats views, dashboard RPC and role helpers. |
+| H.a | PASS (LIVE) | The anonymous smoke confirmed 19 active categories, 80 available items and Soups. The post-migration SQL export confirmed the ten expected tables with RLS, 19 category rows and 80 item rows. |
+| H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on all four operational tables. The post-migration SQL export confirms the expected INSERT grants and policy restrictions. Direct REST POST denial probes remain unrun and require a disposable project. |
+| H.c | PASS (LIVE) | The SQL export matched the three buckets' public flags, byte limits, MIME types and the expected Storage object policies, including the absence of anonymous upload policies. |
+| H.d | PASS (LIVE) | The SQL evaluator matched the expected function EXECUTE, view SELECT and trigger metadata, including the four staff guards. |
 | H.e | PASS (LIVE) | The operator reran the read-only Auth check and the saved result confirms signup is disabled. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
 | H.f | PASS (LIVE) | The operator's SQL export reports one admin user with the owner role. |
 | H.g | UNVERIFIED (LIVE) | Use the staff rollback script and the interactive owner smoke script in `docs/VERIFY_SUPABASE.md`. Order and booking fixtures require confirmed owner cleanup access. The production CV and contact writes cannot meet the current cleanup requirement. |
@@ -146,6 +146,6 @@ Before the successful repair, the operator's attempt to run the previous 006 fai
 
 ## Remaining partial and unverified checks
 
-- C25 remains partial until the operator compares the target schema and policies with the migrations. Local clean and upgrade replays passed.
+- C25 remains partial for seven defaults across five tables. The five UUID columns use `uuid_generate_v4()` instead of `gen_random_uuid()`. `orders.order_type` still defaults to `dine-in`, and `orders.payment_status` to `pending`. The current handler sends explicit order and payment values. Check the live order constraints before relying on hosted order writes.
 - F46 remains partial for historical Git provenance. The pre-existing local main divergence is documented above.
-- Rerun the metadata export after the migration and seed, then run the staff rollback test in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
+- Run the staff rollback test in the project SQL Editor. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
