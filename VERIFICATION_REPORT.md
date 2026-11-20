@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 5 | 0 | 1 | 1 |
-| **Total** | **56** | **0** | **3** | **1** |
+| H. Live Supabase | 5 | 0 | 2 | 0 |
+| **Total** | **57** | **0** | **3** | **0** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -76,7 +76,7 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 |---|---|---|
 | C23 | PASS | `audit/db-replay.cjs` applied 001–004 and 006 in order to empty embedded PostgreSQL with Supabase schema stubs, replayed the full sequence, and replayed 006 over simulated manual changes. Full managed Supabase parity remains unverified. |
 | C24 | PASS | `006_cleanup_legacy.sql:4–34` removes the four legacy INSERT and three upload policies, makes menu/OG writes owner-only and upserts bucket MIME/size. Lines 202–208 apply view privileges. Lines 232–242 explicitly revoke the three generators, five named trigger functions and dashboard access from the specified roles, with dashboard restored to authenticated. |
-| C25 | PARTIAL | No listed legacy policy is created by 001 or 004. Clean and simulated upgrade replay passed. The previous live SQL export passed 90 of 95 checks. The follow-up constraint export exposed legacy CHECK values that rejected the current order handler's payment status. Migration 007 now passes clean and legacy fixture replays through all four actual write handlers. The refreshed SQL baseline passes 100 checks locally. Live 007 application and hosted write verification are pending. |
+| C25 | PASS | The operator applied 007. The fresh production SQL export matched all 100 baseline checks, including workflow constraints, defaults, transition functions and triggers. Clean and legacy fixture replays also passed through all four Edge write handlers. |
 | C26 | PASS | `006_cleanup_legacy.sql:124–139,232` declares stable SECURITY DEFINER SQL with empty search_path and qualified `public.admin_users` and `auth.uid()`, granting EXECUTE to anon and authenticated. Current rollback exercised helper access and membership checks. |
 | C27 | PASS | `006_cleanup_legacy.sql:163–200` guards four BEFORE UPDATE triggers. Allowed fields are `status`, order `payment_status`, and `updated_at` where defined; NULL UID and owner bypass the guard. `behavior.sql:113–182` confirms permitted status/payment and forbidden protected changes, plus owner edits. |
 | C28 | PASS | `002_admin_settings.sql:91–129` declares the 12-key view and matching seed; `006_cleanup_legacy.sql:63–76` backfills the same keys. Replay returned 12 rows in both settings and public_settings, and current docs did not assert 13. |
@@ -138,7 +138,7 @@ Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found p
 | H.d | PASS (LIVE) | The SQL evaluator matched the expected function EXECUTE, view SELECT and trigger metadata, including the four staff guards. |
 | H.e | PASS (LIVE) | The operator reran the read-only Auth check and the saved result confirms signup is disabled. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
 | H.f | PASS (LIVE) | The operator's SQL export reports one admin user with the owner role. |
-| H.g | UNVERIFIED (LIVE) | Use the staff rollback script and the interactive owner smoke script in `docs/VERIFY_SUPABASE.md`. Order and booking fixtures require confirmed owner cleanup access. The owner smoke covers contact transitions on a disposable project only, because production owners cannot clean up rate-limit records. The production CV upload remains unverified. |
+| H.g | PARTIAL (LIVE) | The operator's SQL Editor screenshot shows the 13-row staff rollback test and confirms allowed status updates and denied protected writes. The interactive owner run reached the email prompt. Hosted order and booking writes, Realtime and cleanup still need the completed owner run. CV upload and contact writes remain for a disposable project. |
 
 The live SQL evaluator passed all 95 baseline checks locally and detected injected permission and catalog drift. The staff rollback script passed 13 checks in embedded PostgreSQL and restored the owner role, fixture counts, and order sequence state.
 
@@ -146,6 +146,6 @@ Before the successful repair, the operator's attempt to run the previous 006 fai
 
 ## Remaining partial and unverified checks
 
-- C25 remains partial until the operator applies [007](supabase/fixes/007_align_legacy_schema.sql) and refreshes the SQL export. The live CHECK constraints accepted `dine-in`, payment `pending`, and `no-show`, while current handlers and admin use `dine_in`, `unpaid`, and `no_show`. The legacy replay now tests converted rows, preserved failed payments and sequence continuity. The fresh and upgraded schemas have identical exported constraints and defaults.
+- The first evaluation after 007 read the older local export and reported 87 passes and 13 failures. Evaluating the operator's attached post-007 export and saving it at the default ignored path produced 100 passes and zero failures.
 - F46 remains partial for historical Git provenance. The pre-existing local main divergence is documented above.
-- Run the staff rollback test in the project SQL Editor. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
+- Complete the interactive owner smoke in a terminal you control and check the cleanup results. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
