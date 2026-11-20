@@ -14,13 +14,7 @@
   <link rel="stylesheet" href="css/pages.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="stylesheet" href="css/refinements.css">
-  <script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-  window.supabase = createClient(
-    'https://dqzmyahsedhvgbfqprks.supabase.co',
-    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
-  );
-</script>
+
 
 </head>
 <body class="contact-page">
@@ -72,10 +66,10 @@
             </div>
             <div class="form-group">
               <label for="message">Message <span aria-hidden="true">*</span></label>
-              <textarea id="message" name="message" required rows="5" placeholder="Write a message. This demo does not send it."></textarea>
+              <textarea id="message" name="message" required rows="5" placeholder="How can we help?"></textarea>
               <span class="form-error"></span>
             </div>
-            <button type="submit" class="btn btn--primary btn--lg" style="width: 100%;">Preview Message</button>
+            <button type="submit" class="btn btn--primary btn--lg" style="width: 100%;">Send message</button>
           </form>
         </div>
 

@@ -1,14 +1,8 @@
 // Shared helpers for the existing buildless application.
-function indiaDate(date) {
-  return new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit'}).format(date);
-}
-
-function handoffUrl(message) {
-  const contact = window.cafeState.config.contact;
-  if (contact.whatsappVerified && /^91[6-9]\d{9}$/.test(contact.whatsapp)) {
-    return 'https://wa.me/' + contact.whatsapp + '?text=' + encodeURIComponent(message);
-  }
-  return 'mailto:' + contact.email + '?subject=' + encodeURIComponent('Café De Leila demo request') + '&body=' + encodeURIComponent(message);
+function verifiedWhatsAppUrl(contact) {
+  const number = contact?.whatsapp;
+  return contact?.whatsappVerified === true && typeof number === 'string' && /^91\d{10}$/.test(number)
+    ? 'https://wa.me/' + number : '';
 }
 
 function syncPickers() {
@@ -36,8 +30,8 @@ function populateBusinessDetails() {
   });
   document.querySelectorAll('main address,footer address').forEach(el => {
     const note = document.createElement('p'); note.className = 'address-note';
-    note.textContent = 'Address differs across listings. Please confirm with the café before travelling.';
-    el.after(note);
+    note.textContent = contact.address.note || '';
+    if (note.textContent) el.after(note);
   });
 }
 
@@ -102,4 +96,71 @@ function installDialogAccessibility() {
     }
   }, true);
   sync();
+}
+async function publicSupabase(path, options = {}) {
+  const {url, publishableKey} = window.CAFE_CONFIG?.supabase || {};
+  if (!url || !publishableKey) throw new Error('Online requests are unavailable in this preview.');
+  try {
+    const response = await fetch(url.replace(/\/$/, '') + path, {
+      ...options,
+      headers: {apikey: publishableKey, 'Content-Type': 'application/json', ...options.headers},
+    });
+    if (response.ok) return await response.json();
+  } catch {
+    // The caller supplies the customer-facing failure message.
+  }
+  throw new Error('Online request failed.');
+}
+
+function showFormFailure(form, message) {
+  const contact = window.CAFE_CONFIG?.contact;
+  const text = document.createElement('p');
+  text.className = 'submission-error';
+  text.setAttribute('role', 'alert');
+  text.textContent = message;
+  if (contact?.phone && /^\d+$/.test(contact.phoneRaw)) {
+    const phone = document.createElement('a');
+    phone.href = 'tel:+' + contact.phoneRaw;
+    phone.textContent = contact.phone;
+    text.append(' Please call the café at ', phone, '.');
+  }
+  form.querySelector('.submission-error')?.remove();
+  const submit = form.querySelector('[type="submit"]');
+  (submit?.parentElement || form).append(text);
+}
+
+async function loadPublicSettings(config) {
+  if (!config.supabase?.url || !config.supabase?.publishableKey) return;
+  const rows = await publicSupabase('/rest/v1/public_settings?select=key,value');
+  const settings = Object.fromEntries(rows.map(row => [row.key, row.value]));
+  const contact = config.contact;
+  if (settings.address?.full) contact.address = {...contact.address, ...settings.address};
+  if (settings.phone?.formatted) contact.phone = settings.phone.formatted;
+  if (settings.phone?.raw) contact.phoneRaw = settings.phone.raw;
+  if (settings.email?.value) contact.email = settings.email.value;
+  if (settings.opening_hours) config.hours = {...config.hours, ...settings.opening_hours};
+  if (settings.whatsapp_number) {
+    contact.whatsapp = settings.whatsapp_number.value;
+    contact.whatsappVerified = settings.whatsapp_number.verified;
+  }
+  config.menu.is_sample = settings.menu_is_sample?.is_sample ?? config.menu.is_sample;
+  config.ordering.enabled = settings.ordering_enabled?.enabled ?? true;
+  config.ordering.deliveryEnabled = settings.delivery_enabled?.enabled ?? false;
+  config.ordering.deliveryFee = settings.delivery_fee?.amount ?? 0;
+  config.ordering.minOrderDelivery = settings.min_order?.amount ?? 0;
+  config.ordering.taxRate = (settings.tax_percent?.value ?? 0) / 100;
+}
+
+function catalogFromDatabase({categories, items}) {
+  return categories.map(category => ({
+    id: category.slug, name: category.name,
+    items: items.filter(item => item.category_id === category.id).map(item => {
+      const image = item.image_url;
+      return {
+        id: item.id, name: item.name, description: item.description ?? '', price: item.price_inr,
+        veg: item.veg, image: menuImageUrl(image, window.CAFE_CONFIG?.supabase?.url) || 'assets/meal.svg',
+        tags: item.tags ?? [],
+      };
+    }),
+  }));
 }

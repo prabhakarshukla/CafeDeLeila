@@ -1,11 +1,8 @@
-# Assumptions
+# Current assumptions
 
-- Work in the supplied local checkout. Deployment instructions are requested; no production launch or business account changes are needed.
-- The specific home/contact/location requirements permit hours/contact information in those page bodies. The global footer-only rule means no contact strip above the navbar.
-- Interpret the category list literally as 19 categories, including separate Main Course and Chinese.
-- Keep existing sample dishes where suitable; all prices and menu descriptions remain sample. Correct obvious dietary contradictions.
-- Empty WhatsApp plus `whatsappVerified: false` is the placeholder. Do not send personal details to a random numeric sample. Show an email draft fallback until the owner supplies a verified WhatsApp number.
-- Booking slots are explicitly demo slots, not advertised opening hours or availability. No reservation or order is accepted by a backend.
-- Preserve existing vector logo artwork pending owner approval. Use local decorative SVG artwork, not food photos or claims about actual dishes.
-- Do not invent founding dates, locations, ratings, employment benefits, delivery fees or taxes. This prototype shows sample subtotal only.
-- Browser localStorage is optional. Failed persistence must leave the interaction usable and disclose that the result was not saved.
+See [assumptions and migration decisions](docs/ASSUMPTIONS.md).
+
+- The shared booking rules are the source for sample slots and advance limits. The storefront and booking handler use the same rules. Changing them requires deploying both.
+- A local image path is relative to the storefront or rooted at its origin. An absolute image URL must match the configured Supabase project origin and its public Storage path.
+- Local checks use fictional browser and database fixtures. Hosted probes that could create or change rows belong on a disposable project that mirrors the target.
+- The local `main` ref was already one commit ahead of `origin/main` before this work. Only the feature branch is part of this delivery. Historical browser captures remain retrievable from commit `0d011ee`.

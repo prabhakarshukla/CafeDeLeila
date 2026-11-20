@@ -12,8 +12,7 @@ build/
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 
 # IDE/Editor
 .vscode/
@@ -31,11 +30,13 @@ logs/
 *.log
 
 # Testing
+audit/live-sql-report.json
+audit/live-smoke-result.json
+audit/disposable-smoke-result.json
 coverage/
 .nyc_output/
 
 # Project-specific
-PROJECT_REPORT.md
 
 # Supabase
 .supabase/
@@ -49,3 +50,5 @@ assets/og-image.jpg
 # Cache
 .cache/
 *.cache
+supabase/.temp/
+supabase/legacy/local-drafts/

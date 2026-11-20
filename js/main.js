@@ -171,41 +171,11 @@ const utils = (function() {
     };
   }
 
-  function formatDate(date, options = {}) {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-IN', {
-      weekday: options.weekday || 'short',
-      day: 'numeric',
-      month: options.month || 'short',
-      year: options.year ? 'numeric' : undefined
-    });
-  }
-
   function formatTime(time) {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  }
-
-  function isPastDate(date) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return new Date(date) < today;
-  }
-
-  function getAvailableDates(maxDays = 60) {
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i <= maxDays; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push({
-        value: indiaDate(date),
-        label: formatDate(date, { weekday: 'short', month: 'short' })
-      });
-    }
-    return dates;
   }
 
   // ACCESSIBILITY UTILITIES
@@ -246,56 +216,8 @@ const utils = (function() {
     });
   }
 
-  // WHATSAPP UTILITIES
-  function getWhatsAppUrl(phone, message) {
-    const encoded = encodeURIComponent(message);
-    return `https://wa.me/${phone}?text=${encoded}`;
-  }
-
-  function openWhatsAppOrder(order, whatsappNumber) {
-    const lines = [
-      `*New Order - ${order.id}*`,
-      `*Type:* ${order.type}`,
-      `*Customer:* ${order.customer.name}`,
-      `*Phone:* ${order.customer.phone}`,
-      '',
-      '*Items:*'
-    ];
-
-    order.items.forEach(item => {
-      lines.push(`• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`);
-    });
-
-    lines.push('', `*Subtotal:* ${formatPrice(order.subtotal)}`);
-    if (order.deliveryFee > 0) {
-      lines.push(`*Delivery Fee:* ${formatPrice(order.deliveryFee)}`);
-    }
-    if (order.tax > 0) {
-      lines.push(`*Tax (${(order.taxRate * 100).toFixed(0)}%):* ${formatPrice(order.tax)}`);
-    }
-    lines.push(`*Total:* ${formatPrice(order.total)}`);
-
-    if (order.type === 'delivery' && order.address) {
-      lines.push('', `*Delivery Address:* ${order.address}`);
-    }
-
-    if (order.notes) {
-      lines.push('', `*Notes:* ${order.notes}`);
-    }
-
-    lines.push('', 'Thank you for ordering from Café De Leila!');
-
-    const url = getWhatsAppUrl(whatsappNumber, lines.join('\n'));
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
-  // API REQUEST UTILITY
   async function apiRequest(functionName, body) {
-    const { supabase } = window;
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.functions.invoke(functionName, { body });
-    if (error) throw new Error(error.message);
-    return data;
+    return publicSupabase('/functions/v1/' + functionName, {method: 'POST', body: JSON.stringify(body)});
   }
 
   // LAZY LOADING
@@ -389,9 +311,9 @@ const utils = (function() {
     createEl, $, $$, on, delegate, storageGet, storageSet, storageRemove,
     formatPrice, formatPhone, validateIndianPhone, validateEmail, validateRequired, validateFile,
     generateId, generateOrderId, debounce, throttle,
-    formatDate, formatTime, isPastDate, getAvailableDates,
+    formatTime,
     trapFocus, announce, prefersReducedMotion, animate,
-    getWhatsAppUrl, openWhatsAppOrder, initLazyLoading, showToast, escapeHtml,
+    initLazyLoading, showToast, escapeHtml,
     apiRequest
   };
 })();
@@ -434,16 +356,11 @@ window.generateId = utils.generateId;
 window.generateOrderId = utils.generateOrderId;
 window.debounce = utils.debounce;
 window.throttle = utils.throttle;
-window.formatDate = utils.formatDate;
 window.formatTime = utils.formatTime;
-window.isPastDate = utils.isPastDate;
-window.getAvailableDates = utils.getAvailableDates;
 window.trapFocus = utils.trapFocus;
 window.announce = utils.announce;
 window.prefersReducedMotion = utils.prefersReducedMotion;
 window.animate = utils.animate;
-window.getWhatsAppUrl = utils.getWhatsAppUrl;
-window.openWhatsAppOrder = utils.openWhatsAppOrder;
 window.initLazyLoading = utils.initLazyLoading;
 window.showToast = utils.showToast;
 window.escapeHtml = utils.escapeHtml;
@@ -477,18 +394,35 @@ async function loadConfig() {
     if (!response.ok) throw new Error('Failed to load config');
     state.config = await response.json();
     applyConfigToPage();
+    try { await loadPublicSettings(state.config); } catch { /* Keep local defaults if settings are unavailable. */ }
   } catch (error) {
     console.error('Config load failed:', error);
     utils.showToast('Failed to load configuration', 'error');
   }
 }
 
+let menuImageUrl;
+
 async function loadMenu() {
     try {
+    if (state.config?.supabase?.url) {
+      try {
+        const catalog = await publicSupabase('/functions/v1/menu');
+        state.menu = catalogFromDatabase(catalog);
+        if (!state.menu.some(category => category.items.length)) throw new Error('Catalog is empty');
+        state.onlineCatalog = true;
+        return;
+      } catch { /* Show the sample catalog without enabling checkout. */ }
+    }
     const response = await fetch('data/menu.json');
     if (!response.ok) throw new Error('Failed to load menu');
     const data = await response.json();
-    state.menu = data.categories;
+    state.menu = data.categories.map(category => ({
+      ...category,
+      items: category.items.map(item => ({
+        ...item, image: menuImageUrl(item.image, state.config?.supabase?.url) || 'assets/meal.svg',
+      })),
+    }));
   } catch (error) {
     console.error('Menu load failed:', error);
     utils.showToast('Failed to load menu', 'error');
@@ -510,7 +444,7 @@ function loadCart() {
   const items = (state.menu || []).flatMap(c => c.items);
   state.cart = Array.isArray(saved) ? saved.flatMap(row => {
     const item = items.find(i => i.id === row?.id);
-    return item && Number.isInteger(row.quantity) && row.quantity > 0 ? [{...item, quantity: Math.min(row.quantity, 99)}] : [];
+    return item && Number.isInteger(row.quantity) && row.quantity > 0 ? [{...item, quantity: Math.min(row.quantity, 50)}] : [];
   }) : [];
   state.cartNotes = utils.storageGet('cartNotes', '');
   updateCartUI();
@@ -533,7 +467,7 @@ function updateCartUI() {
 function addToCart(item, quantity = 1) {
   const existingIndex = window.cafeState.cart.findIndex(i => i.id === item.id);
   if (existingIndex >= 0) {
-    window.cafeState.cart[existingIndex].quantity = Math.min(99, window.cafeState.cart[existingIndex].quantity + quantity);
+    window.cafeState.cart[existingIndex].quantity = Math.min(50, window.cafeState.cart[existingIndex].quantity + quantity);
   } else {
     window.cafeState.cart.push({
       ...item,
@@ -552,7 +486,7 @@ function updateCartQuantity(itemId, quantity) {
     if (quantity <= 0) {
       window.cafeState.cart.splice(index, 1);
     } else {
-      window.cafeState.cart[index].quantity = Math.min(99, quantity);
+      window.cafeState.cart[index].quantity = Math.min(50, quantity);
     }
     saveCart();
   }
@@ -616,9 +550,9 @@ function renderCartDrawer() {
   const taxRate = config?.ordering?.taxRate ?? 0;
 
   const subtotal = getCartSubtotal();
-  const needsDeliveryFee = subtotal < minOrderDelivery;
+  const needsDeliveryFee = false;
   const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-  const tax = subtotal * taxRate;
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + deliveryFeeAmount + tax;
 
   body.innerHTML = window.cafeState.cart.map(item => `
@@ -648,9 +582,9 @@ function renderCartDrawer() {
   `).join('');
 
   footer.innerHTML = `
-    <div class="cart-drawer__row cart-drawer__row--total"><span>Sample subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
+    <div class="cart-drawer__row cart-drawer__row--total"><span>Subtotal</span><span>${utils.formatPrice(subtotal)}</span></div>
     <label for="cart-notes">Order notes</label><textarea id="cart-notes" rows="2" placeholder="Preferences or special requests"></textarea>
-    <p class="cart-drawer__note">Demo menu and prices. Nothing is sent or paid here.</p>
+    <p class="cart-drawer__note">Review quantities and notes before checkout.</p>
     <button class="btn btn--primary cart-drawer__checkout">Proceed to Checkout</button>`;
   const notes = drawer.querySelector('#cart-notes');
   notes.value = state.cartNotes || '';
@@ -893,21 +827,22 @@ function renderFooter() {
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 <div>
                   <div class="footer-contact__label">Phone</div>
-                  <a class="footer-contact__value" href="tel:+${config.contact?.phoneRaw}">${config.contact?.phone}</a>
+                  <a class="footer-contact__value" href="tel:+${utils.escapeHtml(config.contact?.phoneRaw)}">${utils.escapeHtml(config.contact?.phone)}</a>
                 </div>
               </div>
               <div class="footer-contact__item">
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <div>
                   <div class="footer-contact__label">Email</div>
-                  <a class="footer-contact__value" href="mailto:${config.contact?.email}">${config.contact?.email}</a>
+                  <a class="footer-contact__value" href="mailto:${utils.escapeHtml(config.contact?.email)}">${utils.escapeHtml(config.contact?.email)}</a>
                 </div>
               </div>
+              ${verifiedWhatsAppUrl(config.contact) ? '<div class="footer-contact__item"><a class="footer-contact__value" href="' + verifiedWhatsAppUrl(config.contact) + '">WhatsApp</a></div>' : ''}
               <div class="footer-contact__item">
                 <svg class="footer-contact__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <div>
                   <div class="footer-contact__label">Address</div>
-                  <address class="footer-contact__value" style="font-style: normal;">${config.contact?.address?.full}</address>
+                  <address class="footer-contact__value" style="font-style: normal;">${utils.escapeHtml(config.contact?.address?.full)}</address>
                 </div>
               </div>
             </div>
@@ -918,7 +853,7 @@ function renderFooter() {
             <div class="footer-hours">
               ${!config.hours.verified ? '<p>Hours awaiting confirmation. Please call before visiting.</p>' : hours.map(h => `
                 <div class="footer-hours__day">
-                  <span>${h.day}</span>
+                  <span>${utils.escapeHtml(h.day)}</span>
                   <span>${h.closed ? 'Closed' : `${utils.formatTime(h.open)} - ${utils.formatTime(h.close)}`}</span>
                 </div>
               `).join('')}
@@ -943,7 +878,10 @@ function populateFeaturedDishes(state) {
   const grid = $('#featured-grid');
   if (!grid || !state.menu) return;
 
-  const featured = ['imc-1','pizza-1','kebab-3','biryani-1','pasta-2','dessert-1'].map(id => state.menu.flatMap(c => c.items).find(i => i.id === id)).filter(Boolean);
+  const items = state.menu.flatMap(category => category.items);
+  const featured = state.onlineCatalog
+    ? [...items.filter(item => item.tags.includes('popular')), ...items.filter(item => !item.tags.includes('popular'))].slice(0, 6)
+    : ['imc-1','pizza-1','kebab-3','biryani-1','pasta-2','dessert-1'].map(id => items.find(item => item.id === id)).filter(Boolean);
 
   grid.innerHTML = featured.map(item => `
     <article class="dish-card" role="listitem">
@@ -958,7 +896,7 @@ function populateFeaturedDishes(state) {
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)}${state.config?.menu?.is_sample || !state.onlineCatalog ? ' <small>sample</small>' : ''}</span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
@@ -996,7 +934,7 @@ function populateOpeningHours(state) {
   hoursGrid.innerHTML = state.config.hours.schedule.map(h => `
     <div class="hours-card">
       <div class="hours-card__icon" aria-hidden="true">${icons[h.day] || ''}</div>
-      <h3 class="hours-card__title">${h.day}</h3>
+      <h3 class="hours-card__title">${utils.escapeHtml(h.day)}</h3>
       <div class="hours-card__times">
         ${h.closed
           ? '<span>Closed</span>'
@@ -1155,6 +1093,22 @@ function renderMenuGrid() {
   const grid = utils.$('.menu-grid');
   if (!grid) return;
 
+  // Show sample notice if menu is sample
+  const config = window.cafeState?.config;
+  if ((config?.menu?.is_sample || !state.onlineCatalog)) {
+    const notice = document.createElement('div');
+    notice.className = 'menu-sample-notice';
+    notice.setAttribute('role', 'status');
+    notice.innerHTML = `
+      <svg class="menu-sample-notice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4m0 4h.01"/>
+      </svg>
+      <span>Sample menu for preview — prices and items are placeholders</span>
+    `;
+    grid.parentNode?.insertBefore(notice, grid);
+  }
+
   if (menuState.filteredItems.length === 0) {
     grid.innerHTML = `
       <div class="menu-empty">
@@ -1187,7 +1141,7 @@ function renderMenuGrid() {
       <div class="dish-card__content">
         <div class="dish-card__header">
           <h3 class="dish-card__name">${utils.escapeHtml(item.name)}</h3>
-          <span class="dish-card__price">${utils.formatPrice(item.price)} <small>sample</small></span>
+          <span class="dish-card__price">${utils.formatPrice(item.price)}${state.config?.menu?.is_sample || !state.onlineCatalog ? ' <small>sample</small>' : ''}</span>
         </div>
         <p class="dish-card__description">${utils.escapeHtml(item.description)}</p>
         <div class="dish-card__footer">
@@ -1246,6 +1200,14 @@ function initLazyLoading() {
 // ========================================
 
 function openCheckout() {
+  if (state.cart.length > 50) {
+    utils.showToast('Limit each order to 50 different dishes.', 'info');
+    return;
+  }
+  if (!state.onlineCatalog || state.config.ordering.enabled === false) {
+    utils.showToast('Online ordering is currently unavailable.', 'info');
+    return;
+  }
   if (window.cafeState.cart.length === 0) {
     utils.showToast('Your cart is empty', 'warning');
     return;
@@ -1255,7 +1217,7 @@ function openCheckout() {
 
   const config = window.CAFE_CONFIG;
   const orderTypes = config?.ordering?.types || [
-    { id: 'dine-in', label: 'Dine In', description: 'Enjoy your meal at our cafe' },
+    { id: 'dine_in', label: 'Dine In', description: 'Enjoy your meal at our cafe' },
     { id: 'takeaway', label: 'Takeaway', description: 'Pick up your order' },
     { id: 'delivery', label: 'Delivery', description: 'Delivered to your door' }
   ];
@@ -1264,9 +1226,9 @@ function openCheckout() {
   const deliveryFee = config?.ordering?.deliveryFee ?? 0;
   const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
   const taxRate = config?.ordering?.taxRate ?? 0;
-  const needsDeliveryFee = subtotal < minOrderDelivery;
+  const needsDeliveryFee = false;
   const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-  const tax = subtotal * taxRate;
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + deliveryFeeAmount + tax;
 
   const modalHtml = utils.createEl('div', { class: 'modal-overlay checkout-modal', id: 'checkout-modal' },
@@ -1282,12 +1244,12 @@ function openCheckout() {
           utils.createEl('div', { class: 'checkout-form__section' },
             utils.createEl('h3', { class: 'checkout-form__section-title' }, 'Order Type'),
             utils.createEl('div', { class: 'checkout-form__order-type', role: 'radiogroup', 'aria-label': 'Order type' },
-              orderTypes.map(type => utils.createEl('button', {
+              orderTypes.filter(type => type.id !== 'delivery' || state.config.ordering.deliveryEnabled).map(type => utils.createEl('button', {
                 type: 'button',
-                class: `order-type-btn ${type.id === 'dine-in' ? 'is-active' : ''}`,
+                class: `order-type-btn ${type.id === 'dine_in' ? 'is-active' : ''}`,
                 'data-type': type.id,
                 role: 'radio',
-                'aria-checked': type.id === 'dine-in',
+                'aria-checked': type.id === 'dine_in',
               }, type.label))
             ),
             utils.createEl('div', { class: 'checkout-form__address', id: 'delivery-address-field', hidden: '' },
@@ -1357,10 +1319,10 @@ function openCheckout() {
     const deliveryFee = config?.ordering?.deliveryFee ?? 0;
     const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
     const taxRate = config?.ordering?.taxRate ?? 0;
-    const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in';
-    const needsDeliveryFee = activeType === 'delivery' && subtotal < minOrderDelivery;
+    const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine_in';
+    const needsDeliveryFee = activeType === 'delivery';
     const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
-    const tax = subtotal * taxRate;
+    const tax = Math.round(subtotal * taxRate);
     const total = subtotal + deliveryFeeAmount + tax;
     totalEl.textContent = utils.formatPrice(total);
   }
@@ -1379,11 +1341,15 @@ function openCheckout() {
     utils.on(btn, 'click', () => selectOrderType(btn.dataset.type));
   });
 
-  selectOrderType('dine-in');
-  form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'Demo checkout. Sample prices; no payment or café acceptance.'));
+  selectOrderType('dine_in');
+  form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'The café will review your order request. Payment is arranged separately.'));
   utils.on(form, 'submit', async (e) => {
     e.preventDefault();
-    if (!validateCheckoutForm(form)) return;
+    form.querySelector('.submission-error')?.remove();
+    if (!validateCheckoutForm(form)) {
+      showFormFailure(form, 'Please check the highlighted order fields.');
+      return;
+    }
 
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
@@ -1391,7 +1357,7 @@ function openCheckout() {
 
     const order = {
       id: utils.generateOrderId(),
-      type: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in',
+      type: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine_in',
       customer: {
         name: form.elements.namedItem('name').value.trim(),
         phone: form.elements.namedItem('phone').value.trim()
@@ -1415,32 +1381,36 @@ function openCheckout() {
     const config = window.CAFE_CONFIG;
     const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
     const deliveryFee = config?.ordering?.deliveryFee ?? 0;
-    const needsDeliveryFee = order.type === 'delivery' && order.subtotal < minOrderDelivery;
+    const needsDeliveryFee = order.type === 'delivery';
     order.deliveryFee = needsDeliveryFee ? deliveryFee : 0;
     order.total = order.subtotal + order.deliveryFee + order.tax;
 
-    const storedOrders = utils.storageGet('orders', []);
-    const orders = Array.isArray(storedOrders) ? storedOrders : [];
-    orders.unshift(order);
-    order.saved = utils.storageSet('orders', orders.slice(0, 50));
-
-    clearCart();
-
-    closeCheckout();
-
-    state.cartNotes = ''; utils.storageRemove('cartNotes');
-    
-    // Submit order to Supabase
     try {
-      utils.showToast('Placing order...', 'info');
-      const result = await utils.apiRequest('orders', order);
-      if (result.id) {
-        showOrderConfirmation(result);
-      } else {
-        throw new Error(result.error || 'Order failed');
+      const result = await utils.apiRequest('orders', {
+        customer_name: order.customer.name,
+        customer_phone: '91' + order.customer.phone,
+        order_type: order.type,
+        items: order.items.map(({id, quantity}) => ({id, quantity})),
+        notes: order.notes,
+        delivery_address: order.address ? {full: order.address} : null,
+      });
+      if (!result?.order_number || !Array.isArray(result.items) || !Number.isFinite(result.total_inr)) {
+        throw new Error('Invalid order response');
       }
-    } catch (e) {
-      utils.showToast('Order failed: ' + e.message, 'error');
+      const items = result.items.map(item => ({...item, price: item.price_inr}));
+      clearCart();
+      closeCheckout();
+      state.cartNotes = '';
+      utils.storageRemove('cartNotes');
+      showOrderConfirmation({
+        ...result, id: result.order_number, subtotal: result.subtotal_inr,
+        deliveryFee: result.delivery_fee_inr, tax: result.tax_inr, total: result.total_inr,
+        items,
+      });
+    } catch {
+      showFormFailure(form, 'We could not confirm your order. Please check with us before resubmitting.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Place Order';
     }
   });
 }
@@ -1499,8 +1469,8 @@ function showOrderConfirmation(order) {
         utils.createEl('div', { class: 'confirmation__icon' },
           utils.createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '40', height: '40' }, utils.createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), utils.createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order Confirmed'),
-        utils.createEl('p', { class: 'confirmation__subtitle' }, `Your order has been placed successfully. Reference: ${order.order_number || order.id}`),
+        utils.createEl('h2', { class: 'confirmation__title', id: 'confirmation-title' }, 'Order received'),
+        utils.createEl('p', { class: 'confirmation__subtitle' }, `The café will review your request. Reference: ${order.order_number || order.id}`),
         utils.createEl('div', { class: 'confirmation__order-id' }, order.id),
         utils.createEl('div', { class: 'confirmation__summary' },
           utils.createEl('h3', { class: 'confirmation__summary-title' }, 'Order Summary'),
@@ -1520,7 +1490,7 @@ function showOrderConfirmation(order) {
               utils.createEl('span', {}, utils.formatPrice(order.deliveryFee))
             ),
             utils.createEl('div', { class: 'confirmation__total-row' },
-              utils.createEl('span', {}, `Tax (${(order.taxRate * 100).toFixed(0)}%)`),
+              utils.createEl('span', {}, 'Tax'),
               utils.createEl('span', {}, utils.formatPrice(order.tax))
             ),
             utils.createEl('div', { class: 'confirmation__total-row confirmation__total-row--grand' },
@@ -1532,7 +1502,7 @@ function showOrderConfirmation(order) {
         utils.createEl('div', { class: 'confirmation__actions' },
           utils.createEl('button', { class: 'btn btn--primary btn--lg', onclick: closeConfirmation }, 'Done')
         ),
-        utils.createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
+        utils.createEl('p', { class: 'confirmation__note' }, 'We have received your order. We\'ll confirm shortly.')
       )
     )
   );
@@ -1555,7 +1525,7 @@ function closeConfirmation() {
 function buildWhatsAppMessage(order) {
   const lines = [
     `*New Order - ${order.id}*`,
-    `*Type:* ${order.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+    `*Type:* ${order.type.replaceAll('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
     `*Customer:* ${order.customer.name}`,
     `*Phone:* ${order.customer.phone}`,
     '',
@@ -1596,7 +1566,6 @@ function initBookingPage() {
   if (!document.body.classList.contains('booking-page')) return;
   if (!state.config) return;
 
-  bookingState.config = state.config;
   _initBookingPage();
 }
 
@@ -1609,8 +1578,7 @@ function _initBookingPage() {
   initLazyLoading();
 }
 
-let bookingState = {
-  config: null,
+const bookingState = {
   availableDates: [],
   timeSlots: [],
   selectedDate: null,
@@ -1618,31 +1586,21 @@ let bookingState = {
   selectedGuests: 2
 };
 
+let bookingDates;
+let bookingRules;
+
 function loadBookingConfig() {
-  const config = bookingState.config?.booking || {};
-  bookingState.timeSlots = config.timeSlots || [
-    "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-    "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-    "20:00", "20:30", "21:00"
-  ];
-  bookingState.maxGuests = config.maxGuests || 20;
-  bookingState.maxAdvanceDays = config.maxAdvanceDays || 60;
-  bookingState.minAdvanceMinutes = config.minAdvanceMinutes || 30;
-
-  const today = new Date();
-  bookingState.availableDates = [];
-  for (let i = 0; i <= bookingState.maxAdvanceDays; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    bookingState.availableDates.push({
-      value: indiaDate(date),
-      label: formatDate(date, { weekday: 'short', month: 'short' }),
-      fullLabel: formatDate(date, { weekday: 'long', month: 'long', day: 'numeric' })
-    });
-  }
-
-  bookingState.selectedDate = bookingState.availableDates[0].value;
+  Object.assign(bookingState, bookingRules.bookingRules);
+  const today = bookingDates.indiaDate();
+  bookingState.availableDates = Array.from({length: bookingState.maxAdvanceDays + 1}, (_, offset) => {
+    const value = bookingDates.addCalendarDays(today, offset);
+    return {
+      value,
+      label: bookingDates.formatIndiaDate(value, {weekday: 'short', month: 'short'}),
+      fullLabel: bookingDates.formatIndiaDate(value, {weekday: 'long', month: 'long', day: 'numeric'}),
+    };
+  });
+  bookingState.selectedDate = today;
 }
 
 function renderDateOptions() {
@@ -1656,7 +1614,7 @@ function renderDateOptions() {
             aria-pressed="${date.value === bookingState.selectedDate}"
             role="button"
             aria-label="${date.fullLabel}">
-      <span class="date-option__day">${new Date(date.value).getDate()}</span>
+      <span class="date-option__day">${Number(date.value.slice(-2))}</span>
       <span class="date-option__label">${date.label}</span>
     </button>
   `).join('');
@@ -1671,13 +1629,13 @@ function renderTimeSlots() {
   const container = $('#booking-time');
   if (!container) return;
 
-  const today = indiaDate(new Date());
-  const currentTime = new Intl.DateTimeFormat('en-GB', {timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(Date.now() + bookingState.minAdvanceMinutes * 60000));
-
-  const slots = bookingState.timeSlots.map(time => {
-    const isPast = bookingState.selectedDate === today && time <= currentTime;
-    return { time, isPast };
-  });
+  const now = new Date();
+  const slots = bookingState.timeSlots.map(time => ({
+    time, isPast: !bookingRules.bookingSlotAvailable(bookingState.selectedDate, time, now),
+  }));
+  if (!slots.some(slot => slot.time === bookingState.selectedTime && !slot.isPast)) {
+    bookingState.selectedTime = slots.find(slot => !slot.isPast)?.time ?? null;
+  }
 
   container.innerHTML = slots.map(slot => `
     <button type="button"
@@ -1691,13 +1649,6 @@ function renderTimeSlots() {
     </button>
   `).join('');
 
-  if (!bookingState.selectedTime) {
-    const firstAvailable = slots.find(s => !s.isPast);
-    if (firstAvailable) {
-      bookingState.selectedTime = firstAvailable.time;
-      container.querySelector(`[data-time="${firstAvailable.time}"]`)?.classList.add('is-selected');
-    }
-  }
 }
 
 function renderGuestOptions() {
@@ -1750,14 +1701,9 @@ function bookingValidateField(input) {
     message = 'Please enter a valid 10-digit Indian mobile number';
   } else if (input.type === 'email' && input.value && !validateEmail(input.value)) {
     valid = false; message = 'Please enter a valid email address';
-  } else if (input.type === 'date' && input.value) {
-    const selected = new Date(input.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selected < today) {
-      valid = false;
-      message = 'Date cannot be in the past';
-    }
+  } else if (input.type === 'date' && input.value && !bookingRules.bookingDateAllowed(input.value)) {
+    valid = false;
+    message = 'Choose a valid booking date';
   }
 
   if (group) {
@@ -1778,6 +1724,7 @@ function bookingGetFieldLabel(input) {
 async function bookingHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -1788,12 +1735,12 @@ async function bookingHandleSubmit(e) {
     }
   });
 
-  if (!bookingState.availableDates.some(d => d.value === bookingState.selectedDate) || bookingState.selectedDate < indiaDate(new Date())) {
+  if (!bookingRules.bookingDateAllowed(bookingState.selectedDate)) {
     showToast('Please select a date', 'error');
     allValid = false;
   }
 
-  if (!bookingState.timeSlots.includes(bookingState.selectedTime) || Date.parse(bookingState.selectedDate + 'T' + bookingState.selectedTime + ':00+05:30') < Date.now() + bookingState.minAdvanceMinutes * 60000) {
+  if (!bookingRules.bookingSlotAvailable(bookingState.selectedDate, bookingState.selectedTime)) {
     showToast('Please select a time', 'error');
     allValid = false;
   }
@@ -1801,6 +1748,7 @@ async function bookingHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -1822,14 +1770,18 @@ async function bookingHandleSubmit(e) {
   // Submit booking to Supabase
   try {
     utils.showToast('Booking table...', 'info');
-    const result = await utils.apiRequest('bookings', booking);
+    const result = await utils.apiRequest('bookings', {
+      customer_name: booking.customer.name, customer_phone: '91' + booking.customer.phone,
+      customer_email: booking.customer.email, booking_date: booking.date,
+      booking_time: booking.time, guests: booking.guests, special_requests: booking.notes,
+    });
     if (result.id) {
-      showBookingConfirmation(result);
+      showBookingConfirmation({...booking, id: result.booking_number});
     } else {
       throw new Error(result.error || 'Booking failed');
     }
-  } catch (e) {
-    utils.showToast('Booking failed: ' + e.message, 'error');
+  } catch {
+    showFormFailure(form, 'We could not confirm your booking request.');
     return;
   }
 
@@ -1860,7 +1812,7 @@ function showBookingConfirmation(booking) {
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Date'),
-            createEl('span', { class: 'booking-success__value' }, formatDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' }))
+            createEl('span', { class: 'booking-success__value' }, bookingDates.formatIndiaDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' }))
           ),
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Time'),
@@ -1882,7 +1834,7 @@ function showBookingConfirmation(booking) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeBookingConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'You will receive a confirmation via WhatsApp shortly.')
+        createEl('p', { class: 'confirmation__note' }, 'We have received your booking request. We\'ll confirm shortly.')
       )
     )
   );
@@ -1900,29 +1852,6 @@ function closeBookingConfirmation() {
     modal.classList.remove('is-open');
     setTimeout(() => modal.remove(), 250);
   }
-}
-
-function bookingBuildWhatsAppMessage(booking) {
-  const lines = [
-    `*New Table Booking - ${booking.id}*`,
-    `*Date:* ${formatDate(booking.date, { weekday: 'long', month: 'long', day: 'numeric' })}`,
-    `*Time:* ${formatTime(booking.time)}`,
-    `*Guests:* ${booking.guests}`,
-    `*Name:* ${booking.customer.name}`,
-    `*Phone:* ${booking.customer.phone}`,
-  ];
-
-  if (booking.customer.email) {
-    lines.push(`*Email:* ${booking.customer.email}`);
-  }
-
-  if (booking.notes) {
-    lines.push(`*Notes:* ${booking.notes}`);
-  }
-
-  lines.push('', 'Thank you for booking with Café De Leila!');
-
-  return lines.join('\n');
 }
 
 function initCareersPage() {
@@ -2132,6 +2061,7 @@ function careersGetFieldLabel(input) {
 async function careersHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -2149,6 +2079,7 @@ async function careersHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -2176,30 +2107,34 @@ async function careersHandleSubmit(e) {
       // Get signed upload URL
       const { signedUrl, path } = await utils.apiRequest('applications/get-upload-url', {
         fileName: careersState.selectedFile.name,
-        contentType: careersState.selectedFile.type
+        contentType: careersState.selectedFile.type,
+        fileSize: careersState.selectedFile.size
       });
       
+      if (typeof signedUrl !== 'string' || typeof path !== 'string' || !path) throw new Error('Invalid upload response');
+
       // Upload file directly to Supabase Storage
-      await fetch(signedUrl, {
+      const upload = await fetch(signedUrl, {
         method: 'PUT',
-        body: careersState.selectedFile,
-        headers: { 'Content-Type': careersState.selectedFile.type }
+        body: (() => { const data = new FormData(); data.append('', careersState.selectedFile); return data; })()
       });
+      if (!upload.ok) throw new Error('CV upload failed');
       cvPath = path;
     }
 
     const result = await utils.apiRequest('applications', {
-      ...application,
-      cv: cvPath
+      full_name: application.customer.name, email: application.customer.email,
+      phone: '91' + application.customer.phone, address: application.customer.address,
+      role: application.role, cv_path: cvPath
     });
     
     if (result.id) {
-      showApplicationConfirmation(result);
+      showApplicationConfirmation({...application, id: result.application_number});
     } else {
       throw new Error(result.error || 'Application failed');
     }
-  } catch (e) {
-    utils.showToast('Application failed: ' + e.message, 'error');
+  } catch {
+    showFormFailure(form, 'We could not submit your application.');
     return;
   }
 
@@ -2215,7 +2150,7 @@ function showApplicationConfirmation(application) {
           createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
         createEl('h2', { class: 'booking-success__title', id: 'careers-confirmation-title' }, 'Application preview ready'),
-        createEl('p', {}, `Demo only. No application or CV was uploaded. Reference: ${application.id}`),
+        createEl('p', {}, `Application received. Reference: ${application.id}`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Role Applied'),
@@ -2241,7 +2176,7 @@ function showApplicationConfirmation(application) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeCareersConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'This is a demo. A real backend integration is planned for Phase 2.')
+        createEl('p', { class: 'confirmation__note' }, 'The café can review your request in its dashboard.')
       )
     )
   );
@@ -2329,9 +2264,10 @@ function contactGetFieldLabel(input) {
   return label ? label.textContent.replace('*', '').trim() : 'This field';
 }
 
-function contactHandleSubmit(e) {
+async function contactHandleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  form.querySelector('.submission-error')?.remove();
 
   const inputs = form.querySelectorAll('input, select, textarea');
   let allValid = true;
@@ -2345,6 +2281,7 @@ function contactHandleSubmit(e) {
   if (!allValid) {
     const firstError = form.querySelector('.has-error input, .has-error select, .has-error textarea');
     firstError?.focus();
+    showFormFailure(form, 'Please check the highlighted fields and your selections.');
     return;
   }
 
@@ -2361,11 +2298,13 @@ function contactHandleSubmit(e) {
     status: 'submitted'
   };
 
-  const stored = storageGet('contacts', []);
-  const contacts = Array.isArray(stored) ? stored : [];
-  contacts.unshift(contact);
-  // Contact preview stays in memory.
-
+  try {
+    const result = await utils.apiRequest('contact', {...contact.customer, subject: contact.subject, message: contact.message});
+    if (result?.received !== true) throw new Error('Invalid contact response');
+  } catch {
+    showFormFailure(form, 'We could not send your message.');
+    return;
+  }
   showContactConfirmation(contact);
   form.reset();
 }
@@ -2377,8 +2316,8 @@ function showContactConfirmation(contact) {
         createEl('div', { class: 'booking-success__icon' },
           createEl('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', width: '48', height: '48' }, createEl('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), createEl('polyline', { points: '22 4 12 14.01 9 11.01' }))
         ),
-        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message preview ready'),
-        createEl('p', {}, `Demo only. This message was not sent. Reference: ${contact.id}`),
+        createEl('h2', { class: 'booking-success__title', id: 'contact-confirmation-title' }, 'Message received'),
+        createEl('p', {}, `Your message was received.`),
         createEl('div', { class: 'booking-success__details' },
           createEl('div', { class: 'booking-success__detail' },
             createEl('span', { class: 'booking-success__label' }, 'Subject'),
@@ -2400,7 +2339,7 @@ function showContactConfirmation(contact) {
         createEl('div', { class: 'booking-success__actions' },
           createEl('button', { class: 'btn btn--primary btn--lg', onclick: () => closeContactConfirmation() }, 'Done')
         ),
-        createEl('p', { class: 'confirmation__note' }, 'This is a demo. A real backend integration is planned for Phase 2.')
+        createEl('p', { class: 'confirmation__note' }, 'The café can review your request in its dashboard.')
       )
     )
   );
@@ -2599,6 +2538,7 @@ function initEventDelegation() {
 async function init() {
 
   try {
+    ({menuImageUrl} = await import('./menu-image.mjs'));
     // Render shared header/footer first
     renderHeader();
     await loadConfig();
@@ -2616,6 +2556,10 @@ async function init() {
       initMenuPage();
     }
     if (document.body.classList.contains('booking-page')) {
+      [bookingDates, bookingRules] = await Promise.all([
+        import('../supabase/functions/_shared/india-date.mjs'),
+        import('../supabase/functions/_shared/booking-rules.mjs'),
+      ]);
       initBookingPage();
     }
     if (document.body.classList.contains('careers-page')) {

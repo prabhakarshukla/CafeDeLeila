@@ -1,0 +1,17 @@
+name: Database replay
+on: [pull_request, push]
+jobs:
+  database-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --prefix node_modules/.audit-deps --no-save --no-package-lock @electric-sql/pglite@0.5.17
+      - run: |
+          node audit/db-replay.cjs
+          node audit/workflow-replay.cjs
+          node audit/order-contract.cjs
+        env:
+          NODE_PATH: ${{ github.workspace }}/node_modules/.audit-deps/node_modules

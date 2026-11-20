@@ -55,9 +55,11 @@
     "defaultType": "dine-in",
     "minOrderDelivery": 0,
     "deliveryFee": 0,
-    "taxRate": 0,
-    "_sample": true,
     "note": "Sample subtotal only. Taxes, delivery pricing and service area require owner confirmation."
+  },
+  "menu": {
+    "is_sample": true,
+    "note": "All prices and items are samples for preview only. Replace with real data before launch."
   },
   "careers": {
     "allowedFileTypes": [
@@ -80,38 +82,8 @@
     ],
     "_sample": true
   },
-  "booking": {
-    "timeSlots": [
-      "11:00",
-      "11:30",
-      "12:00",
-      "12:30",
-      "13:00",
-      "13:30",
-      "14:00",
-      "14:30",
-      "15:00",
-      "15:30",
-      "16:00",
-      "16:30",
-      "17:00",
-      "17:30",
-      "18:00",
-      "18:30",
-      "19:00",
-      "19:30",
-      "20:00",
-      "20:30",
-      "21:00"
-    ],
-    "maxGuests": 20,
-    "minAdvanceMinutes": 30,
-    "maxAdvanceDays": 60,
-    "_sample": true,
-    "note": "Sample slots only, not confirmed opening hours or availability."
-  },
   "payment": {
-    "note": "Phase 2: Integrate real payment gateway (Razorpay/Stripe/PayU). Current implementation uses WhatsApp for order confirmation only.",
+    "note": "Online payment is not configured. The café arranges payment separately.",
     "methods": [
       "cash",
       "upi",
@@ -123,5 +95,9 @@
     "defaultDescription": "Experience culinary magic at Café De Leila, Lucknow. Authentic Indian, Continental & Chinese cuisine. Order online, book a table, or visit us at Gomti Nagar.",
     "ogImage": "assets/meal.svg",
     "twitterHandle": "@cafedeleila"
+  },
+  "supabase": {
+    "url": "https://dqzmyahsedhvgbfqprks.supabase.co",
+    "publishableKey": "sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R"
   }
 }

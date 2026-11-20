@@ -11,8 +11,10 @@ const items=menu.categories.flatMap(c=>c.items);assert.equal(new Set(items.map(i
 for(const c of menu.categories)assert(c.items.length>=3);
 for(const i of items){assert(i._sample===true);assert(fs.existsSync(i.image));assert(typeof i.veg==='boolean');assert(Number.isFinite(i.price)&&i.price>0);assert(Array.isArray(i.tags));}
 result.checks.push('JSON valid; exact 19 categories; 80 unique IDs/descriptions; 3+ per category; sample flags; local images');
-for(const f of fs.readdirSync('js').filter(f=>f.endsWith('.js')))cp.execFileSync(process.execPath,['--check','js/'+f]);
-result.checks.push('All 10 JavaScript files pass node --check');
+const scripts = ['js','admin/js'].flatMap(dir => fs.readdirSync(dir)
+  .filter(file => /\.m?js$/.test(file)).map(file => dir + '/' + file));
+for (const file of scripts) cp.execFileSync(process.execPath,['--check',file]);
+result.checks.push(scripts.length + ' storefront and admin JavaScript files pass node --check');
 for(const f of fs.readdirSync('.').filter(f=>f.endsWith('.html'))){
  const html=fs.readFileSync(f,'utf8');
  for(const pattern of [/<title>/, /name="description"/, /name="viewport"/, /rel="icon"/, /<main/, /class="skip-link"/, /lang="en"/])assert(pattern.test(html),f+' '+pattern);
@@ -26,4 +28,4 @@ const luminance=hex=>{const values=hex.match(/\w\w/g).map(x=>parseInt(x,16)/255)
 for(const [fg,bg] of [['f5f0eb','161616'],['f5f0eb','25211e'],['d4b79e','25211e'],['b28f6f','25211e'],['161616','b28f6f']]){const a=luminance(fg),b=luminance(bg),ratio=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);assert(ratio>=4.5);result.contrast.push({fg,bg,ratio:Number(ratio.toFixed(2))});}
 assert.equal(config.hours.verified,false);assert.equal(config.hours.schedule.length,0);assert.equal(config.contact.whatsapp,'');assert.equal(config.contact.whatsappVerified,false);
 result.checks.push('Unconfirmed hours and WhatsApp safely unset; text palette contrasts >=4.5:1');
-fs.writeFileSync('audit/static-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+console.log(JSON.stringify(result,null,2));

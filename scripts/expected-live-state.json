@@ -1,0 +1,1549 @@
+{
+  "format_version": 1,
+  "tables": [
+    {
+      "name": "admin_users",
+      "rls": true
+    },
+    {
+      "name": "bookings",
+      "rls": true
+    },
+    {
+      "name": "contact_messages",
+      "rls": true
+    },
+    {
+      "name": "job_applications",
+      "rls": true
+    },
+    {
+      "name": "menu_categories",
+      "rls": true
+    },
+    {
+      "name": "menu_items",
+      "rls": true
+    },
+    {
+      "name": "order_status_history",
+      "rls": true
+    },
+    {
+      "name": "orders",
+      "rls": true
+    },
+    {
+      "name": "settings",
+      "rls": true
+    },
+    {
+      "name": "submission_limits",
+      "rls": true
+    }
+  ],
+  "operational_grants": [
+    {
+      "rls": true,
+      "name": "bookings",
+      "schema": "public",
+      "force_rls": false,
+      "anon_insert": false,
+      "anon_select": true,
+      "authenticated_insert": false
+    },
+    {
+      "rls": true,
+      "name": "contact_messages",
+      "schema": "public",
+      "force_rls": false,
+      "anon_insert": false,
+      "anon_select": true,
+      "authenticated_insert": false
+    },
+    {
+      "rls": true,
+      "name": "job_applications",
+      "schema": "public",
+      "force_rls": false,
+      "anon_insert": false,
+      "anon_select": true,
+      "authenticated_insert": false
+    },
+    {
+      "rls": true,
+      "name": "orders",
+      "schema": "public",
+      "force_rls": false,
+      "anon_insert": false,
+      "anon_select": true,
+      "authenticated_insert": false
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "admin_users",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin users can read themselves",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "admin_users",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage admin users",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "bookings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read all bookings",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "bookings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can delete bookings",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "bookings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Staff can update booking status",
+      "schemaname": "public",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "contact_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read all messages",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "contact_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can delete messages",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "contact_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "Staff can update message status",
+      "schemaname": "public",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "job_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read all applications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "job_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can delete applications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "job_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Staff can update application status",
+      "schemaname": "public",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "menu_categories",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage menu categories",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(is_active = true)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "menu_categories",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public read menu categories",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "menu_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage menu items",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(is_available AND (EXISTS ( SELECT 1\n   FROM menu_categories c\n  WHERE ((c.id = menu_items.category_id) AND c.is_active))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "menu_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public read menu items",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "order_status_history",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read order status history",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read all orders",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can delete orders",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "Staff can update order status",
+      "schemaname": "public",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "is_owner()",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage settings",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((bucket_id = 'cv-uploads'::text) AND is_admin())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can read CVs",
+      "schemaname": "storage",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "((bucket_id = 'menu-images'::text) AND is_owner())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage menu images",
+      "schemaname": "storage",
+      "with_check": "((bucket_id = 'menu-images'::text) AND is_owner())"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "((bucket_id = 'og-images'::text) AND is_owner())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "Owners can manage og images",
+      "schemaname": "storage",
+      "with_check": "((bucket_id = 'og-images'::text) AND is_owner())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(bucket_id = 'menu-images'::text)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public read menu images",
+      "schemaname": "storage",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(bucket_id = 'og-images'::text)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public read og images",
+      "schemaname": "storage",
+      "with_check": null
+    }
+  ],
+  "buckets": [
+    {
+      "id": "cv-uploads",
+      "public": false,
+      "file_size_limit": 2097152,
+      "allowed_mime_types": [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ]
+    },
+    {
+      "id": "menu-images",
+      "public": true,
+      "file_size_limit": 5242880,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    },
+    {
+      "id": "og-images",
+      "public": true,
+      "file_size_limit": 2097152,
+      "allowed_mime_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ]
+    }
+  ],
+  "settings_keys": [
+    "address",
+    "booking_capacity_per_slot",
+    "delivery_enabled",
+    "delivery_fee",
+    "email",
+    "menu_is_sample",
+    "min_order",
+    "opening_hours",
+    "ordering_enabled",
+    "phone",
+    "tax_percent",
+    "whatsapp_number"
+  ],
+  "functions": [
+    {
+      "name": "allow_submission",
+      "returns": "boolean",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "endpoint text, visitor text",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "generate_application_number",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "generate_booking_number",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "generate_order_number",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "get_admin_dashboard_stats",
+      "returns": "jsonb",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": true,
+      "authenticated_exec": true
+    },
+    {
+      "name": "guard_staff_columns",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "insert_order_status_history",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": true,
+      "authenticated_exec": false
+    },
+    {
+      "name": "is_admin",
+      "returns": "boolean",
+      "language": "sql",
+      "anon_exec": true,
+      "arguments": "",
+      "volatility": "s",
+      "security_definer": true,
+      "authenticated_exec": true,
+      "configuration": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "name": "is_owner",
+      "returns": "boolean",
+      "language": "sql",
+      "anon_exec": true,
+      "arguments": "",
+      "volatility": "s",
+      "security_definer": true,
+      "authenticated_exec": true,
+      "configuration": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "name": "protect_payment_update",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false,
+      "optional": true
+    },
+    {
+      "name": "reserve_booking",
+      "returns": "bookings",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "details jsonb",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "update_updated_at_column",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "validate_application_status_transition",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "validate_booking_status_transition",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "validate_contact_status_transition",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "validate_order_status_transition",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
+      "authenticated_exec": false
+    }
+  ],
+  "views": [
+    {
+      "name": "admin_recent_activity",
+      "schema": "public",
+      "anon_other": [],
+      "definition": null,
+      "reloptions": [
+        "security_invoker=true"
+      ],
+      "anon_select": false,
+      "authenticated_select": true
+    },
+    {
+      "name": "admin_today_bookings",
+      "schema": "public",
+      "anon_other": [],
+      "definition": null,
+      "reloptions": [
+        "security_invoker=true"
+      ],
+      "anon_select": false,
+      "authenticated_select": true
+    },
+    {
+      "name": "admin_today_stats",
+      "schema": "public",
+      "anon_other": [],
+      "definition": null,
+      "reloptions": [
+        "security_invoker=true"
+      ],
+      "anon_select": false,
+      "authenticated_select": true
+    },
+    {
+      "name": "admin_top_items_7d",
+      "schema": "public",
+      "anon_other": [],
+      "definition": null,
+      "reloptions": [
+        "security_invoker=true"
+      ],
+      "anon_select": false,
+      "authenticated_select": true
+    },
+    {
+      "name": "public_settings",
+      "schema": "public",
+      "anon_other": [],
+      "definition": " SELECT key,\n    value\n   FROM settings\n  WHERE (key = ANY (ARRAY['opening_hours'::text, 'address'::text, 'phone'::text, 'email'::text, 'whatsapp_number'::text, 'ordering_enabled'::text, 'delivery_enabled'::text, 'delivery_fee'::text, 'min_order'::text, 'tax_percent'::text, 'booking_capacity_per_slot'::text, 'menu_is_sample'::text]));",
+      "reloptions": [],
+      "anon_select": true,
+      "authenticated_select": true
+    }
+  ],
+  "triggers": [
+    {
+      "name": "aa_guard_staff_columns",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.bookings FOR EACH ROW EXECUTE FUNCTION guard_staff_columns()",
+      "table_name": "bookings"
+    },
+    {
+      "name": "trigger_generate_booking_number",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_generate_booking_number BEFORE INSERT ON public.bookings FOR EACH ROW EXECUTE FUNCTION generate_booking_number()",
+      "table_name": "bookings"
+    },
+    {
+      "name": "trigger_validate_booking_status_transition",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_validate_booking_status_transition BEFORE UPDATE OF status ON public.bookings FOR EACH ROW EXECUTE FUNCTION validate_booking_status_transition()",
+      "table_name": "bookings"
+    },
+    {
+      "name": "update_bookings_updated_at",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON public.bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+      "table_name": "bookings"
+    },
+    {
+      "name": "aa_guard_staff_columns",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION guard_staff_columns()",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "trigger_validate_contact_status_transition",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_validate_contact_status_transition BEFORE UPDATE OF status ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION validate_contact_status_transition()",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "aa_guard_staff_columns",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.job_applications FOR EACH ROW EXECUTE FUNCTION guard_staff_columns()",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "trigger_generate_application_number",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_generate_application_number BEFORE INSERT ON public.job_applications FOR EACH ROW EXECUTE FUNCTION generate_application_number()",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "trigger_validate_application_status_transition",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_validate_application_status_transition BEFORE UPDATE OF status ON public.job_applications FOR EACH ROW EXECUTE FUNCTION validate_application_status_transition()",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "update_applications_updated_at",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER update_applications_updated_at BEFORE UPDATE ON public.job_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "update_menu_items_updated_at",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "aa_guard_staff_columns",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION guard_staff_columns()",
+      "table_name": "orders"
+    },
+    {
+      "name": "trigger_generate_order_number",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_generate_order_number BEFORE INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION generate_order_number()",
+      "table_name": "orders"
+    },
+    {
+      "name": "trigger_insert_order_status_history",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_insert_order_status_history AFTER UPDATE OF status ON public.orders FOR EACH ROW EXECUTE FUNCTION insert_order_status_history()",
+      "table_name": "orders"
+    },
+    {
+      "name": "trigger_validate_order_status_transition",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_validate_order_status_transition BEFORE UPDATE OF status ON public.orders FOR EACH ROW EXECUTE FUNCTION validate_order_status_transition()",
+      "table_name": "orders"
+    },
+    {
+      "name": "update_orders_updated_at",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+      "table_name": "orders"
+    }
+  ],
+  "realtime": [
+    "public.bookings",
+    "public.orders"
+  ],
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "bookings"
+    },
+    {
+      "name": "booking_number",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "customer_name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "customer_phone",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "customer_email",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 5,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "booking_date",
+      "type": "date",
+      "default": null,
+      "nullable": false,
+      "position": 6,
+      "udt_name": "date",
+      "table_name": "bookings"
+    },
+    {
+      "name": "booking_time",
+      "type": "time without time zone",
+      "default": null,
+      "nullable": false,
+      "position": 7,
+      "udt_name": "time",
+      "table_name": "bookings"
+    },
+    {
+      "name": "guests",
+      "type": "integer",
+      "default": null,
+      "nullable": false,
+      "position": 8,
+      "udt_name": "int4",
+      "table_name": "bookings"
+    },
+    {
+      "name": "special_requests",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 9,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "default": "'pending'::text",
+      "nullable": true,
+      "position": 10,
+      "udt_name": "text",
+      "table_name": "bookings"
+    },
+    {
+      "name": "whatsapp_sent",
+      "type": "boolean",
+      "default": "false",
+      "nullable": true,
+      "position": 11,
+      "udt_name": "bool",
+      "table_name": "bookings"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 12,
+      "udt_name": "timestamptz",
+      "table_name": "bookings"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 13,
+      "udt_name": "timestamptz",
+      "table_name": "bookings"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "subject",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 5,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "message",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 6,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "default": "'new'::text",
+      "nullable": true,
+      "position": 7,
+      "udt_name": "text",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 8,
+      "udt_name": "timestamptz",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "application_number",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "full_name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 5,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "role",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 6,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "cv_url",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 7,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 8,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "default": "'pending'::text",
+      "nullable": true,
+      "position": 9,
+      "udt_name": "text",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 10,
+      "udt_name": "timestamptz",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 11,
+      "udt_name": "timestamptz",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "default": "0",
+      "nullable": true,
+      "position": 5,
+      "udt_name": "int4",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "default": "true",
+      "nullable": true,
+      "position": 6,
+      "udt_name": "bool",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 7,
+      "udt_name": "timestamptz",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "category_id",
+      "type": "uuid",
+      "default": null,
+      "nullable": true,
+      "position": 2,
+      "udt_name": "uuid",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "price_inr",
+      "type": "integer",
+      "default": null,
+      "nullable": false,
+      "position": 5,
+      "udt_name": "int4",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "veg",
+      "type": "boolean",
+      "default": "true",
+      "nullable": true,
+      "position": 6,
+      "udt_name": "bool",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "image_url",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 7,
+      "udt_name": "text",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "tags",
+      "type": "ARRAY",
+      "default": "'{}'::text[]",
+      "nullable": true,
+      "position": 8,
+      "udt_name": "_text",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "is_available",
+      "type": "boolean",
+      "default": "true",
+      "nullable": true,
+      "position": 9,
+      "udt_name": "bool",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "default": "0",
+      "nullable": true,
+      "position": 10,
+      "udt_name": "int4",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 11,
+      "udt_name": "timestamptz",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 12,
+      "udt_name": "timestamptz",
+      "table_name": "menu_items"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "order_id",
+      "type": "uuid",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "from_status",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "to_status",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "changed_by",
+      "type": "uuid",
+      "default": null,
+      "nullable": true,
+      "position": 5,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 6,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 7,
+      "udt_name": "timestamptz",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "orders"
+    },
+    {
+      "name": "order_number",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "customer_name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "customer_phone",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "customer_email",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 5,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "order_type",
+      "type": "text",
+      "default": "'dine_in'::text",
+      "nullable": true,
+      "position": 6,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "delivery_address",
+      "type": "jsonb",
+      "default": null,
+      "nullable": true,
+      "position": 7,
+      "udt_name": "jsonb",
+      "table_name": "orders"
+    },
+    {
+      "name": "items",
+      "type": "jsonb",
+      "default": null,
+      "nullable": false,
+      "position": 8,
+      "udt_name": "jsonb",
+      "table_name": "orders"
+    },
+    {
+      "name": "subtotal_inr",
+      "type": "integer",
+      "default": null,
+      "nullable": false,
+      "position": 9,
+      "udt_name": "int4",
+      "table_name": "orders"
+    },
+    {
+      "name": "delivery_fee_inr",
+      "type": "integer",
+      "default": "0",
+      "nullable": true,
+      "position": 10,
+      "udt_name": "int4",
+      "table_name": "orders"
+    },
+    {
+      "name": "tax_inr",
+      "type": "integer",
+      "default": null,
+      "nullable": false,
+      "position": 11,
+      "udt_name": "int4",
+      "table_name": "orders"
+    },
+    {
+      "name": "total_inr",
+      "type": "integer",
+      "default": null,
+      "nullable": false,
+      "position": 12,
+      "udt_name": "int4",
+      "table_name": "orders"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "default": "'pending'::text",
+      "nullable": true,
+      "position": 13,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "payment_status",
+      "type": "text",
+      "default": "'unpaid'::text",
+      "nullable": true,
+      "position": 14,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "payment_method",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 15,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "payment_id",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 16,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 17,
+      "udt_name": "text",
+      "table_name": "orders"
+    },
+    {
+      "name": "whatsapp_sent",
+      "type": "boolean",
+      "default": "false",
+      "nullable": true,
+      "position": 18,
+      "udt_name": "bool",
+      "table_name": "orders"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 19,
+      "udt_name": "timestamptz",
+      "table_name": "orders"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 20,
+      "udt_name": "timestamptz",
+      "table_name": "orders"
+    }
+  ],
+  "category_slugs": [
+    "chinese",
+    "continental-appetizers",
+    "desserts",
+    "indian-kebabs",
+    "indian-main-course-chicken-mutton",
+    "main-course",
+    "main-course-continental",
+    "pasta",
+    "pizza",
+    "raita",
+    "rice-noodles",
+    "salads",
+    "sandwiches-burgers",
+    "soups",
+    "south-indian",
+    "special-breads",
+    "tandoori-appetizers",
+    "varieties-biryani",
+    "varieties-rice"
+  ],
+  "sample_menu": {
+    "items": 80,
+    "categories": 19
+  },
+  "checks": [
+    {
+      "name": "admin_users_role_check",
+      "definition": "CHECK ((role = ANY (ARRAY['owner'::text, 'staff'::text])))",
+      "table_name": "admin_users"
+    },
+    {
+      "name": "bookings_guests_check",
+      "definition": "CHECK (((guests > 0) AND (guests <= 20)))",
+      "table_name": "bookings"
+    },
+    {
+      "name": "bookings_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'cancelled'::text, 'completed'::text, 'no_show'::text])))",
+      "table_name": "bookings"
+    },
+    {
+      "name": "contact_messages_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['new'::text, 'read'::text, 'replied'::text, 'archived'::text])))",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "job_applications_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'reviewing'::text, 'shortlisted'::text, 'rejected'::text, 'hired'::text])))",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "orders_order_type_check",
+      "definition": "CHECK ((order_type = ANY (ARRAY['dine_in'::text, 'takeaway'::text, 'delivery'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_payment_method_check",
+      "definition": "CHECK ((payment_method = ANY (ARRAY['cash'::text, 'upi'::text, 'card'::text, 'razorpay'::text, 'stripe'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_payment_status_check",
+      "definition": "CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'paid'::text, 'failed'::text, 'refunded'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'preparing'::text, 'ready'::text, 'out_for_delivery'::text, 'completed'::text, 'cancelled'::text])))",
+      "table_name": "orders"
+    }
+  ]
+}

@@ -14,13 +14,7 @@
   <link rel="stylesheet" href="css/pages.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="stylesheet" href="css/refinements.css">
-  <script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-  window.supabase = createClient(
-    'https://dqzmyahsedhvgbfqprks.supabase.co',
-    'sb_publishable_3KNkfvVPXglN2hVTvBmq2g_2TXtkc8R'
-  );
-</script>
+
 
 </head>
 <body class="booking-page">
@@ -32,7 +26,7 @@
     <section class="booking-hero" aria-labelledby="booking-hero-title">
       <div class="container">
         <h1 id="booking-hero-title" class="booking-hero__title">Book a Table</h1>
-        <p class="booking-hero__subtitle">Try a table request. Slots are samples; no table is reserved until the café confirms.</p>
+        <p class="booking-hero__subtitle">Request a table. The café will confirm availability.</p>
       </div>
     </section>
 
@@ -98,7 +92,7 @@
 
           <div class="booking-form__actions">
             <button type="button" class="btn btn--secondary" onclick="window.location.href='index.html'">Cancel</button>
-            <button type="submit" class="btn btn--primary btn--lg">Preview Booking Request</button>
+            <button type="submit" class="btn btn--primary btn--lg">Send booking request</button>
           </div>
         </form>
       </div>
