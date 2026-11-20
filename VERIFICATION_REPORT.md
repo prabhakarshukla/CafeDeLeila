@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 0 | 2 | 1 | 4 |
-| **Total** | **51** | **2** | **3** | **4** |
+| H. Live Supabase | 1 | 1 | 1 | 4 |
+| **Total** | **52** | **1** | **3** | **4** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -128,15 +128,15 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 
 ## H. What only the operator can verify
 
-Live HTTP and CLI checks ran on 20 November 2026. The production Auth settings endpoint responded HTTP 200 with `disable_signup: false`. The menu endpoint responded HTTP 200 with 18 active categories, including Soups, and zero available items. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. No fixture writes, signup attempts, deployments, or changes to Auth settings occurred.
+Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found public signup enabled. The operator reran the anonymous smoke test after changing the setting. The saved report now shows HTTP 200 and `disable_signup: true`. The menu endpoint responded HTTP 200 with 18 active categories, including Soups, and zero available items. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. The smoke scripts made no fixture writes, signup attempts, deployments, or Auth setting changes.
 
 | No. | Status | Operator check and exact pointer |
 |---|---|---|
-| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. Exact SQL counts, the underlying availability flags, and RLS inventory still need the SQL export. |
+| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. A read-only follow-up found the legacy `main-course-chinese` slug, with `main-course` and `chinese` missing. The public catalog is marked as sample. Exact SQL row counts, availability flags, and RLS inventory still need the SQL export. |
 | H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. Policy and INSERT grants need the SQL export. The direct REST POST denial probes require a disposable project. |
 | H.c | UNVERIFIED (LIVE) | Run the Storage policy and bucket SQL at the top of `docs/VERIFY_SUPABASE.md`. Compare public flags, upload policies, MIME types and byte limits to the listed expected values. |
 | H.d | UNVERIFIED (LIVE) | Run **Check staff guards and dashboard privileges** in `docs/VERIFY_SUPABASE.md`. Compare anon and authenticated EXECUTE and SELECT flags to the expected results for the trigger helpers, generators, stats views, dashboard RPC and role helpers. |
-| H.e | FAIL (LIVE) | Public signup remains enabled according to Auth settings. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
+| H.e | PASS (LIVE) | The operator reran the read-only Auth check and the saved result confirms signup is disabled. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
 | H.f | UNVERIFIED (LIVE) | Run the role/count query in `docs/VERIFY_SUPABASE.md`. The target must have at least one owner. |
 | H.g | UNVERIFIED (LIVE) | Use the staff rollback script and the interactive owner smoke script in `docs/VERIFY_SUPABASE.md`. Order and booking fixtures require confirmed owner cleanup access. The production CV and contact writes cannot meet the current cleanup requirement. |
 
@@ -146,4 +146,4 @@ The live SQL evaluator passed all 95 baseline checks locally and detected inject
 
 - C25 remains partial until the operator compares the target schema and policies with the migrations. Local clean and upgrade replays passed.
 - F46 remains partial for historical Git provenance. The pre-existing local main divergence is documented above.
-- Disable public signup in the Supabase Dashboard. Run the metadata export and staff rollback test locally in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
+- Run the metadata export and staff rollback test in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)

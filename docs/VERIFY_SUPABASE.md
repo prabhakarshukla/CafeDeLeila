@@ -11,7 +11,9 @@ The SQL below reads metadata and counts. Use [the database chapter](report/06-da
 
 The production script uses GET and OPTIONS for anonymous requests. An anonymous REST INSERT probe belongs on a disposable project because it can create a row if permissions drift. CV upload and contact smoke tests also belong on a disposable project. The current owner policies cannot clean up a CV object or the database rate-limit rows. The production script skips those writes.
 
-If the SQL report confirms the production catalog is empty, review and run [migration 006](../supabase/migrations/006_cleanup_legacy.sql) with the prerequisites in the setup guide. Then run [the sample menu seed](../supabase/seed/menu_items.sql) if sample pricing is appropriate. If the SQL count is nonzero but the public API is empty, inspect the catalog availability flags and the expected read policy first. [Setup guide](SETUP_SUPABASE.md)
+If the menu has 18 active categories and still lists `main-course-chinese`, run the SQL export to check `row_counts.menu_items` and the booking and rate-limit routines before making changes. [Migration 006](../supabase/migrations/006_cleanup_legacy.sql) renames the legacy category to `chinese` while preserving its UUID and adds the missing `main-course` category. If `allow_submission` or `reserve_booking` is missing, apply the current 004 before 006. [Setup guide](SETUP_SUPABASE.md)
+
+If the SQL count is zero and the menu is still marked as sample, run [the sample menu seed](../supabase/seed/menu_items.sql) after 006. If the count is nonzero while the API is empty, inspect item availability, category activity, and the catalog read policy before seeding. Rerun `node scripts/live-smoke.mjs --anonymous` after the changes. The fresh sample catalog should show 19 active categories and 80 available items.
 
 ```sql
 select tablename, rowsecurity from pg_tables
