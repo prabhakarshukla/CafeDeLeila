@@ -4,11 +4,13 @@ import {createInterface} from 'node:readline/promises';
 import {Writable} from 'node:stream';
 import {addCalendarDays, indiaDate} from '../supabase/functions/_shared/india-date.mjs';
 import {bookingRules} from '../supabase/functions/_shared/booking-rules.mjs';
+import {nextStatuses, workflows} from '../js/workflow.mjs';
 
-const projectUrl = 'https://dqzmyahsedhvgbfqprks.supabase.co';
+const productionUrl = 'https://dqzmyahsedhvgbfqprks.supabase.co';
+let projectUrl = productionUrl;
 const origins = ['http://localhost:8080', 'https://cafedeleila.vercel.app'];
 const methods = {orders:'POST', bookings:'POST', contact:'POST', menu:'GET', applications:'POST'};
-const reportFile = new URL('../audit/live-smoke-result.json', import.meta.url);
+let reportName = 'live-smoke-result.json';
 const configFile = new URL('../data/config.json', import.meta.url);
 const results = [];
 const add = (check, verdict, evidence = {}) => results.push({check, verdict, ...evidence});
@@ -93,8 +95,8 @@ async function checkAnonymous() {
     }
   }
   add('Anonymous direct inserts', 'UNVERIFIED', {reason:'Use SQL policy/grant checks. A live anonymous POST could create an unapproved row.'});
-  add('CV upload and contact write', 'UNVERIFIED',
-    {reason:'The owner cannot clean up the CV object or the database rate-limit rows under current policies.'});
+  add('CV upload', 'UNVERIFIED',
+    {reason:'The owner cannot delete CV objects under the current policies.'});
   return items;
 }
 
@@ -148,60 +150,146 @@ async function watchOrders(token, marker) {
   };
 }
 
-async function runMarkedFixtures(token, items) {
+const orderPaths = [
+  ['dine_in', ['confirmed','preparing','ready','completed']],
+  ['takeaway', ['confirmed','preparing','cancelled']],
+  ['delivery', ['confirmed','preparing','ready','out_for_delivery','completed']],
+  ['takeaway', ['confirmed','cancelled']],
+  ['takeaway', ['confirmed','ready','cancelled']],
+];
+const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+
+async function runMarkedFixtures(token, items, disposable) {
   const marker = 'SMOKE_TEST_' + randomUUID().replaceAll('-', '');
-  const fixtures = [];
-  const remember = table => {
-    const path = '/rest/v1/' + table + '?customer_name=eq.' + encodeURIComponent(marker);
-    fixtures.push({table,path});
+  const fixtures = new Map();
+  const remember = (table, markerColumn = 'customer_name') => {
+    const path = '/rest/v1/' + table + '?' + markerColumn + '=eq.' + encodeURIComponent(marker);
+    fixtures.set(table, path);
+    return path;
   };
   let watcher;
   let interrupted = false;
   const interrupt = () => {interrupted = true;};
   process.on('SIGINT', interrupt);
   process.on('SIGTERM', interrupt);
+  function patchStatus(path, id, previous, status) {
+    if (!uuid.test(id)) throw new Error('Missing fixture identifier');
+    return request(path + '&id=eq.' + id + '&status=eq.' + previous + '&select=id,status', {
+      method:'PATCH', body:{status}, token, headers:{Prefer:'return=representation'},
+    });
+  }
+  async function transition(table, path, id, from, to) {
+    if (interrupted) return false;
+    const update = await patchStatus(path, id, from, to);
+    const pass = update.status === 200 && update.data?.length === 1 && update.data[0].status === to;
+    record(table + ' ' + from + ' to ' + to, pass, {http:update.status});
+    return pass;
+  }
+
   try {
     console.log('Fixture cleanup marker ' + marker);
-    if (!interrupted && items[0] && Number.isInteger(items[0].price_inr)) {
+    const settings = await request('/rest/v1/public_settings?select=key,value');
+    const config = new Map(Array.isArray(settings.data) ? settings.data.map(row => [row.key,row.value]) : []);
+    const tax = config.get('tax_percent')?.value;
+    const min = config.get('min_order')?.amount ?? 0;
+    const deliveryFee = config.get('delivery_fee')?.amount ?? 0;
+    const item = items.filter(row => uuid.test(row.id) && Number.isInteger(row.price_inr) && row.price_inr > 0)
+      .sort((a,b) => b.price_inr - a.price_inr)[0];
+    const covered = new Set();
+    if (!interrupted && item && config.get('ordering_enabled')?.enabled === true && Number.isFinite(tax)) {
       try { watcher = await watchOrders(token, marker); } catch {
         add('Realtime subscription', 'UNVERIFIED', {reason:'Install the pinned scripts dependency and retry.'});
       }
       if (watcher) record('Realtime subscription', watcher.subscribed);
-      const settings = await request('/rest/v1/public_settings?select=value&key=eq.tax_percent');
-      const tax = settings.data?.[0]?.value?.value;
-      if (!interrupted && typeof tax === 'number' && Number.isFinite(tax)) {
-        remember('orders');
-        const item = items[0];
+      let verifiedOrder = false;
+      let invalidTested = false;
+      for (const [type,statuses] of orderPaths) {
+        if (interrupted) break;
+        const delivery = type === 'delivery';
+        const quantity = delivery ? Math.max(2,Math.ceil(min / item.price_inr)) : 2;
+        if (delivery && (config.get('delivery_enabled')?.enabled !== true || quantity > 50)) {
+          add('Marked delivery order', 'UNVERIFIED', {reason:'Delivery is disabled or the minimum cannot be met by this fixture.'});
+          continue;
+        }
+        const path = remember('orders');
         const order = await request('/functions/v1/orders', {method:'POST', body:{
-          customer_name:marker, customer_phone:'919000000001', order_type:'takeaway',
-          items:[{id:item.id,quantity:2,price_inr:1}], subtotal_inr:1,total_inr:1,
+          customer_name:marker, customer_phone:'919000000001', order_type:type,
+          items:[{id:item.id,quantity,price_inr:1}], subtotal_inr:1,total_inr:1,
+          ...(delivery && {delivery_address:{full:'SMOKE_TEST fixture address'}}),
         }});
-        const subtotal = 2 * item.price_inr;
-        const pass = order.status === 200 && order.data?.customer_name === marker &&
-          /^CDL-\d{8}-\d{3,}$/.test(order.data?.order_number ?? '') &&
-          order.data?.items?.[0]?.price_inr === item.price_inr &&
-          order.data?.subtotal_inr === subtotal && order.data?.total_inr === subtotal + Math.round(subtotal * tax / 100);
-        record('Marked order uses server prices and a generated reference', pass, {http:order.status});
-        if (watcher?.subscribed && order.status === 200) record('Marked order INSERT reached Realtime', await watcher.received());
-        else add('Marked order INSERT reached Realtime', 'UNVERIFIED', {reason:'Needs a subscription and successful order.'});
-      } else add('Order pricing smoke', 'UNVERIFIED', {reason:'Public tax setting unavailable.'});
-    } else add('Order pricing and Realtime smoke', 'UNVERIFIED', {reason:'The public menu has no available item.'});
+        const row = order.data;
+        const subtotal = quantity * item.price_inr;
+        const pass = order.status === 200 && row?.customer_name === marker && uuid.test(row.id) &&
+          row.order_type === type && row.payment_status === 'unpaid' && row.status === 'pending' &&
+          /^CDL-\d{8}-\d{3,}$/.test(row.order_number ?? '') && row.items?.[0]?.price_inr === item.price_inr &&
+          row.subtotal_inr === subtotal && row.total_inr === subtotal + Math.round(subtotal * tax / 100) + (delivery ? deliveryFee : 0);
+        record('Marked ' + type + ' order uses server pricing', pass, {http:order.status});
+        if (!pass) continue;
+        verifiedOrder = true;
+        if (!invalidTested && !interrupted) {
+          invalidTested = true;
+          const denied = await patchStatus(path,row.id,'pending','completed');
+          record('Order pending to completed is rejected', denied.status === 400 && denied.data?.code === 'P0001',
+            {http:denied.status});
+          if (denied.status === 200 && denied.data?.length) continue;
+        }
+        let from = 'pending';
+        for (const to of statuses) {
+          if (!await transition('orders',path,row.id,from,to)) break;
+          covered.add(from + ':' + to);
+          from = to;
+        }
+      }
+      const everyEdge = Object.keys(workflows.orders.next).flatMap(from =>
+        nextStatuses('orders',from,'delivery').map(to => from + ':' + to));
+      const allCovered = everyEdge.every(edge => covered.has(edge));
+      add('All order transition branches', allCovered ? 'PASS' : 'UNVERIFIED',
+        {verified:covered.size, expected:everyEdge.length});
+      if (verifiedOrder && watcher?.subscribed) record('Marked order INSERT reached Realtime',await watcher.received());
+      else add('Marked order INSERT reached Realtime', 'UNVERIFIED', {reason:'Needs a subscription and a successful order.'});
+    } else add('Order pricing, transitions and Realtime smoke', 'UNVERIFIED',
+      {reason:'Ordering is disabled or an available item or tax setting could not be read.'});
 
     if (interrupted) return;
-    remember('bookings');
+    const bookingPath = remember('bookings');
     const booking = await request('/functions/v1/bookings', {method:'POST', body:{
       customer_name:marker, customer_phone:'919000000001', booking_date:addCalendarDays(indiaDate(), 2),
       booking_time:bookingRules.timeSlots[0], guests:2,
     }});
-    record('Marked booking and generated reference', booking.status === 200 &&
-      booking.data?.customer_name === marker && /^BK-\d{8}-\d{3,}$/.test(booking.data?.booking_number ?? ''),
-    {http:booking.status});
+    const row = booking.data;
+    const booked = booking.status === 200 && row?.customer_name === marker && uuid.test(row.id) &&
+      row.status === 'pending' && /^BK-\d{8}-\d{3,}$/.test(row.booking_number ?? '');
+    record('Marked booking and generated reference',booked,{http:booking.status});
+    if (booked && await transition('bookings',bookingPath,row.id,'pending','confirmed')) {
+      await transition('bookings',bookingPath,row.id,'confirmed','no_show');
+    }
+
+    if (interrupted) return;
+    if (disposable) {
+      const messagePath = remember('contact_messages','name');
+      const sent = await request('/functions/v1/contact', {method:'POST',body:{
+        name:marker,email:'smoke@example.invalid',subject:'Smoke test',message:'Disposable verification fixture.',
+      }});
+      const found = await request(messagePath + '&select=id,status', {token});
+      const message = found.data?.[0];
+      const created = sent.status === 201 && sent.data?.received === true && found.status === 200 &&
+        found.data?.length === 1 && uuid.test(message?.id) && message.status === 'new';
+      record('Marked contact message',created,{http:sent.status});
+      if (created) {
+        let from = 'new';
+        for (const to of ['read','replied','archived']) {
+          if (!await transition('contact_messages',messagePath,message.id,from,to)) break;
+          from = to;
+        }
+      }
+    } else add('Contact status and cleanup smoke', 'UNVERIFIED',
+      {reason:'Use a disposable project. The contact function writes a rate-limit row the owner cannot delete.'});
   } finally {
     let cleanupFailed = false;
-    for (const {table,path} of fixtures.reverse()) {
+    for (const [table,path] of [...fixtures].reverse()) {
       let cleaned = false;
       for (let attempt = 0; attempt < 3 && !cleaned; attempt++) {
-        // The full random marker is required for every delete, even after a lost response.
+        // Keep the exact fixture marker even if the write response was lost.
         const removed = await request(path, {method:'DELETE', token, headers:{Prefer:'return=minimal'}});
         const remains = await request(path + '&select=id&limit=1', {token});
         cleaned = removed.status >= 200 && removed.status < 300 &&
@@ -209,7 +297,7 @@ async function runMarkedFixtures(token, items) {
         if (!cleaned) await new Promise(resolve => setTimeout(resolve,750));
       }
       record('Cleanup of marked ' + table, cleaned,
-        cleaned ? {} : {marker, reason:'Find and delete only the row with this exact marker.'});
+        cleaned ? {} : {marker, reason:'Find and delete only rows with this exact marker.'});
       cleanupFailed ||= !cleaned;
     }
     await watcher?.close().catch(() => {});
@@ -221,17 +309,24 @@ async function runMarkedFixtures(token, items) {
 
 try {
   const flags = new Set(process.argv.slice(2));
-  if ([...flags].some(flag => !['--anonymous','--write-fixtures'].includes(flag)) ||
+  if ([...flags].some(flag => !['--anonymous','--write-fixtures','--disposable-project'].includes(flag)) ||
       (flags.has('--anonymous') && flags.has('--write-fixtures'))) throw new Error('Invalid flags');
-  const config = JSON.parse(await readFile(configFile, 'utf8')).supabase;
-  if (config?.url?.replace(/\/$/, '') !== projectUrl ||
+  const disposable = flags.has('--disposable-project');
+  const config = disposable
+    ? {url:process.env.CAFE_SMOKE_URL, publishableKey:process.env.CAFE_SMOKE_PUBLISHABLE_KEY}
+    : JSON.parse(await readFile(configFile, 'utf8')).supabase;
+  const target = config?.url?.replace(/\/$/, '');
+  if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(target ?? '') ||
+      (disposable ? target === productionUrl : target !== productionUrl) ||
       !/^sb_publishable_[A-Za-z0-9_-]+$/.test(config?.publishableKey ?? '')) throw new Error('Unexpected project configuration');
+  projectUrl = target;
+  if (disposable) reportName = 'disposable-smoke-result.json';
   key = config.publishableKey;
 
   const items = await checkAnonymous();
   const token = flags.has('--anonymous') ? undefined : await checkOwner();
   if (flags.has('--anonymous')) add('Owner login and dashboard', 'UNVERIFIED', {reason:'No owner credentials requested.'});
-  if (flags.has('--write-fixtures') && token) await runMarkedFixtures(token, items);
+  if (flags.has('--write-fixtures') && token) await runMarkedFixtures(token, items, disposable);
   else add('Order, booking and Realtime write smoke', 'UNVERIFIED',
     {reason:'Requires a verified owner session and the optional fixture flag.'});
 } catch {
@@ -239,9 +334,9 @@ try {
 } finally {
   const report = {run_at:new Date().toISOString(), results};
   try {
-    await writeFile(reportFile, JSON.stringify(report, null, 2) + '\n', {mode:0o600});
+    await writeFile(new URL('../audit/' + reportName, import.meta.url), JSON.stringify(report, null, 2) + '\n', {mode:0o600});
     for (const {check,verdict} of results) console.log(verdict + ' ' + check);
-    console.log('Wrote audit/live-smoke-result.json');
+    console.log('Wrote audit/' + reportName);
   } catch {
     console.error('Could not write the redacted smoke report.');
     process.exitCode = 1;
