@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 1 | 1 | 1 | 4 |
-| **Total** | **52** | **1** | **3** | **4** |
+| H. Live Supabase | 2 | 1 | 1 | 3 |
+| **Total** | **53** | **1** | **3** | **3** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -132,15 +132,17 @@ Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found p
 
 | No. | Status | Operator check and exact pointer |
 |---|---|---|
-| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. A read-only follow-up found the legacy `main-course-chinese` slug, with `main-course` and `chinese` missing. The public catalog is marked as sample. Exact SQL row counts, availability flags, and RLS inventory still need the SQL export. |
-| H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. Policy and INSERT grants need the SQL export. The direct REST POST denial probes require a disposable project. |
+| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. A read-only follow-up found the legacy `main-course-chinese` slug, with `main-course` and `chinese` missing. The public catalog is marked as sample. The operator's SQL export confirmed 18 category rows, zero menu-item rows and no `submission_limits` table. It also lacks `allow_submission` and `reserve_booking`. Apply current 004, then patched 006 and the seed in the SQL Editor. |
+| H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. The SQL export shows that anon and authenticated still have INSERT grants on all four operational tables. Migration 006 removes these grants. The direct REST POST denial probes require a disposable project. |
 | H.c | UNVERIFIED (LIVE) | Run the Storage policy and bucket SQL at the top of `docs/VERIFY_SUPABASE.md`. Compare public flags, upload policies, MIME types and byte limits to the listed expected values. |
 | H.d | UNVERIFIED (LIVE) | Run **Check staff guards and dashboard privileges** in `docs/VERIFY_SUPABASE.md`. Compare anon and authenticated EXECUTE and SELECT flags to the expected results for the trigger helpers, generators, stats views, dashboard RPC and role helpers. |
 | H.e | PASS (LIVE) | The operator reran the read-only Auth check and the saved result confirms signup is disabled. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
-| H.f | UNVERIFIED (LIVE) | Run the role/count query in `docs/VERIFY_SUPABASE.md`. The target must have at least one owner. |
+| H.f | PASS (LIVE) | The operator's SQL export reports one admin user with the owner role. |
 | H.g | UNVERIFIED (LIVE) | Use the staff rollback script and the interactive owner smoke script in `docs/VERIFY_SUPABASE.md`. Order and booking fixtures require confirmed owner cleanup access. The production CV and contact writes cannot meet the current cleanup requirement. |
 
 The live SQL evaluator passed all 95 baseline checks locally and detected injected permission and catalog drift. The staff rollback script passed 13 checks in embedded PostgreSQL and restored the owner role, fixture counts, and order sequence state.
+
+The operator's attempt to run the previous 006 failed with SQLSTATE `42883`: the revoke named the missing legacy payment helper. The follow-up migration patch checks whether that helper exists and revokes extra grants on `public_settings`, which the production export showed had broad anonymous privileges. Local replay reproduced the missing-helper failure before the patch and passed after it.
 
 ## Remaining partial and unverified checks
 

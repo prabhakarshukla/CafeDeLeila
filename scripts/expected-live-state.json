@@ -527,6 +527,7 @@
     },
     {
       "name": "protect_payment_update",
+      "optional": true,
       "returns": "trigger",
       "language": "plpgsql",
       "anon_exec": false,

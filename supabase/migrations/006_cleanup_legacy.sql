@@ -199,6 +199,10 @@ CREATE OR REPLACE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.contact
 DROP TRIGGER IF EXISTS protect_payment_update ON public.orders;
 GRANT UPDATE ON public.orders, public.bookings, public.job_applications, public.contact_messages TO authenticated;
 
+-- The whitelist view is for public reads. Hosted default grants can expose writes.
+REVOKE ALL ON public.public_settings FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.public_settings TO anon, authenticated;
+
 ALTER VIEW public.admin_today_stats SET (security_invoker = true);
 ALTER VIEW public.admin_today_bookings SET (security_invoker = true);
 ALTER VIEW public.admin_recent_activity SET (security_invoker = true);
@@ -238,8 +242,17 @@ REVOKE EXECUTE ON FUNCTION public.generate_order_number(), public.generate_booki
   public.generate_application_number(), public.update_updated_at_column(),
   public.validate_order_status_transition(), public.insert_order_status_history(),
   public.validate_booking_status_transition(), public.validate_application_status_transition(),
-  public.protect_payment_update(), public.guard_staff_columns()
+  public.guard_staff_columns()
   FROM PUBLIC, anon, authenticated, service_role;
+
+-- The obsolete payment helper may never have been installed on a legacy project.
+DO $$
+BEGIN
+  IF to_regprocedure('public.protect_payment_update()') IS NOT NULL THEN
+    REVOKE EXECUTE ON FUNCTION public.protect_payment_update()
+      FROM PUBLIC, anon, authenticated, service_role;
+  END IF;
+END $$;
 
 REVOKE EXECUTE ON FUNCTION public.allow_submission(text, text), public.reserve_booking(jsonb)
   FROM PUBLIC, anon, authenticated;

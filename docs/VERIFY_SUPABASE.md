@@ -11,7 +11,7 @@ The SQL below reads metadata and counts. Use [the database chapter](report/06-da
 
 The production script uses GET and OPTIONS for anonymous requests. An anonymous REST INSERT probe belongs on a disposable project because it can create a row if permissions drift. CV upload and contact smoke tests also belong on a disposable project. The current owner policies cannot clean up a CV object or the database rate-limit rows. The production script skips those writes.
 
-If the menu has 18 active categories and still lists `main-course-chinese`, run the SQL export to check `row_counts.menu_items` and the booking and rate-limit routines before making changes. [Migration 006](../supabase/migrations/006_cleanup_legacy.sql) renames the legacy category to `chinese` while preserving its UUID and adds the missing `main-course` category. If `allow_submission` or `reserve_booking` is missing, apply the current 004 before 006. [Setup guide](SETUP_SUPABASE.md)
+If the menu has 18 active categories and still lists `main-course-chinese`, run the SQL export to check `row_counts.menu_items` and the booking and rate-limit routines before making changes. [Migration 006](../supabase/migrations/006_cleanup_legacy.sql) renames the legacy category to `chinese` while preserving its UUID and adds the missing `main-course` category. If `allow_submission` or `reserve_booking` is missing, apply the current 004 before 006. The November 20 export is missing both routines and has zero menu rows. Copy the current 006 from the branch before retrying. It tolerates installations without the obsolete `protect_payment_update()` helper and restores SELECT-only access to `public_settings`. [Setup guide](SETUP_SUPABASE.md)
 
 If the SQL count is zero and the menu is still marked as sample, run [the sample menu seed](../supabase/seed/menu_items.sql) after 006. If the count is nonzero while the API is empty, inspect item availability, category activity, and the catalog read policy before seeding. Rerun `node scripts/live-smoke.mjs --anonymous` after the changes. The fresh sample catalog should show 19 active categories and 80 available items.
 
@@ -50,8 +50,21 @@ left join public.menu_items i on i.category_id = c.id group by slug order by slu
 
 - All ten application tables have RLS enabled. The 20 application policies and five Storage policies in the database chapter should match. The four public INSERT policies, three old CV/menu upload policies and two staff-wide image management names should be absent. Review any extra policy that affects these tables before accepting customer data.
 - CV storage is private with 2,097,152 bytes and MIME types PDF, Microsoft Word DOC and OpenXML DOCX. Menu images are public with 5,242,880 bytes and JPEG, PNG and WebP. OG images are public with 2,097,152 bytes and the same image formats.
-- The public tables in the Realtime publication include `orders` and `bookings`. The function inventory above returns 15 application functions. The older payment-check function is retained without an attached trigger.
+- The public tables in the Realtime publication include `orders` and `bookings`. The function inventory above returns 14 required application functions. The older payment-check function is optional. If present, it has no attached trigger or anonymous or authenticated EXECUTE grant.
 - After bootstrapping the first administrator, expect one owner and zero staff on a fresh project. After 006 the 12 expected keys are `opening_hours`, `address`, `phone`, `email`, `whatsapp_number`, `ordering_enabled`, `delivery_enabled`, `delivery_fee`, `min_order`, `tax_percent`, `booking_capacity_per_slot` and `menu_is_sample`. Existing extra rows are preserved. After the clean seed, expect 19 categories and 80 items.
+
+## Check legacy order defaults before write smoke tests
+
+The November 20 export showed legacy defaults for order type and payment status. The current order handler sends explicit values. Check which values the database accepts before relying on a production order smoke test.
+
+```sql
+select conname, pg_get_constraintdef(oid) as definition
+from pg_constraint
+where conrelid = 'public.orders'::regclass and contype = 'c'
+order by conname;
+```
+
+Expect the order-type constraint to accept `dine_in`, `takeaway`, and `delivery`, and the payment constraint to accept `unpaid`, `paid`, and `refunded`. If the constraints still use legacy values, keep the write smoke disabled until the existing rows and constraints can be migrated together.
 
 ## Check staff guards and dashboard privileges
 

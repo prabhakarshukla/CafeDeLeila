@@ -33,6 +33,8 @@ const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
       DELETE FROM public.menu_categories WHERE slug = 'main-course';
       UPDATE public.menu_categories SET slug = 'main-course-chinese', name = 'Main Course Chinese' WHERE slug = 'chinese';
       UPDATE storage.buckets SET file_size_limit = null;
+      DROP FUNCTION public.protect_payment_update();
+      GRANT ALL ON public.public_settings TO PUBLIC, anon, authenticated;
       CREATE POLICY "Anyone can create orders" ON orders FOR INSERT WITH CHECK (true);
       CREATE POLICY "Authenticated upload CVs" ON storage.objects FOR INSERT WITH CHECK (true);
       CREATE POLICY "Admins can manage menu images" ON storage.objects FOR UPDATE USING (is_admin());
@@ -44,6 +46,15 @@ const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
     assert.deepEqual((await db.query("SELECT id, file_size_limit::int AS bytes FROM storage.buckets ORDER BY id")).rows,
       [{id:'cv-uploads',bytes:2097152},{id:'menu-images',bytes:5242880},{id:'og-images',bytes:2097152}]);
     assert.equal((await db.query("SELECT count(*)::int AS n FROM pg_policies WHERE policyname LIKE 'Anyone can create %' OR policyname IN ('Authenticated upload CVs','Admins can manage menu images')")).rows[0].n,0);
+    assert.equal((await db.query("SELECT to_regprocedure('public.protect_payment_update()') IS NULL AS absent")).rows[0].absent,true);
+    for (const role of ['anon','authenticated']) {
+      const privileges = (await db.query(
+        "SELECT has_table_privilege($1,'public.public_settings','SELECT') AS can_read, " +
+        "has_table_privilege($1,'public.public_settings','INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') AS extra_grants",
+        [role],
+      )).rows[0];
+      assert.deepEqual(privileges,{can_read:true,extra_grants:false});
+    }
     const seed = read('supabase/seed/menu_items.sql');
     await db.exec(seed);
     await db.exec("UPDATE menu_items SET price_inr = 777 WHERE id = (SELECT min(id::text)::uuid FROM menu_items)");

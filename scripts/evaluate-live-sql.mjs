@@ -67,6 +67,10 @@ function evaluate(actual) {
   const functions = indexes(actual.functions, functionKey);
   for (const row of expected.functions) {
     const observed = functions.get(functionKey(row));
+    if (!observed && row.optional) {
+      check('Optional legacy function ' + functionKey(row) + ' is absent', true);
+      continue;
+    }
     check('Function ' + functionKey(row), !!observed && sql(observed.returns) === sql(row.returns) &&
       ['security_definer','language','volatility','anon_exec','authenticated_exec'].every(key => observed[key] === row[key]) &&
       (!('configuration' in row) || isDeepStrictEqual(observed.configuration, row.configuration)));
