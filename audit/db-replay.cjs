@@ -5,10 +5,9 @@ const {PGlite} = require('@electric-sql/pglite');
 const migrations = fs.readdirSync('supabase/migrations').filter(file => file.endsWith('.sql')).sort();
 const read = file => fs.readFileSync(file,'utf8');
 const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
+const cleanupMigration = '006_cleanup_legacy.sql';
 
-(async () => {
-  const db = new PGlite();
-  try {
+async function setupDatabase(db) {
     await db.exec(`
       CREATE ROLE anon;
       CREATE ROLE authenticated;
@@ -24,6 +23,15 @@ const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
       CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public bool, file_size_limit bigint, allowed_mime_types text[]);
       CREATE PUBLICATION supabase_realtime;
     `);
+}
+
+module.exports = {setupDatabase};
+if (require.main === module) main().catch(error => {console.error(error.message); process.exitCode = 1;});
+
+async function main() {
+  const db = new PGlite();
+  try {
+    await setupDatabase(db);
     for (const file of migrations) await apply(db,file);
     for (const file of migrations) await apply(db,file);
     const keys = (await db.query('SELECT count(*)::int AS n FROM public.settings')).rows[0].n;
@@ -40,8 +48,8 @@ const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
       CREATE POLICY "Admins can manage menu images" ON storage.objects FOR UPDATE USING (is_admin());
     `);
     const before = (await db.query("SELECT id FROM menu_categories WHERE slug = 'main-course-chinese'")).rows[0].id;
-    await apply(db,migrations.at(-1));
-    await apply(db,migrations.at(-1));
+    await apply(db,cleanupMigration);
+    await apply(db,cleanupMigration);
     assert.equal((await db.query("SELECT id FROM menu_categories WHERE slug = 'chinese'")).rows[0].id,before);
     assert.deepEqual((await db.query("SELECT id, file_size_limit::int AS bytes FROM storage.buckets ORDER BY id")).rows,
       [{id:'cv-uploads',bytes:2097152},{id:'menu-images',bytes:5242880},{id:'og-images',bytes:2097152}]);
@@ -66,4 +74,4 @@ const apply = (db,file) => db.exec(read('supabase/migrations/' + file));
     assert.equal((await db.query('SELECT count(*)::int AS n FROM orders')).rows[0].n,0);
     console.log('PASS Embedded Postgres: clean migrations, full replay, legacy cleanup replay, seed repeat, owner price preserved, rollback behaviors.');
   } finally { await db.close(); }
-})().catch(error => {console.error(error.message); process.exitCode = 1;});
+}

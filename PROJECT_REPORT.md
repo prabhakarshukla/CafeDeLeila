@@ -43,7 +43,7 @@ Read the overview for the café workflow, then use the architecture chapter to f
 1. The checkout now has a generated sample database catalog in addition to the 80-item JSON fallback. A hosted empty catalog remains an operator-reported starting state.
 2. The SQL catalog uses 19 category slugs, including separate Main Course and Chinese entries. Existing Chinese IDs survive a rename where possible.
 3. The seed defines exactly 12 expected settings keys. The `public_settings` whitelist exposes the same 12 keys, and the operator confirmed all are present.
-4. The applied order is 001–004 then 006, and the sample seed is separate. There is no deployable 005.
+4. The migration order is 001–004, 006, then 007, and the sample seed is separate. There is no deployable 005.
 5. Recorded distinct proof for embedded SQL, stubbed order-handler tests, historical mock browser runs and unverified hosted services.
 6. Removed the obsolete UUID extension dependency from migration 003 so fresh SQL can apply.
 7. Documented the cleanup of legacy public insert and upload policies and the current full policy inventory.
@@ -57,3 +57,4 @@ Read the overview for the café workflow, then use the architecture chapter to f
 15. Migration 006 adds an early column guard on orders, bookings, applications, and messages. Staff can update the allowed fields, including order payment status. The guard bypasses owners and callers without an Auth UID, while the existing transition checks still apply.
 16. Migration 006 records the stats view and RPC grants and blocks direct browser execution of the number generators. Anonymous catalog reads and service-role numbering are covered by the rollback tests.
 17. Migration 006 hardens `is_admin()` and `is_owner()` with stable SQL, an empty search path, and qualified references. Both functions remain callable by anonymous and authenticated roles for policy checks.
+18. The live CHECK constraints accepted legacy order and booking spellings, while the Edge handler inserts `dine_in` and `unpaid`. The storefront already translated the hyphenated order type at the request boundary. It now uses the canonical value throughout. Migration 007 maps existing legacy values, aligns checks and defaults, and validates order, booking, application and contact transitions. CI replays both the clean and legacy schemas through the actual handlers.

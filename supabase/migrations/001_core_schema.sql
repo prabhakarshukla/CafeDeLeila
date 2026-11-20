@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS orders (
   tax_inr INT NOT NULL,
   total_inr INT NOT NULL,
   status TEXT CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled')) DEFAULT 'pending',
-  payment_status TEXT CHECK (payment_status IN ('unpaid', 'paid', 'refunded')) DEFAULT 'unpaid',
+  payment_status TEXT CHECK (payment_status IN ('unpaid', 'paid', 'failed', 'refunded')) DEFAULT 'unpaid',
   payment_method TEXT CHECK (payment_method IN ('cash', 'upi', 'card', 'razorpay', 'stripe')),
   payment_id TEXT,
   notes TEXT,

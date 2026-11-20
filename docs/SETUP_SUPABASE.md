@@ -16,9 +16,10 @@ Get-Content -Raw supabase/migrations/002_admin_settings.sql | Set-Clipboard
 Get-Content -Raw supabase/migrations/003_order_status_history.sql | Set-Clipboard
 Get-Content -Raw supabase/migrations/004_admin_rls_storage_realtime.sql | Set-Clipboard
 Get-Content -Raw supabase/migrations/006_cleanup_legacy.sql | Set-Clipboard
+Get-Content -Raw supabase/migrations/007_align_legacy_schema.sql | Set-Clipboard
 ```
 
-For the reported existing project, reapply current 004 before 006 if the limiter or booking RPC is missing. The reported list lacks both, so use **004 → 006** for that project. 006 preserves existing settings and menu rows and removes known legacy access. Use the metadata queries in the verification guide first if the installation differs. There is no deployable 005. Keep manual SQL Editor runs separate from CLI migration history.
+For the reported existing project, reapply current 004 before 006 if the limiter or booking RPC is missing. The reported list lacks both, so use **004 → 006** for that project. 006 preserves existing settings and menu rows and removes known legacy access. Use the metadata queries in the verification guide first if the installation differs. On an installation with 006 applied, run the [SQL Editor copy of 007](../supabase/fixes/007_align_legacy_schema.sql) to align checks, defaults and transitions. There is no deployable 005. Keep manual SQL Editor runs separate from CLI migration history.
 
 ## 3. Seed the sample catalog
 

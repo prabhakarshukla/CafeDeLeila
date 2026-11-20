@@ -1,12 +1,8 @@
 import {addCalendarDays, indiaDateTime, isCalendarDate} from '../../supabase/functions/_shared/india-date.mjs';
 import {action, button, changeStatus, el, field, labelOf, localTime, result, rupees} from './ui.js';
+import {nextStatuses, paymentStatuses, workflows} from '../../js/workflow.mjs';
 
-const next = {
-  pending: ['confirmed'], confirmed: ['preparing','ready','cancelled'],
-  preparing: ['ready','cancelled'], ready: ['out_for_delivery','completed','cancelled'],
-  out_for_delivery: ['completed'],
-};
-const statuses = ['all','pending','confirmed','preparing','ready','out_for_delivery','completed','cancelled'];
+const statuses = ['all', ...workflows.orders.states];
 const pageSize = 20;
 
 function printOrder(card) {
@@ -92,7 +88,7 @@ export async function render({client, view, role, notice}) {
       el('ul', {}, (order.items || []).map(item => el('li', {}, item.quantity + ' × ', item.name))),
       el('p', {}, order.notes ? 'Kitchen notes: ' + order.notes : 'No kitchen notes'));
     const actions = el('div', {className:'actions no-print'},
-      (next[order.status] || []).filter(status => status !== 'out_for_delivery' || order.order_type === 'delivery').map(status =>
+      nextStatuses('orders', order.status, order.order_type).map(status =>
         button(labelOf(status), event => action(event.currentTarget, notice, async () => {
           await changeStatus(client, 'orders', order, status);
           await load(); notice('Order updated.');
@@ -102,7 +98,7 @@ export async function render({client, view, role, notice}) {
       el('p', {className:'no-print'}, order.delivery_address?.full || ''),
       el('p', {className:'no-print'}, 'Payment: ', labelOf(order.payment_status)), actions);
     if (role === 'owner') {
-      const paid = el('select', {}, ['unpaid','paid','refunded'].map(status => el('option', {value:status}, status)));
+      const paid = el('select', {}, paymentStatuses.map(status => el('option', {value:status}, labelOf(status))));
       paid.value = order.payment_status;
       actions.append(field('Payment status', paid), button('Save payment', event => action(event.currentTarget, notice, async () => {
         const updated = await result(client.from('orders').update({payment_status:paid.value}).eq('id', order.id)

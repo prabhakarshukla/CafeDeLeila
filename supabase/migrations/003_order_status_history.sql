@@ -31,7 +31,7 @@ ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
 -- Valid status transitions:
 -- pending -> confirmed -> preparing -> ready -> (out_for_delivery) -> completed
--- cancelled allowed from: pending, confirmed, preparing
+-- cancelled allowed from: confirmed, preparing, ready
 -- no transitions from: completed, cancelled
 
 CREATE OR REPLACE FUNCTION validate_order_status_transition()

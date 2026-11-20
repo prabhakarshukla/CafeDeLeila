@@ -12,8 +12,8 @@ Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ 
 
 ## Set up the database
 
-- Fresh project: apply 001, 002, 003, 004 and 006, then supabase/seed/menu_items.sql. Do not run the archive.
-- Existing early project: verify the limiter and booking routine. If missing, reapply current 004 before 006. Run the seed while preparing a sample catalog.
+- Fresh project: apply 001, 002, 003, 004, 006 and 007, then supabase/seed/menu_items.sql. Do not run the archive.
+- Existing early project: verify the limiter and booking routine. If missing, reapply current 004 before 006. Apply 007 after 006. Run the seed while preparing a sample catalog.
 - Configure the function origin allowlist, deploy the five functions, disable public sign-up and create an owner. Use the [numbered setup guide](docs/SETUP_SUPABASE.md) and [verification guide](docs/VERIFY_SUPABASE.md).
 - Run the anonymous access, order, CV and admin/staff smoke tests on a disposable project.
 

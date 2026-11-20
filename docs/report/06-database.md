@@ -7,6 +7,7 @@
 3. Migration 003 validates order, booking and application status changes. Only orders keep a status history. An order trigger records the previous status, new status and actor in `order_status_history`. Bookings and applications retain their current status without a history table.
 4. Migration 004 grants narrowly scoped updates, creates Storage policies and buckets, and publishes order and booking changes. It adds the dashboard queries, a shared rate limiter and the booking reservation function.
 5. Migration 006 removes known legacy policies, upserts bucket definitions and inserts missing settings or categories. It also installs the staff column guard and narrows direct access to stats and trigger functions. A legacy Chinese category is renamed by slug when that preserves the existing ID. The seed uses category slugs to resolve foreign keys and deterministic IDs to avoid overwrites.
+6. Migration 007 normalizes live legacy rows, adds the supported state checks, aligns defaults and reinstates the canonical transition triggers. It advances reference sequences past legacy numbers without changing those references.
 
 ### Sequences, triggers and routines
 
@@ -18,10 +19,11 @@
 | `generate_application_number` / `trigger_generate_application_number` | Before application INSERT, writes APP-date-sequence into `application_number`. |
 | `update_updated_at_column` | Sets updated_at on UPDATE. Triggers are `update_menu_items_updated_at`, `update_orders_updated_at`, `update_bookings_updated_at`, `update_applications_updated_at`. |
 | `is_admin`, `is_owner` | Stable SQL functions read membership as the function owner, with an empty search path and qualified references. Anonymous and authenticated callers can execute both. |
-| `validate_order_status_transition` / `trigger_validate_order_status_transition` | Pending → confirmed. Confirmed → preparing/ready/cancelled. Preparing → ready/cancelled. Ready → out for delivery/completed/cancelled. Out for delivery → completed. |
+| `validate_order_status_transition` / `trigger_validate_order_status_transition` | Pending → confirmed. Confirmed → preparing/ready/cancelled. Preparing → ready/cancelled. Ready → completed/cancelled, or out for delivery for delivery orders. Out for delivery → completed. |
 | `insert_order_status_history` / `trigger_insert_order_status_history` | After a changed order status, writes order_id, from_status, to_status and the authenticated actor. |
 | `validate_booking_status_transition` / `trigger_validate_booking_status_transition` | Pending → confirmed/cancelled. Confirmed → completed/cancelled/no show. |
 | `validate_application_status_transition` / `trigger_validate_application_status_transition` | Pending → reviewing/rejected. Reviewing → shortlisted/rejected. Shortlisted → hired/rejected. |
+| `validate_contact_status_transition` / `trigger_validate_contact_status_transition` | New → read → replied → archived. Archived is terminal. |
 | `guard_staff_columns` / `aa_guard_staff_columns` | Runs before the other update triggers on orders, bookings, applications, and messages. It protects all columns from staff edits except order status and payment status, status on the other tables, and `updated_at` where present. Owners and callers without an Auth UID bypass this guard. Migration 006 removes the older `protect_payment_update` trigger. |
 | `reserve_booking(details)` | Rejects past India-time slots, acquires a transaction lock derived from the date/time, counts pending and confirmed bookings against capacity, then inserts and returns the booking. |
 | `allow_submission(endpoint, visitor)` | Counts arrivals per hashed visitor and endpoint in minute buckets. Applications and contact have a limit of 10 each. Deletes buckets older than 10 minutes. |
@@ -60,12 +62,14 @@ The four admin stats views use `security_invoker` and grant browser access only 
 
 ## Where to look
 
-Canonical SQL lives in `supabase/migrations/001_core_schema.sql`, `002_admin_settings.sql`, `003_order_status_history.sql`, `004_admin_rls_storage_realtime.sql` and `006_cleanup_legacy.sql`. The tables and policy names below are transcribed from those declarations. Use the verification guide to compare hosted metadata.
+Canonical SQL lives in `supabase/migrations/001_core_schema.sql`, `002_admin_settings.sql`, `003_order_status_history.sql`, `004_admin_rls_storage_realtime.sql`, `006_cleanup_legacy.sql` and `007_align_legacy_schema.sql`. The tables and policy names below are transcribed from those declarations. Use the verification guide to compare hosted metadata.
 
 
 ### Table reference
 
 Columns without NOT NULL are nullable unless a primary key makes them required. Table and column constraints appear as written.
+
+Orders use `dine_in`, `takeaway`, and `delivery`. Only delivery orders can enter `out_for_delivery`. Bookings use `no_show`. Applications start at `pending`, and contact messages start at `new`. The stored values also appear in CSV exports. Admin labels display **Dine In** and **No Show**.
 
 #### menu_categories
 
@@ -119,7 +123,7 @@ Order snapshots, totals, fulfillment and payment state. Defined in `001_core_sch
 | `tax_inr` | `INT NOT NULL` |
 | `total_inr` | `INT NOT NULL` |
 | `status` | `TEXT CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled')) DEFAULT 'pending'` |
-| `payment_status` | `TEXT CHECK (payment_status IN ('unpaid', 'paid', 'refunded')) DEFAULT 'unpaid'` |
+| `payment_status` | `TEXT CHECK (payment_status IN ('unpaid', 'paid', 'failed', 'refunded')) DEFAULT 'unpaid'` |
 | `payment_method` | `TEXT CHECK (payment_method IN ('cash', 'upi', 'card', 'razorpay', 'stripe'))` |
 | `payment_id` | `TEXT` |
 | `notes` | `TEXT` |

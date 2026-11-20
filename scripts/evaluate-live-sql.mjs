@@ -99,6 +99,10 @@ function evaluate(actual) {
     row.schema === 'public' && reviewedTables.has(row.table_name) && !expectedTriggers.has(triggerKey(row))));
   check('Realtime publication', isDeepStrictEqual(sorted(actual.realtime.filter(name => name.startsWith('public.'))),
     sorted(expected.realtime)));
+  check('Workflow CHECK constraints', Array.isArray(actual.checks) && isDeepStrictEqual(
+    actual.checks.map(row => ({...row, definition: sql(row.definition)})),
+    expected.checks.map(row => ({...row, definition: sql(row.definition)})),
+  ));
   for (const table of new Set(expected.columns.map(row => row.table_name))) {
     const project = rows => rows.filter(row => row.table_name === table)
       .sort((a,b) => a.position - b.position).map(row => ({...row, default:sql(row.default)}));

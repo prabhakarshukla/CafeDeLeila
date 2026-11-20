@@ -45,12 +45,16 @@ function loadHandler(name, backend = client, clock = Date) {
   }
   return route;
 }
-handler = loadHandler('orders');
-const post = (items, extra = {}) => handler(new Request('https://fixture.invalid/orders',{
-  method:'POST', body:JSON.stringify({customer_name:'Fixture',customer_phone:'919876543210',
-    order_type:'takeaway',items,...extra}),
-}));
-(async () => {
+module.exports = {loadHandler};
+
+if (require.main === module) main().catch(error => {console.error(error.message);process.exitCode=1;});
+
+async function main() {
+  handler = loadHandler('orders');
+  const post = (items, extra = {}) => handler(new Request('https://fixture.invalid/orders',{
+    method:'POST', body:JSON.stringify({customer_name:'Fixture',customer_phone:'919876543210',
+      order_type:'takeaway',items,...extra}),
+  }));
   for (const name of ['orders', 'bookings', 'contact', 'applications', 'menu']) {
     const route = loadHandler(name);
     const url = 'https://fixture.invalid/' + name;
@@ -155,4 +159,4 @@ const post = (items, extra = {}) => handler(new Request('https://fixture.invalid
   assert.equal(reservations,2);
   console.log('PASS strict order/booking fields and India date boundaries.');
   console.log('PASS Order handler: unknown/unavailable IDs, quantity, duplicates, ordering switch, and server totals with mocked catalog.');
-})().catch(error => {console.error(error.message);process.exitCode=1;});
+}

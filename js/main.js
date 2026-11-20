@@ -1217,7 +1217,7 @@ function openCheckout() {
 
   const config = window.CAFE_CONFIG;
   const orderTypes = config?.ordering?.types || [
-    { id: 'dine-in', label: 'Dine In', description: 'Enjoy your meal at our cafe' },
+    { id: 'dine_in', label: 'Dine In', description: 'Enjoy your meal at our cafe' },
     { id: 'takeaway', label: 'Takeaway', description: 'Pick up your order' },
     { id: 'delivery', label: 'Delivery', description: 'Delivered to your door' }
   ];
@@ -1246,10 +1246,10 @@ function openCheckout() {
             utils.createEl('div', { class: 'checkout-form__order-type', role: 'radiogroup', 'aria-label': 'Order type' },
               orderTypes.filter(type => type.id !== 'delivery' || state.config.ordering.deliveryEnabled).map(type => utils.createEl('button', {
                 type: 'button',
-                class: `order-type-btn ${type.id === 'dine-in' ? 'is-active' : ''}`,
+                class: `order-type-btn ${type.id === 'dine_in' ? 'is-active' : ''}`,
                 'data-type': type.id,
                 role: 'radio',
-                'aria-checked': type.id === 'dine-in',
+                'aria-checked': type.id === 'dine_in',
               }, type.label))
             ),
             utils.createEl('div', { class: 'checkout-form__address', id: 'delivery-address-field', hidden: '' },
@@ -1319,7 +1319,7 @@ function openCheckout() {
     const deliveryFee = config?.ordering?.deliveryFee ?? 0;
     const minOrderDelivery = config?.ordering?.minOrderDelivery ?? 0;
     const taxRate = config?.ordering?.taxRate ?? 0;
-    const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in';
+    const activeType = modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine_in';
     const needsDeliveryFee = activeType === 'delivery';
     const deliveryFeeAmount = needsDeliveryFee ? deliveryFee : 0;
     const tax = Math.round(subtotal * taxRate);
@@ -1341,7 +1341,7 @@ function openCheckout() {
     utils.on(btn, 'click', () => selectOrderType(btn.dataset.type));
   });
 
-  selectOrderType('dine-in');
+  selectOrderType('dine_in');
   form.prepend(utils.createEl('p', {class: 'demo-notice'}, 'The café will review your order request. Payment is arranged separately.'));
   utils.on(form, 'submit', async (e) => {
     e.preventDefault();
@@ -1357,7 +1357,7 @@ function openCheckout() {
 
     const order = {
       id: utils.generateOrderId(),
-      type: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine-in',
+      type: modalHtml.querySelector('.order-type-btn.is-active')?.dataset.type || 'dine_in',
       customer: {
         name: form.elements.namedItem('name').value.trim(),
         phone: form.elements.namedItem('phone').value.trim()
@@ -1389,7 +1389,7 @@ function openCheckout() {
       const result = await utils.apiRequest('orders', {
         customer_name: order.customer.name,
         customer_phone: '91' + order.customer.phone,
-        order_type: order.type.replace('-', '_'),
+        order_type: order.type,
         items: order.items.map(({id, quantity}) => ({id, quantity})),
         notes: order.notes,
         delivery_address: order.address ? {full: order.address} : null,
@@ -1525,7 +1525,7 @@ function closeConfirmation() {
 function buildWhatsAppMessage(order) {
   const lines = [
     `*New Order - ${order.id}*`,
-    `*Type:* ${order.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+    `*Type:* ${order.type.replaceAll('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
     `*Customer:* ${order.customer.name}`,
     `*Phone:* ${order.customer.phone}`,
     '',

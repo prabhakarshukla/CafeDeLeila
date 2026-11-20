@@ -1,14 +1,13 @@
 import {formatIndiaDate, isCalendarDate} from '../../supabase/functions/_shared/india-date.mjs';
 import {action, button, changeStatus, el, field, labelOf, localTime, result} from './ui.js';
+import {nextStatuses, workflows} from '../../js/workflow.mjs';
 
 const sections = {
-  bookings: {title:'Bookings', table:'bookings', states:['pending','confirmed','cancelled','completed','no_show'],
-    next:{pending:['confirmed','cancelled'], confirmed:['completed','cancelled','no_show']}},
-  applications: {title:'Applications', table:'job_applications', states:['pending','reviewing','shortlisted','rejected','hired'],
-    next:{pending:['reviewing','rejected'], reviewing:['shortlisted','rejected'], shortlisted:['hired','rejected']}},
-  messages: {title:'Messages', table:'contact_messages', states:['new','read','replied','archived'],
-    next:{new:['read']}},
+  bookings: {title:'Bookings', table:'bookings'},
+  applications: {title:'Applications', table:'job_applications'},
+  messages: {title:'Messages', table:'contact_messages'},
 };
+const messageActions = {read:'Mark read', replied:'Mark replied', archived:'Archive'};
 const size = 25;
 
 export async function render({client, view, key, notice}) {
@@ -16,7 +15,7 @@ export async function render({client, view, key, notice}) {
   let page = 0;
   let request = 0;
   const rows = el('div', {'aria-live':'polite'});
-  const select = el('select', {}, ['all', ...section.states].map(status => el('option', {value:status}, labelOf(status))));
+  const select = el('select', {}, ['all', ...workflows[section.table].states].map(status => el('option', {value:status}, labelOf(status))));
   const date = el('input', {type:'date'});
   const filters = el('form', {className:'filters'}, field('Status',select),
     key === 'bookings' ? field('Booking date in Lucknow',date) : null, el('button', {}, 'Apply filters'));
@@ -56,8 +55,8 @@ export async function render({client, view, key, notice}) {
     const controls = el('div',{className:'actions'});
     const card = el('article',{},el('h2',{},title),el('p',{},labelOf(row.status),' · ',localTime(row.created_at)),
       summary.filter(Boolean).map(text => el('p',{},text)),controls);
-    for (const status of section.next[row.status] || []) {
-      controls.append(button(key === 'messages' ? 'Mark read' : labelOf(status), event => action(event.currentTarget, notice, async () => {
+    for (const status of nextStatuses(section.table, row.status)) {
+      controls.append(button(key === 'messages' ? messageActions[status] : labelOf(status), event => action(event.currentTarget, notice, async () => {
         await changeStatus(client,section.table,row,status); await load(); notice('Status updated.');
       })));
     }

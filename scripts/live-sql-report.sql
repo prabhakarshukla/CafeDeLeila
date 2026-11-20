@@ -80,12 +80,17 @@ SELECT jsonb_build_object(
     FROM pg_publication_tables WHERE pubname = 'supabase_realtime'), '[]'),
   'admin_users', jsonb_build_object('count', (SELECT count FROM counts WHERE name = 'admin_users'),
     'roles', (SELECT roles FROM owners)),
+  'checks', coalesce((SELECT jsonb_agg(jsonb_build_object('table_name', r.name,
+      'name', c.conname, 'definition', pg_get_constraintdef(c.oid)) ORDER BY r.name, c.conname)
+    FROM pg_constraint c JOIN relations r ON r.oid = c.conrelid
+    WHERE c.contype = 'c' AND r.schema = 'public' AND r.name IN
+      ('orders','bookings','job_applications','contact_messages','admin_users')), '[]'),
   'columns', coalesce((SELECT jsonb_agg(jsonb_build_object(
       'table_name', table_name, 'name', column_name, 'type', data_type, 'udt_name', udt_name,
       'position', ordinal_position, 'nullable', is_nullable = 'YES', 'default', column_default
     ) ORDER BY table_name, ordinal_position)
     FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name IN ('orders','bookings','job_applications','contact_messages','menu_items')), '[]'),
+    WHERE table_schema = 'public' AND table_name IN ('orders','bookings','job_applications','contact_messages','menu_categories','menu_items','order_status_history')), '[]'),
   'category_slugs', (SELECT slugs FROM categories),
   'soups', coalesce((SELECT slugs ? 'soups' FROM categories), false)
 ) AS report;

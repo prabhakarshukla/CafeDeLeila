@@ -527,14 +527,14 @@
     },
     {
       "name": "protect_payment_update",
-      "optional": true,
       "returns": "trigger",
       "language": "plpgsql",
       "anon_exec": false,
       "arguments": "",
       "volatility": "v",
       "security_definer": false,
-      "authenticated_exec": false
+      "authenticated_exec": false,
+      "optional": true
     },
     {
       "name": "reserve_booking",
@@ -563,7 +563,7 @@
       "anon_exec": false,
       "arguments": "",
       "volatility": "v",
-      "security_definer": true,
+      "security_definer": false,
       "authenticated_exec": false
     },
     {
@@ -573,7 +573,17 @@
       "anon_exec": false,
       "arguments": "",
       "volatility": "v",
-      "security_definer": true,
+      "security_definer": false,
+      "authenticated_exec": false
+    },
+    {
+      "name": "validate_contact_status_transition",
+      "returns": "trigger",
+      "language": "plpgsql",
+      "anon_exec": false,
+      "arguments": "",
+      "volatility": "v",
+      "security_definer": false,
       "authenticated_exec": false
     },
     {
@@ -583,7 +593,7 @@
       "anon_exec": false,
       "arguments": "",
       "volatility": "v",
-      "security_definer": true,
+      "security_definer": false,
       "authenticated_exec": false
     }
   ],
@@ -676,6 +686,13 @@
       "schema": "public",
       "enabled": "O",
       "definition": "CREATE TRIGGER aa_guard_staff_columns BEFORE UPDATE ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION guard_staff_columns()",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "trigger_validate_contact_status_transition",
+      "schema": "public",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER trigger_validate_contact_status_transition BEFORE UPDATE OF status ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION validate_contact_status_transition()",
       "table_name": "contact_messages"
     },
     {
@@ -1049,6 +1066,69 @@
       "nullable": false,
       "position": 1,
       "udt_name": "uuid",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "default": "0",
+      "nullable": true,
+      "position": 5,
+      "udt_name": "int4",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "default": "true",
+      "nullable": true,
+      "position": 6,
+      "udt_name": "bool",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 7,
+      "udt_name": "timestamptz",
+      "table_name": "menu_categories"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
       "table_name": "menu_items"
     },
     {
@@ -1149,6 +1229,69 @@
       "position": 12,
       "udt_name": "timestamptz",
       "table_name": "menu_items"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": "gen_random_uuid()",
+      "nullable": false,
+      "position": 1,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "order_id",
+      "type": "uuid",
+      "default": null,
+      "nullable": false,
+      "position": 2,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "from_status",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 3,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "to_status",
+      "type": "text",
+      "default": null,
+      "nullable": false,
+      "position": 4,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "changed_by",
+      "type": "uuid",
+      "default": null,
+      "nullable": true,
+      "position": 5,
+      "udt_name": "uuid",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "default": null,
+      "nullable": true,
+      "position": 6,
+      "udt_name": "text",
+      "table_name": "order_status_history"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": true,
+      "position": 7,
+      "udt_name": "timestamptz",
+      "table_name": "order_status_history"
     },
     {
       "name": "id",
@@ -1355,5 +1498,52 @@
   "sample_menu": {
     "items": 80,
     "categories": 19
-  }
+  },
+  "checks": [
+    {
+      "name": "admin_users_role_check",
+      "definition": "CHECK ((role = ANY (ARRAY['owner'::text, 'staff'::text])))",
+      "table_name": "admin_users"
+    },
+    {
+      "name": "bookings_guests_check",
+      "definition": "CHECK (((guests > 0) AND (guests <= 20)))",
+      "table_name": "bookings"
+    },
+    {
+      "name": "bookings_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'cancelled'::text, 'completed'::text, 'no_show'::text])))",
+      "table_name": "bookings"
+    },
+    {
+      "name": "contact_messages_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['new'::text, 'read'::text, 'replied'::text, 'archived'::text])))",
+      "table_name": "contact_messages"
+    },
+    {
+      "name": "job_applications_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'reviewing'::text, 'shortlisted'::text, 'rejected'::text, 'hired'::text])))",
+      "table_name": "job_applications"
+    },
+    {
+      "name": "orders_order_type_check",
+      "definition": "CHECK ((order_type = ANY (ARRAY['dine_in'::text, 'takeaway'::text, 'delivery'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_payment_method_check",
+      "definition": "CHECK ((payment_method = ANY (ARRAY['cash'::text, 'upi'::text, 'card'::text, 'razorpay'::text, 'stripe'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_payment_status_check",
+      "definition": "CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'paid'::text, 'failed'::text, 'refunded'::text])))",
+      "table_name": "orders"
+    },
+    {
+      "name": "orders_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'preparing'::text, 'ready'::text, 'out_for_delivery'::text, 'completed'::text, 'cancelled'::text])))",
+      "table_name": "orders"
+    }
+  ]
 }

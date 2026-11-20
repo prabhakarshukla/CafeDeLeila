@@ -36,6 +36,7 @@ The folders separate browser code, database and function source, documentation a
 
 | File or folder | Purpose | Used by | Depends on |
 |---|---|---|---|
+| `.github/workflows/database-replay.yml` | Runs the database and handler replays on branch updates | GitHub Actions | Node 24 and PGlite |
 | `.gitignore` | Git exclusion rules for local metadata and artifacts | Git add/status | Repository layout |
 | `ASSUMPTIONS.md` | Pointer to current assumptions | Contributors | docs/ASSUMPTIONS.md |
 | `CHANGELOG.md` | Change history | Contributors | Commit history |
@@ -60,6 +61,7 @@ The folders separate browser code, database and function source, documentation a
 | `audit/browser-results.json` | Historical browser flow outcomes | Historical audit | Corresponding command in audit/ |
 | `audit/browser.cjs` | Storefront form, cart and layout tests | Playwright | Chrome, static files and intercepted requests |
 | `audit/check-report-coverage.cjs` | Asserts one guide row per tracked file | Node and report review | Git index and this file |
+| `audit/workflow-replay.cjs` | Tests actual Edge inserts and admin transitions against clean and legacy schemas | Node and database reviewers | PGlite, archived SQL and the shared workflow |
 | `audit/db-replay.cjs` | Runs clean, repeat and simulated legacy SQL | Node and database reviewers | PGlite and Supabase SQL with platform stubs |
 | `audit/generate-menu-seed.cjs` | Produces/verifies sample insert SQL | Node and database maintainers | data/menu.json |
 | `audit/layout-results.json` | Historical viewport measurements | Historical audit | Corresponding command in audit/ |
@@ -107,6 +109,7 @@ The folders separate browser code, database and function source, documentation a
 | `docs/report/15-glossary-and-next.md` | Reference chapter for glossary and priorities | PROJECT_REPORT.md | Current implementation, SQL and tests |
 | `index.html` | Home and featured dishes | Browser navigation | css/, js/main.js and js/support.js |
 | `js/menu-image.mjs` | Validates menu image paths and project Storage URLs | Storefront and admin Menu | Browser URL parser |
+| `js/workflow.mjs` | Shared status and payment values and available transitions | Admin, smoke runner and audit | Migration 007 |
 | `js/main.js` | Active storefront orchestration and forms | Six storefront pages | js/support.js, data files and Edge routes |
 | `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
 | `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
@@ -117,6 +120,7 @@ The folders separate browser code, database and function source, documentation a
 | `scripts/live-sql-report.sql` | Single, read-only metadata and count export | Supabase SQL Editor | PostgreSQL catalogs |
 | `scripts/live-staff-rls-test.sql` | Rollback-only staff permission checks | Supabase SQL Editor | Existing owner and application schema |
 | `scripts/package.json` | Pins the optional Realtime dependency | npm | Node 18+ |
+| `supabase/fixes/007_align_legacy_schema.sql` | Full SQL Editor copy of migration 007 | Supabase operator | 001–006 already applied |
 | `supabase/config.toml` | Local project and five function entries | Supabase CLI | Function source directories |
 | `supabase/functions/_shared/booking-rules.mjs` | Sample slots, advance limits and shared validation | Booking page and handler | Shared India calendar |
 | `supabase/functions/_shared/http.ts` | Request wrapper, streamed JSON, response and rate limits | Public function handlers | Deno environment, request body and Web Crypto |
@@ -142,5 +146,6 @@ The folders separate browser code, database and function source, documentation a
 | `supabase/migrations/003_order_status_history.sql` | Status transition and history triggers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
 | `supabase/migrations/004_admin_rls_storage_realtime.sql` | Access grants, buckets, dashboard, limiter and booking lock | SQL Editor and embedded replay | Earlier migrations and platform schemas |
 | `supabase/migrations/006_cleanup_legacy.sql` | Legacy policy cleanup, bucket convergence and complete numbers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
+| `supabase/migrations/007_align_legacy_schema.sql` | Aligns legacy constraints, defaults, reference sequences and workflow triggers | SQL Editor and embedded replay | Earlier migrations |
 | `supabase/seed/menu_items.sql` | Generated, repeatable sample catalog inserts | Operator SQL Editor and replay test | 006 category slugs and data/menu.json |
 | `supabase/tests/behavior.sql` | Rollback role, transition and reference assertions | Embedded replay or disposable SQL Editor | Migrations, auth.users stub or service |

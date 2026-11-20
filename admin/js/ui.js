@@ -20,7 +20,10 @@ const money = new Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'
 export const rupees = value => money.format(value);
 export const localTime = value => formatIndiaDate(value, {dateStyle: 'medium', timeStyle: 'short'});
 export const today = indiaDate;
-export const labelOf = value => String(value ?? '').replaceAll('_', ' ');
+const workflowLabels = {dine_in: 'Dine In', no_show: 'No Show'};
+export const labelOf = value => Object.hasOwn(workflowLabels, value)
+  ? workflowLabels[value]
+  : String(value ?? '').replaceAll('_', ' ');
 export const field = (label, input) => el('label', {}, label, input);
 
 export async function result(query) {
