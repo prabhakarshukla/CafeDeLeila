@@ -1,0 +1,6 @@
+{
+  "name": "cafe-de-leila-live-smoke",
+  "private": true,
+  "engines": {"node": ">=18"},
+  "dependencies": {"@supabase/supabase-js": "2.49.4"}
+}

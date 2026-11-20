@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 0 | 0 | 0 | 7 |
-| **Total** | **51** | **0** | **2** | **7** |
+| H. Live Supabase | 0 | 2 | 1 | 4 |
+| **Total** | **51** | **2** | **3** | **4** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -23,8 +23,8 @@ A PASS applies to the source or runtime named in the evidence. F6 defines histor
 - `node audit/static.cjs` passed page markup, labels, local assets, sample catalog and color contrast.
 - `node audit/order-contract.cjs`, `node audit/db-replay.cjs` and `node audit/generate-menu-seed.cjs --check` passed. The PostgreSQL runtime was embedded with test Auth, Storage and Realtime relations.
 - `node audit/browser.cjs`, `node audit/admin-browser.cjs` and `node audit/booking-timezone.cjs` passed with isolated Playwright fixtures. The storefront and admin suites created 18 and 27 temporary captures, respectively.
-- `node audit/check-report-coverage.cjs` passed for all 102 tracked files. Each commit was screened for the six requested signature families before pushing.
-- Deno and Docker are unavailable. `deno check`, `deno test`, a full local Supabase stack, hosted deployment, and hosted Auth, REST, Storage and Realtime flows are unverified. This work made no requests to the café's live Supabase project.
+- `node audit/check-report-coverage.cjs` passed for all tracked files. Each commit was screened for the six requested signature families before pushing.
+- Deno and Docker are unavailable. `deno check`, `deno test`, a full local Supabase stack, Vercel deployment, and the remaining hosted flows are unverified. The live checks used public GET and OPTIONS plus read-only CLI listings. See section H for the results.
 
 ## A. Frontend and content
 
@@ -76,7 +76,7 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 |---|---|---|
 | C23 | PASS | `audit/db-replay.cjs` applied 001–004 and 006 in order to empty embedded PostgreSQL with Supabase schema stubs, replayed the full sequence, and replayed 006 over simulated manual changes. Full managed Supabase parity remains unverified. |
 | C24 | PASS | `006_cleanup_legacy.sql:4–34` removes the four legacy INSERT and three upload policies, makes menu/OG writes owner-only and upserts bucket MIME/size. Lines 202–208 apply view privileges. Lines 232–242 explicitly revoke the three generators, five named trigger functions and dashboard access from the specified roles, with dashboard restored to authenticated. |
-| C25 | PARTIAL | No listed legacy policy is created by 001 or 004. Clean and simulated upgrade replay passed. Actual equality with the user-edited live database is unproven; H.a notes an explicit table-count discrepancy. |
+| C25 | PARTIAL | No listed legacy policy is created by 001 or 004. Clean and simulated upgrade replay passed. Actual equality with the user-edited live database is unproven until the SQL export is evaluated. |
 | C26 | PASS | `006_cleanup_legacy.sql:124–139,232` declares stable SECURITY DEFINER SQL with empty search_path and qualified `public.admin_users` and `auth.uid()`, granting EXECUTE to anon and authenticated. Current rollback exercised helper access and membership checks. |
 | C27 | PASS | `006_cleanup_legacy.sql:163–200` guards four BEFORE UPDATE triggers. Allowed fields are `status`, order `payment_status`, and `updated_at` where defined; NULL UID and owner bypass the guard. `behavior.sql:113–182` confirms permitted status/payment and forbidden protected changes, plus owner edits. |
 | C28 | PASS | `002_admin_settings.sql:91–129` declares the 12-key view and matching seed; `006_cleanup_legacy.sql:63–76` backfills the same keys. Replay returned 12 rows in both settings and public_settings, and current docs did not assert 13. |
@@ -120,7 +120,7 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 | No. | Status | Finding and evidence |
 |---|---|---|
 | G48 | PASS | `PROJECT_REPORT.md` indexes 15 chapters. The frontend, workflows, database, Edge contracts, deployment and testing chapters now describe the current checks, history scope and unverified hosted work. |
-| G49 | PASS | `node audit/check-report-coverage.cjs` reports `PASS report coverage: 102 tracked files.` The guide includes this report and the new shared modules and test. |
+| G49 | PASS | `node audit/check-report-coverage.cjs` checks every tracked path against the file guide. The guide includes this report and the production verification scripts. |
 | G50 | PASS | `README.md` links this report, describes the handler and browser fixtures and identifies unverified hosted systems. |
 | G51 | PASS | `docs/SETUP_SUPABASE.md` retains the numbered migration, seed, bucket, CLI, origin, sign-up, owner and smoke setup. The final step links the longer verification checklist. |
 | G52 | PASS | `docs/VERIFY_SUPABASE.md` has read-only SQL for views and both roles' function grants, RLS, buckets and publication, plus PowerShell for exact origin preflights, public signup refusal, anonymous POST denial on all four tables, and staff status, total and settings updates. The hosted smoke section covers real alert delivery and points to the order and CV tests. All PowerShell blocks parsed locally. |
@@ -128,20 +128,22 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 
 ## H. What only the operator can verify
 
-All seven checks are **UNVERIFIED (LIVE)**. Run read-only checks on the intended project and requests that insert or modify data on a disposable project. A policy denial can be HTTP 401 or 403 with PostgreSQL `42501`; a revoked table grant may deny access before an RLS predicate runs. A 401-only assertion would be too narrow.
+Live HTTP and CLI checks ran on 20 November 2026. The production Auth settings endpoint responded HTTP 200 with `disable_signup: false`. The menu endpoint responded HTTP 200 with 18 active categories, including Soups, and zero available items. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. No fixture writes, signup attempts, deployments, or changes to Auth settings occurred.
 
 | No. | Status | Operator check and exact pointer |
 |---|---|---|
-| H.a | UNVERIFIED (LIVE) | Use the first and last SQL queries in `docs/VERIFY_SUPABASE.md`. The current repository expects ten application tables including `submission_limits`, RLS on all ten, and 80 seeded items across 19 categories on a fresh sample catalog. |
-| H.b | UNVERIFIED (LIVE) | Review `pg_policies`, then use **Check anonymous reads and writes** in `docs/VERIFY_SUPABASE.md`. The four INSERTs must be denied with `42501` and the order query must return an empty array. |
+| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. Exact SQL counts, the underlying availability flags, and RLS inventory still need the SQL export. |
+| H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. Policy and INSERT grants need the SQL export. The direct REST POST denial probes require a disposable project. |
 | H.c | UNVERIFIED (LIVE) | Run the Storage policy and bucket SQL at the top of `docs/VERIFY_SUPABASE.md`. Compare public flags, upload policies, MIME types and byte limits to the listed expected values. |
 | H.d | UNVERIFIED (LIVE) | Run **Check staff guards and dashboard privileges** in `docs/VERIFY_SUPABASE.md`. Compare anon and authenticated EXECUTE and SELECT flags to the expected results for the trigger helpers, generators, stats views, dashboard RPC and role helpers. |
-| H.e | UNVERIFIED (LIVE) | Use **Check function origins** and **Check public signup is disabled** in `docs/VERIFY_SUPABASE.md`. Verify the five listed functions, the origin secret name, preflights from both origins, no old webhook, and `signup_disabled` from Auth. |
+| H.e | FAIL (LIVE) | Public signup remains enabled according to Auth settings. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
 | H.f | UNVERIFIED (LIVE) | Run the role/count query in `docs/VERIFY_SUPABASE.md`. The target must have at least one owner. |
-| H.g | UNVERIFIED (LIVE) | Use **Check staff updates through REST** and **Check hosted customer and Realtime flows** in `docs/VERIFY_SUPABASE.md`, with the linked setup smoke test for order pricing, dummy CV upload/signing and login. Run write probes on a disposable project with matching configuration. |
+| H.g | UNVERIFIED (LIVE) | Use the staff rollback script and the interactive owner smoke script in `docs/VERIFY_SUPABASE.md`. Order and booking fixtures require confirmed owner cleanup access. The production CV and contact writes cannot meet the current cleanup requirement. |
+
+The live SQL evaluator passed all 95 baseline checks locally and detected injected permission and catalog drift. The staff rollback script passed 13 checks in embedded PostgreSQL and restored the owner role, fixture counts, and order sequence state.
 
 ## Remaining partial and unverified checks
 
 - C25 remains partial until the operator compares the target schema and policies with the migrations. Local clean and upgrade replays passed.
 - F46 remains partial for historical Git provenance. The pre-existing local main divergence is documented above.
-- H.a–H.g require the operator. Run metadata checks on the intended project and run write probes on a disposable project with matching settings. Deploy the five updated Edge Functions before comparing hosted response contracts. Check the origin secret name and behavior, disable public sign-ups, confirm the owner, and run the fixture order, booking, CV, staff and Realtime workflow. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
+- Disable public signup in the Supabase Dashboard. Run the metadata export and staff rollback test locally in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)

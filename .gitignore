@@ -30,6 +30,8 @@ logs/
 *.log
 
 # Testing
+audit/live-sql-report.json
+audit/live-smoke-result.json
 coverage/
 .nyc_output/
 

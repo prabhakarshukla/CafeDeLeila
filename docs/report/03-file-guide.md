@@ -111,6 +111,12 @@ The folders separate browser code, database and function source, documentation a
 | `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
 | `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
 | `menu.html` | Search, category filters and menu | Browser navigation | css/, js/main.js and js/support.js |
+| `scripts/evaluate-live-sql.mjs` | Compares an exported SQL report with the migration baseline | Operators | Node and expected-live-state.json |
+| `scripts/expected-live-state.json` | Expected metadata from migration and seed replay | SQL evaluator | Current migrations and sample seed |
+| `scripts/live-smoke.mjs` | Redacted production HTTP and optional owner fixture checks | Operators | Node 18+, project configuration, optional Realtime client |
+| `scripts/live-sql-report.sql` | Single, read-only metadata and count export | Supabase SQL Editor | PostgreSQL catalogs |
+| `scripts/live-staff-rls-test.sql` | Rollback-only staff permission checks | Supabase SQL Editor | Existing owner and application schema |
+| `scripts/package.json` | Pins the optional Realtime dependency | npm | Node 18+ |
 | `supabase/config.toml` | Local project and five function entries | Supabase CLI | Function source directories |
 | `supabase/functions/_shared/booking-rules.mjs` | Sample slots, advance limits and shared validation | Booking page and handler | Shared India calendar |
 | `supabase/functions/_shared/http.ts` | Request wrapper, streamed JSON, response and rate limits | Public function handlers | Deno environment, request body and Web Crypto |
