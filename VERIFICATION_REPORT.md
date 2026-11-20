@@ -13,8 +13,8 @@ Follow-up to the read-only audit at `0d011ee`. F1–F11 were applied on `feat/ad
 | E. Admin panel | 5 | 0 | 0 | 0 |
 | F. Git and delivery | 1 | 0 | 1 | 0 |
 | G. Documentation | 6 | 0 | 0 | 0 |
-| H. Live Supabase | 2 | 1 | 1 | 3 |
-| **Total** | **53** | **1** | **3** | **3** |
+| H. Live Supabase | 2 | 0 | 2 | 3 |
+| **Total** | **53** | **0** | **4** | **3** |
 
 A PASS applies to the source or runtime named in the evidence. F6 defines history for orders only. F8 allows this project's public Storage images alongside local images.
 
@@ -128,12 +128,12 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 
 ## H. What only the operator can verify
 
-Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found public signup enabled. The operator reran the anonymous smoke test after changing the setting. The saved report now shows HTTP 200 and `disable_signup: true`. The menu endpoint responded HTTP 200 with 18 active categories, including Soups, and zero available items. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. The smoke scripts made no fixture writes, signup attempts, deployments, or Auth setting changes.
+Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found public signup enabled. The operator reran the anonymous smoke test after changing the setting. The saved report now shows HTTP 200 and `disable_signup: true`. The initial menu check found 18 active categories and zero available items. After the operator applied 004, patched 006, and the sample seed, the saved anonymous smoke report passed 23 checks with no failures. The menu returned HTTP 200 with 19 active categories, 80 available items, and Soups. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. The smoke scripts made no fixture writes, signup attempts, deployments, or Auth setting changes.
 
 | No. | Status | Operator check and exact pointer |
 |---|---|---|
-| H.a | FAIL (LIVE) | Public catalog returned 18 active categories and zero available items, with Soups present. A read-only follow-up found the legacy `main-course-chinese` slug, with `main-course` and `chinese` missing. The public catalog is marked as sample. The operator's SQL export confirmed 18 category rows, zero menu-item rows and no `submission_limits` table. It also lacks `allow_submission` and `reserve_booking`. Apply current 004, then patched 006 and the seed in the SQL Editor. |
-| H.b | PARTIAL (LIVE) | Anonymous GET returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. The SQL export shows that anon and authenticated still have INSERT grants on all four operational tables. Migration 006 removes these grants. The direct REST POST denial probes require a disposable project. |
+| H.a | PARTIAL (LIVE) | The post-migration smoke report confirms 19 active categories, 80 available items and Soups. The initial SQL export predates the repair. Rerun the export to confirm the full table inventory, exact row counts and RLS flags. |
+| H.b | PARTIAL (LIVE) | The post-migration anonymous checks returned HTTP 200 and an empty array on orders, bookings, applications and contact messages. The earlier SQL export showed INSERT grants on the four operational tables. Patched 006 ran successfully. Repeat the SQL export to verify the effective grants and review the policies. Use a disposable project for direct REST POST denial probes. |
 | H.c | UNVERIFIED (LIVE) | Run the Storage policy and bucket SQL at the top of `docs/VERIFY_SUPABASE.md`. Compare public flags, upload policies, MIME types and byte limits to the listed expected values. |
 | H.d | UNVERIFIED (LIVE) | Run **Check staff guards and dashboard privileges** in `docs/VERIFY_SUPABASE.md`. Compare anon and authenticated EXECUTE and SELECT flags to the expected results for the trigger helpers, generators, stats views, dashboard RPC and role helpers. |
 | H.e | PASS (LIVE) | The operator reran the read-only Auth check and the saved result confirms signup is disabled. CLI confirmed all five functions, no webhook, and the origin secret name. All allowed and disallowed preflight checks passed. |
@@ -142,10 +142,10 @@ Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found p
 
 The live SQL evaluator passed all 95 baseline checks locally and detected injected permission and catalog drift. The staff rollback script passed 13 checks in embedded PostgreSQL and restored the owner role, fixture counts, and order sequence state.
 
-The operator's attempt to run the previous 006 failed with SQLSTATE `42883`: the revoke named the missing legacy payment helper. The follow-up migration patch checks whether that helper exists and revokes extra grants on `public_settings`, which the production export showed had broad anonymous privileges. Local replay reproduced the missing-helper failure before the patch and passed after it.
+Before the successful repair, the operator's attempt to run the previous 006 failed with SQLSTATE `42883`: the revoke named the missing legacy payment helper. The follow-up migration patch checks whether that helper exists and revokes extra grants on `public_settings`, which the production export showed had broad anonymous privileges. Local replay reproduced the missing-helper failure before the patch and passed after it.
 
 ## Remaining partial and unverified checks
 
 - C25 remains partial until the operator compares the target schema and policies with the migrations. Local clean and upgrade replays passed.
 - F46 remains partial for historical Git provenance. The pre-existing local main divergence is documented above.
-- Run the metadata export and staff rollback test in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
+- Rerun the metadata export after the migration and seed, then run the staff rollback test in the project SQL Editor. Compare production policies and catalog counts with the migration baseline. Use the owner smoke script in a terminal you control. Keep CV and contact write probes on a disposable project with matching settings. [Supabase verification guide](docs/VERIFY_SUPABASE.md)
