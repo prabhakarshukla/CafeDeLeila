@@ -12,9 +12,20 @@ export function adminSessionStorage(storageKey) {
     for (const name of ['localStorage','sessionStorage']) browserStorage(name, storage => storage.removeItem(key));
   }
 
+  function clear() {
+    for (const key of [storageKey, storageKey + '-code-verifier', storageKey + '-user']) removeItem(key);
+  }
+  if (!keepSignedIn) {
+    // Discard an older client’s persistent session until the device opts in.
+    for (const key of [storageKey, storageKey + '-code-verifier', storageKey + '-user']) {
+      browserStorage('localStorage', storage => storage.removeItem(key));
+    }
+  }
+
   return {
     get keepSignedIn() { return keepSignedIn; },
     setPreference(value) {
+      if (value !== keepSignedIn) clear();
       keepSignedIn = value;
       browserStorage('localStorage', storage => storage.setItem(preference, String(value)));
     },
@@ -25,8 +36,6 @@ export function adminSessionStorage(storageKey) {
       browserStorage(selected(), storage => storage.setItem(key,value));
     },
     removeItem,
-    clear() {
-      for (const key of [storageKey, storageKey + '-code-verifier', storageKey + '-user']) removeItem(key);
-    },
+    clear,
   };
 }

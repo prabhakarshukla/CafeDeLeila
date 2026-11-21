@@ -1,15 +1,31 @@
-# Set up and publish a test deployment
+# Open the café on your laptop and publish it
 
-## How it works
+## What this part does
 
-1. Choose a disposable Supabase project. From the SQL Editor apply 001, 002, 003, 004 and 006 in order. There is no deployable 005.
-2. For the reported existing install, check installed functions and grants. Apply current 004 if the limiter and booking reservation function are absent, then 006. Review any policies outside the known cleanup names.
-3. Apply `supabase/seed/menu_items.sql` while preparing the sample menu. Check 19 categories, 80 sample rows and the three buckets. On replays the seed preserves edited rows by UUID.
-4. Link the intended project with the CLI. Set the allowlist, deploy all five Edge Functions, and delete the retired webhook if present.
-5. Turn off public signup. Create the first confirmed Auth user and add their owner row. Configure the site's project URL and publishable key, run the local static server, and follow the smoke tests.
-6. On Vercel use a branch preview, a static project with the repository root as the output, and an empty build command. Use the exact Vercel preview origin in the allowlist. The public storefront and admin can share a host. Browser login and database permissions gate admin data.
-7. Verify the preview through HTTPS before considering a production release. Keep business-facing values labelled until the owner confirms them.
+Your laptop can show the shop window. A deploy puts a version on a web host like Vercel. A real test order also needs waiters and kitchen records configured for that version.
 
-## Where to look
+## How it works, step by step
 
-[Numbered setup and all copy-paste commands](../SETUP_SUPABASE.md), [hosted verification commands and expected results](../VERIFY_SUPABASE.md), [deployment notes](../DEPLOY.md), `supabase/config.toml` and `data/config.json`.
+1. Run `python -m http.server 8080` from the repository and open `http://localhost:8080/`. The same server shows the office at `/admin/`.
+2. Run `npm ci` and `npm run audit:mobile` to practice without writing live data. The mocked browser pages use pretend responses. The normal site reads the project in `data/config.json`.
+3. A branch is a separate line of work, like a draft menu sheet. A commit is a saved group of source changes. Push the feature branch and review its changes on GitHub before merging.
+4. For a new project, a migration is a numbered database change. Apply 001–004, 006, then 007. Apply the sample seed separately when appropriate. The existing project already has that schema as recorded in the verification report.
+5. On Vercel, use the root folder as static output. Check a preview from the feature branch, including `/staff`. Follow the setup guide if you need a new Supabase project or Edge Function deployment.
+
+## Which files are involved
+
+| File | What it does in simple words |
+|---|---|
+| `README.md` | Shows the local command and links to setup. |
+| `docs/SETUP_SUPABASE.md` | Lists the kitchen setup in order. |
+| `supabase/config.toml` | Names the five waiters. |
+| `vercel.json` | Redirects the short staff URL to the office. |
+| `docs/VERIFY_SUPABASE.md` | Explains checks before any hosted writes. |
+
+## What can go wrong and what to check
+
+A file may open from disk while browser requests fail. Use the local HTTP server. A Vercel preview can load while its origin is absent from the Supabase allowlist. The preview for this branch is UNVERIFIED.
+
+## Try it yourself
+
+Start the local server and open `/admin/` without signing in. Close the server when you finish.

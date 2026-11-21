@@ -1,35 +1,31 @@
-# What was tested
+# Practice before serving customers
 
-## How it works
+## What this part does
 
-Run checks from the repository root. Keep all destructive or write tests pointed at disposable systems.
+The café can practice in a quiet kitchen. Local tests use made-up customers and a mock server or an in-process database. They help us see where the code works and where live evidence is still needed.
 
-| Check | Command and coverage | Evidence status |
-|---|---|---|
-| Static storefront | `node audit/static.cjs` validates page tags, assets, labels, the JSON catalog and palette contrast | PASS. Prints results without writing the tracked historical snapshot. |
-| Storefront browser suite | `node audit/browser.cjs` captures six pages at three widths and checks cart persistence, all four form successes and failures, verified WhatsApp contact, safe image fallback and 44 px contact controls | PASS with all requests intercepted. Screenshots go to a temporary directory. |
-| Local HTTP server | `node audit/server-check.cjs` starts Python and checks the storefront HTTP response | Historical result in server-results.json. The prior admin turn verified both storefront and admin routes separately. |
-| Admin browser suite | `node audit/admin-browser.cjs` runs 27 captures, owner/staff/guest navigation, order status/payment, print visibility, Realtime callback/audio toggle, menu create/edit and sample status, CSV contents, and the CV signing call | PASS with populated mocks. Hosted authentication, writes, Storage signing and Realtime delivery still need a disposable Supabase run. The OS print dialog and real audio output are outside the browser fixture. |
-| Generator | `node audit/generate-menu-seed.cjs --check` compares the SQL seed with menu JSON | PASS. 80 items and 19 category mappings. |
-| Edge handlers | `node audit/order-contract.cjs` loads all five actual handlers with database stubs | PASS method and origin checks, invalid JSON, oversized bodies, field validation, generic error shape, India date boundaries and server pricing. Node 24 or compatible TypeScript transformation support required. |
-| Clean and legacy workflow replay | `node audit/workflow-replay.cjs`; also runs in the Database replay CI job | PASS actual Edge inserts for all three order types and the other three customer routes. The same admin transition graph, order history, legacy conversions, and reference continuity pass on both schemas. Storage object lookup is stubbed. |
-| Browser calendar | `node audit/booking-timezone.cjs` compares date labels and validity in Los Angeles and Kolkata | PASS under a fixed instant spanning two different local calendar days. |
-| Embedded Postgres | Install `@electric-sql/pglite@0.3.15` into a temp prefix and point `NODE_PATH` at that package directory, then `node audit/db-replay.cjs` | PASS clean apply, reapply, simulated legacy repair, repeated seed, edited-price preservation and rollback SQL. Stubbed Auth and Storage schemas, so uses real PostgreSQL semantics with no Supabase service processes. |
-| SQL behavior | Run `supabase/tests/behavior.sql` on a disposable DB as the SQL Editor role | PASS inside embedded suite. Asserts anonymous read/write isolation, staff settings denial, invalid/valid status, order-history writes after trigger EXECUTE revocation, and unique order numbers across 1,100 writes. Sequence counters can advance despite rollback. |
-| JS and TS syntax | `node --check` per module | PASS across source. Node syntax is not a Deno type or dependency check. |
-| Report completeness | `node audit/check-report-coverage.cjs` | Compares all tracked paths against the guide rows. |
+## How it works, step by step
 
-### Operator checklist
+1. `audit/static.cjs` checks page titles, labels, links, local artwork and sample dishes.
+2. `audit/db-replay.cjs` and `audit/workflow-replay.cjs` apply the schema and exercise the checkout and office rules. The second runs both fresh and older database layouts.
+3. `audit/browser.cjs` practices customer journeys. `audit/admin-browser.cjs` checks order actions, export, menu editing, and alerts. `audit/admin-session.cjs` opens new browser contexts to test both storage choices.
+4. `audit/mobile.cjs` measures 256 phone and screen combinations. It uses throttling for four local performance measurements and crop-safe viewport simulations.
+5. `scripts/evaluate-live-sql.mjs` compares a read-only export from the real kitchen with expected database rules.
 
-- Confirm the requested migrations and sample count, buckets and policies.
-- Check anon GET returns an empty order list and a valid POST fails authorization.
-- Order two items and tamper with the client price. Confirm the stored subtotal uses the DB price.
-- Apply with a dummy PDF. Check invalid extensions and oversized data are rejected.
-- Sign in as owner and staff. Check staff Settings and Staff routes and direct REST denial.
-- Confirm booking, contact, status changes, print and new-order alert on the test project.
+## Which files are involved
 
-Actual Supabase gateway, Auth credentials, Storage, Realtime and Vercel deployments remain UNVERIFIED. Docker and Deno were unavailable. The embedded suite does not exercise concurrent HTTP arrivals.
+| File | What it does in simple words |
+|---|---|
+| `audit/static.cjs` | Checks HTML and sample data. |
+| `audit/workflow-replay.cjs` | Replays actual order and form handlers against an embedded database. |
+| `audit/mobile.cjs` | Runs the mobile audit without a live database. |
+| `audit/admin-session.cjs` | Checks the sign-in choice, role denial and sign-out. |
+| `scripts/live-sql-report.sql` | Collects live schema facts without writing rows. |
 
-## Where to look
+## What can go wrong and what to check
 
-[Current audit](../../VERIFICATION_REPORT.md), [prior backend audit](../BACKEND_AUDIT.md), `audit/`, `supabase/tests/behavior.sql` and [smoke-test commands](../SETUP_SUPABASE.md#9-run-the-smoke-tests).
+A local pass covers the fixture it used. It does not show how physical keyboards, home-screen installation, live order delivery or larger production photos behave. The completed hosted owner write run remains UNVERIFIED in the saved evidence.
+
+## Try it yourself
+
+Run `npm run audit:mobile -- --dialogs-only`. Check that your local tool closes the practice checkout and returns focus.

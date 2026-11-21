@@ -1,5 +1,7 @@
 # Verify the Supabase setup
 
+The mobile and admin-access changes require no new Supabase migration, function deployment, or policy change. Test the Vercel preview origin against your approved browser origins before using the hosted sign-in. [Admin access](ADMIN_ACCESS.md) · [Mobile audit](MOBILE_AUDIT.md)
+
 The SQL below reads metadata and counts. Use [the database chapter](report/06-database.md) to compare policy definitions and grants.
 
 ## Run the production verification scripts

@@ -57,6 +57,13 @@ async function main() {
       await second.page.getByRole('heading',{name:'Admin sign in'}).waitFor();
       await second.context.close();
     }
+    const previous = await open({cookies:[],origins:[{origin:shop,localStorage:[
+      {name:key,value:JSON.stringify({user:{id:'owner@example.invalid'}})},
+    ]}]});
+    await previous.page.getByRole('heading',{name:'Admin sign in'}).waitFor();
+    assert.equal(await previous.page.evaluate(key => localStorage.getItem(key),key),null);
+    await previous.context.close();
+
     const guest = await open();
     await guest.page.getByRole('checkbox').check();
     await signIn(guest.page,'guest');

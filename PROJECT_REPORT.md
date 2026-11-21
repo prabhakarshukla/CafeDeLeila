@@ -1,60 +1,68 @@
 # Café De Leila project report
 
-The storefront, owner tools and database source are in this branch. The report distinguishes what exists in code from what has been verified on a running service.
+## What this part does
 
-| Area | Status | Evidence |
-|---|---|---|
-| Static storefront and menu | Built | Six pages, filters, fallback and 80 sample dishes. |
-| Admin panel | Built | Eight routes. Populated browser fixtures cover order status and payment, menu edits, CSV, print, CV signing and Realtime callbacks. |
-| Schema, cleanup and seed | Built | Clean and repeat applies passed in embedded PostgreSQL with Supabase schema stubs. |
-| Customer requests and admin queues | Partly | Handlers and UI exist. Local checks cover request schemas, order pricing, forms and database behavior. Hosted journeys are pending. |
-| Live Auth, Storage, Realtime and Gateway | UNVERIFIED | Setup smoke tests remain for the operator. |
-| Final café content | Partly | Sample catalog, hours, address, fees, tax and WhatsApp need owner approval. |
-| Online payment and automated notifications | Not built | The admin panel records payment status manually. |
+This is the café's reading map. Start at the shop window, follow a ticket through the waiters, and see who can open the manager's office.
 
-The [verification report](VERIFICATION_REPORT.md) records each requirement and the remaining hosted checks.
+## How it works, step by step
 
-## How it works
+1. Choose your reading path in [Start here](docs/START-HERE.md).
+2. Learn the words in the [glossary](docs/report/glossary.md). If you know a little HTML, start with the welcome and the map.
+3. Follow a request and check its evidence before trying it on a live project.
 
-Read the overview for the café workflow, then use the architecture chapter to follow a browser request. Use the reference chapters when changing code or checking the database.
+## Which files are involved
 
-## Where to look
+| File | What it does in simple words |
+|---|---|
+| `docs/START-HERE.md` | Gives separate reading paths for the owner, student, and developer. |
+| `docs/report/03-file-guide.md` | Explains each tracked file and folder. |
+| `VERIFICATION_REPORT.md` | Records what was measured and what still needs proof. |
 
-1. [Overview](docs/report/01-overview.md)
-2. [Architecture](docs/report/02-architecture.md)
-3. [Tracked file and folder guide](docs/report/03-file-guide.md)
-4. [Frontend code](docs/report/04-frontend.md)
-5. [Customer and operator flows](docs/report/05-flows.md)
-6. [Database reference](docs/report/06-database.md)
-7. [Edge Function contracts](docs/report/07-edge-functions.md)
-8. [Admin panel](docs/report/08-admin-panel.md)
-9. [Security](docs/report/09-security.md)
-10. [Configuration and settings](docs/report/10-config-and-settings.md)
-11. [Setup and deployment](docs/report/11-setup-and-deploy.md)
-12. [Testing](docs/report/12-testing.md)
-13. [Troubleshooting](docs/report/13-troubleshooting.md)
-14. [Owner demonstration](docs/report/14-owner-and-demo.md)
-15. [Glossary and next work](docs/report/15-glossary-and-next.md)
+## What can go wrong and what to check
 
-[Current claim and setup audit](REPORT_AUDIT.md) · [Operator setup](docs/SETUP_SUPABASE.md) · [Read-only verification](docs/VERIFY_SUPABASE.md)
+The café has sample content on a real website. Read the status and sample-data chapters before treating the prices as approved or the hosting as verified for this branch.
+
+## Try it yourself
+
+Open the one-page map and point to where a menu price is read and where an order is saved.
+
+## Read the chapters
+
+1. [Welcome to the café](docs/report/01-overview.md)
+2. [One-page project map](docs/report/02-architecture.md)
+3. [Every file and folder](docs/report/03-file-guide.md)
+4. [The customer's phone](docs/report/04-frontend.md)
+5. [Click-by-click journeys](docs/report/05-flows.md)
+6. [The kitchen records](docs/report/06-database.md)
+7. [The waiters](docs/report/07-edge-functions.md)
+8. [The manager's office](docs/report/08-admin-panel.md)
+9. [The security guard](docs/report/09-security.md)
+10. [Signs and switches](docs/report/10-config-and-settings.md)
+11. [Laptop setup and publishing](docs/report/11-setup-and-deploy.md)
+12. [Practice tests](docs/report/12-testing.md)
+13. [Logs and common problems](docs/report/13-troubleshooting.md)
+14. [Owner handover and demo](docs/report/14-owner-and-demo.md)
+15. [What to add next](docs/report/15-glossary-and-next.md)
+16. [What is sample and what is real](docs/report/16-sample-and-real.md)
+17. [Honest status](docs/report/17-status.md)
+18. [Glossary](docs/report/glossary.md)
+19. [Quiz yourself](docs/report/quiz.md)
 
 ## Corrections made
 
-1. The checkout now has a generated sample database catalog in addition to the 80-item JSON fallback. A hosted empty catalog remains an operator-reported starting state.
-2. The SQL catalog uses 19 category slugs, including separate Main Course and Chinese entries. Existing Chinese IDs survive a rename where possible.
-3. The seed defines exactly 12 expected settings keys. The `public_settings` whitelist exposes the same 12 keys, and the operator confirmed all are present.
-4. The migration order is 001–004, 006, then 007, and the sample seed is separate. There is no deployable 005.
-5. Recorded distinct proof for embedded SQL, stubbed order-handler tests, historical mock browser runs and unverified hosted services.
-6. Removed the obsolete UUID extension dependency from migration 003 so fresh SQL can apply.
-7. Documented the cleanup of legacy public insert and upload policies and the current full policy inventory.
-8. Corrected the image bucket limit and matching admin check to 5 MiB. CV and OG retain 2 MiB.
-9. Confirmed the storefront submits UUIDs and quantities only and the server applies integer rupee prices and the owner ordering switch.
-10. The featured home panel now handles database UUIDs, and saved-cart bounds match the order handler.
-11. Order, booking and application references keep all digits after 999. Embedded SQL crossed the boundary for order numbers.
-12. Confirmed that the browser config already contains a public-format URL and publishable key without exposing them. Local CLI metadata was removed from tracking and ignore rules fixed.
-13. Updated links to the moved historical audits and owner checklist. The latest audit lives beside this report.
-14. Separated operator-reported Vercel and database state from locally verified code and data.
-15. Migration 006 adds an early column guard on orders, bookings, applications, and messages. Staff can update the allowed fields, including order payment status. The guard bypasses owners and callers without an Auth UID, while the existing transition checks still apply.
-16. Migration 006 records the stats view and RPC grants and blocks direct browser execution of the number generators. Anonymous catalog reads and service-role numbering are covered by the rollback tests.
-17. Migration 006 hardens `is_admin()` and `is_owner()` with stable SQL, an empty search path, and qualified references. Both functions remain callable by anonymous and authenticated roles for policy checks.
-18. The live CHECK constraints accepted legacy order and booking spellings, while the Edge handler inserts `dine_in` and `unpaid`. The storefront already translated the hyphenated order type at the request boundary. It now uses the canonical value throughout. Migration 007 maps existing legacy values, aligns checks and defaults, and validates order, booking, application and contact transitions. CI replays both the clean and legacy schemas through the actual handlers.
+- The menu contains 19 categories and 80 sample dishes. Keep the sample marker until the owner approves them.
+- The public settings list contains 12 keys. The owner controls the real settings through the office.
+- The database setup uses 001–004, 006 and 007. 005 is archived. The old live status spellings and defaults conflicted with current code. Migration 007 aligned them, and the saved live SQL export passed all 100 checks.
+- Migration 006 removes legacy anonymous write rights, protects staff columns, and preserves safe owner and staff checks. Local tests cover the old and new schemas.
+- The office now remembers the sign-in choice and has an online home-screen icon. The mobile audit measures the café window and office without touching live data.
+- Earlier correction details and dates are in [the verification report](VERIFICATION_REPORT.md) and [the historical report audit](REPORT_AUDIT.md).
+
+## Status at a glance
+
+| Area | Status | Evidence |
+|---|---|---|
+| Storefront and office | Built | Local browser and database checks pass. |
+| Online customer forms and live office actions | Partly | Source and local evidence exist. A completed owner write smoke run is still outstanding. |
+| Real photos and final prices | Partly | The menu carries sample material pending owner approval. |
+| Automatic payments and notifications | Not built | The office tracks payment status manually. |
+| This branch on real phones and production | UNVERIFIED | Use the manual checklist and Vercel preview. |
