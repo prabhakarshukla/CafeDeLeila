@@ -558,7 +558,7 @@ function renderCartDrawer() {
   body.innerHTML = window.cafeState.cart.map(item => `
     <div class="cart-item" data-id="${item.id}">
       <div class="cart-item__image">
-        ${item.image ? `<img src="${item.image}" alt="" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
+        ${item.image ? `<img src="${item.image}" alt="" width="48" height="48" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
       </div>
       <div class="cart-item__details">
         <div class="cart-item__name">${utils.escapeHtml(item.name)}</div>
@@ -795,7 +795,7 @@ function renderFooter() {
         <div class="footer-grid">
           <div class="footer-brand">
             <a href="index.html" class="logo" aria-label="Café De Leila - Home">
-              <img class="logo__art" src="assets/logo_delelia.svg" alt="" width="48" height="48">
+              <img class="logo__art" src="assets/logo_delelia.svg" alt="" width="48" height="48" loading="lazy">
               <span class="logo__text">
                 <span class="logo__name">CAFÉ DE LEILA</span>
                 <span class="logo__tagline">Magical Delight</span>
@@ -886,7 +886,7 @@ function populateFeaturedDishes(state) {
   grid.innerHTML = featured.map(item => `
     <article class="dish-card" role="listitem">
       <div class="dish-card__image">
-        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
+        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" width="640" height="480" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
         <div class="dish-card__badges">
           ${item.veg ? '<span class="badge badge--veg">● Veg</span>' : '<span class="badge badge--nonveg">● Non-veg</span>'}
           ${item.tags?.includes('popular') ? '<span class="badge badge--popular">Popular</span>' : ''}
@@ -1093,21 +1093,8 @@ function renderMenuGrid() {
   const grid = utils.$('.menu-grid');
   if (!grid) return;
 
-  // Show sample notice if menu is sample
-  const config = window.cafeState?.config;
-  if ((config?.menu?.is_sample || !state.onlineCatalog)) {
-    const notice = document.createElement('div');
-    notice.className = 'menu-sample-notice';
-    notice.setAttribute('role', 'status');
-    notice.innerHTML = `
-      <svg class="menu-sample-notice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 8v4m0 4h.01"/>
-      </svg>
-      <span>Sample menu for preview — prices and items are placeholders</span>
-    `;
-    grid.parentNode?.insertBefore(notice, grid);
-  }
+  const notice = document.getElementById('menu-sample-notice');
+  if (notice) notice.hidden = !(state.config?.menu?.is_sample || !state.onlineCatalog);
 
   if (menuState.filteredItems.length === 0) {
     grid.innerHTML = `
@@ -1126,7 +1113,7 @@ function renderMenuGrid() {
   grid.innerHTML = menuState.filteredItems.map(item => `
     <article class="dish-card" data-id="${item.id}">
       <div class="dish-card__image">
-        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
+        ${item.image ? `<img src="${item.image}" alt="Illustrative dish placeholder" width="640" height="480" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--color-text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'}
         <div class="dish-card__badges">
           ${item.veg ? '<span class="badge badge--veg">● Veg</span>' : '<span class="badge badge--nonveg">● Non-veg</span>'}
           ${item.tags?.includes('spicy') ? '<span class="badge badge--spicy">Spicy</span>' : ''}
@@ -2574,6 +2561,7 @@ async function init() {
 
     populateBusinessDetails();
     installDialogAccessibility();
+    installMobileFormScrolling();
     syncPickers();
     // Mark body as ready
     document.body.classList.add('app-ready');

@@ -9,14 +9,15 @@ const project = 'https://project.fixture.invalid';
 const clientModule = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm';
 const pictures = fs.mkdtempSync(path.join(os.tmpdir(), 'cafe-admin-'));
 
-async function installAdminFixture(context) {
+async function installAdminFixture(context, {origin=shop,serveFiles=false} = {}) {
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     if (url.href === clientModule) return route.fulfill({contentType:'text/javascript', body:mock});
-    if (url.origin !== shop) return route.abort();
+    if (url.origin !== origin) return route.abort();
     if (url.pathname === '/data/config.json') {
       return route.fulfill({json:{supabase:{url:project,publishableKey:'fixture-public-value'}}});
     }
+    if (serveFiles) return route.continue();
     const file = path.resolve('.' + url.pathname + (url.pathname.endsWith('/') ? 'index.html' : ''));
     if (!file.startsWith(process.cwd() + path.sep) || !fs.existsSync(file)) return route.fulfill({status:404});
     const contentType = {'.mjs':'text/javascript', '.js':'text/javascript'}[path.extname(file)];
@@ -93,6 +94,7 @@ async function main() {
       }
       await signOut();
     }
+    await page.setViewportSize({width:360,height:800});
     await signIn('owner');
     await nav('Orders').waitFor();
     await go('Orders');

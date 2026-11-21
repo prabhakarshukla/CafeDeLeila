@@ -72,6 +72,7 @@ The folders separate browser code, database and function source, documentation a
 | `audit/db-replay.cjs` | Runs clean, repeat and simulated legacy SQL | Node and database reviewers | PGlite and Supabase SQL with platform stubs |
 | `audit/generate-menu-seed.cjs` | Produces/verifies sample insert SQL | Node and database maintainers | data/menu.json |
 | `audit/layout-results.json` | Historical viewport measurements | Historical audit | Corresponding command in audit/ |
+| `audit/mobile.cjs` | Measures phone layouts and speed in Chrome | Developers | Playwright and mock responses |
 | `audit/order-contract.cjs` | Checks HTTP, booking and order contracts with the actual handlers | Node and checkout reviewers | Node TS stripper and database stubs |
 | `audit/server-check.cjs` | Checks HTTP response from local Python server | Node and frontend reviewers | Python, index.html and loopback |
 | `audit/server-results.json` | Historical localhost HTTP result | Historical audit | Corresponding command in audit/ |
@@ -94,6 +95,7 @@ The folders separate browser code, database and function source, documentation a
 | `docs/BACKEND_STATE.md` | Historical security/backend review | Contributors and operator | Project source and audit history |
 | `docs/DEPLOY.md` | Static deployment and rate limit guidance | Contributors and operator | Project source and audit history |
 | `docs/HANDOVER_STATE.md` | Earlier branch and inventory handover | Contributors and operator | Project source and audit history |
+| `docs/MOBILE_AUDIT.md` | Records phone test evidence and manual checks | Owner and developers | Local audit |
 | `docs/PLAN.md` | Prior frontend work plan | Contributors and operator | Project source and audit history |
 | `docs/PROJECT_REPORT.md` | Pointer to current report index | Contributors and operator | Project source and audit history |
 | `docs/PROJECT_STATE.md` | Early frontend architecture and audit | Contributors and operator | Project source and audit history |
@@ -122,6 +124,8 @@ The folders separate browser code, database and function source, documentation a
 | `js/support.js` | Public API, India dates, business fields and dialog helpers | js/main.js | Browser APIs, config and public settings view |
 | `locations.html` | Address and map | Browser navigation | css/, js/main.js and js/support.js |
 | `menu.html` | Search, category filters and menu | Browser navigation | css/, js/main.js and js/support.js |
+| `package.json` | Adds laptop audit commands and the pinned browser test library | Developers | npm |
+| `package-lock.json` | Records exact audit library versions | npm ci | package.json |
 | `scripts/evaluate-live-sql.mjs` | Compares an exported SQL report with the migration baseline | Operators | Node and expected-live-state.json |
 | `scripts/expected-live-state.json` | Expected metadata from migration and seed replay | SQL evaluator | Current migrations and sample seed |
 | `scripts/live-smoke.mjs` | Redacted production HTTP and optional owner fixture checks | Operators | Node 18+, project configuration, optional Realtime client |
