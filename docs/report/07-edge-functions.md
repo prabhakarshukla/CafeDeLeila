@@ -1,26 +1,47 @@
-# Edge Function contracts
+# The waiters that handle requests
 
-## How it works
+## What this part does
 
-| Route and source | Request | Success response |
-|---|---|---|
-| GET menu, `menu/index.ts` | Optional `category` slug, `veg=true/false`, `search` text | 200 JSON `{items,categories}`. Items contain `id`, `category_id`, `price_inr` and catalog fields including joined category information. |
-| POST orders, `orders/index.ts` | `customer_name`, `customer_phone`, optional `customer_email`, `order_type`, `items:[{id,quantity}]`, optional `notes`, `delivery_address:{full}` for delivery | 200 order row with `order_number`, persisted item snapshots, `subtotal_inr`, `delivery_fee_inr`, `tax_inr` and `total_inr`. |
-| POST bookings, `bookings/index.ts` | `customer_name`, `customer_phone`, optional `customer_email`, `booking_date`, `booking_time`, `guests`, optional `special_requests` | 200 booking row with `booking_number` and status. |
-| POST applications/get-upload-url, `applications/index.ts` | `fileName`, `contentType`, `fileSize` bytes | 200 `{signedUrl,path}` for a private CV object. |
-| POST applications, same handler | `full_name`, `email`, `phone`, `role`, optional `address`, `cv_path` | 200 `job_applications` row with `application_number` and `cv_url` path. |
-| POST contact, `contact/index.ts` | `name`, `email`, `subject`, `message`, optional `phone` | 201 `{received:true}`. |
+An Edge Function is a small program the browser calls over the internet. These waiters check what the phone sends before the kitchen keeps a record.
 
-1. Menu filters active categories and available items through a category join, applies optional search and orders by display order.
-2. Orders checks 1–50 distinct UUID lines, quantities 1–50, a sanitized name of 2–80 characters, phone, optional email, order type and delivery address. Optional notes are capped at 500 characters. It rejects unknown IDs, unavailable items and inactive categories. It reads integer rupee prices and the ordering/delivery settings, then applies the delivery minimum and rounds tax to whole rupees. The server inserts status pending and payment unpaid. PostgreSQL generates the reference.
-3. Bookings checks contact fields, real calendar dates within 60 days in India, a configured slot at least 30 minutes ahead, and an integer guest count from 1 to 20. `reserve_booking` applies the Asia/Kolkata time guard and serializes same-slot inserts before writing.
-4. Applications checks file name extension, MIME and declared size up to 2 MiB. It signs a generated path. On submit it checks text fields, email, phone and the uploaded object's existence. Storage also checks allowed type and actual upload size.
-5. Contact bounds the name to 100 characters, email to 254, subject to 120 and message to 2,000. Phone if given must be a 10-digit Indian mobile.
+## How it works, step by step
 
-The shared `requestHandler` reads `ALLOWED_ORIGINS`. Unknown origins receive 403. Allowed browser preflights receive 204. Unsupported methods receive 405. A POST body over 64 KiB receives 413. Malformed JSON or a non-object body receives 400 with `invalid_json`. Field validation returns 400 with `invalid_fields` and a field-to-message map. Full booking slots return 409 and rate limits return 429. Unexpected errors return a generic 500 and a request ID. A disabled ordering or delivery setting returns 403. Order, booking and application phone payloads carry country code 91.
+1. `requestHandler` in `supabase/functions/_shared/http.ts` checks the request method, origin and size. CORS is a browser rule about which websites may read responses. The allowed website addresses are listed in `ALLOWED_ORIGINS`.
+2. The Menu waiter returns available items from active categories. It accepts a category, vegetarian choice or search term.
+3. The Orders waiter accepts item IDs and quantities. It reads price, tax and delivery rules from the kitchen records before saving a pending, unpaid order.
+4. The Bookings waiter checks the India date, guest count and listed times. `reserve_booking` in migration 004 checks the space left for that slot inside the database.
+5. The Applications waiter checks file type and size and returns a signed URL. This is a temporary link that gives permission to upload or open one file. It checks uploaded files exist before saving the application.
+6. The Contact waiter checks the sender and message. Applications and contact use `allow_submission` from migration 004, which counts recent requests and rejects too many.
 
-Orders and bookings use 30 requests/minute per instance and the menu uses 60. Their counters reset with the instance. Applications and contact share a database counter keyed by endpoint and visitor hash. Each endpoint has 10 requests per minute. CV signing and final submission both consume quota. Verify the hosted proxy's visitor header behavior before relying on these limits.
+## Which files are involved
 
-## Where to look
+| File | What it does in simple words |
+|---|---|
+| `supabase/functions/_shared/http.ts` | Reads each request safely and formats errors. |
+| `supabase/functions/menu/index.ts` | Returns the dishes and categories. |
+| `supabase/functions/orders/index.ts` | Recalculates prices and writes an order. |
+| `supabase/functions/bookings/index.ts` | Checks names, dates and guests before reserving a slot. |
+| `supabase/functions/applications/index.ts` | Checks files and records a job application. |
+| `supabase/functions/contact/index.ts` | Checks and saves contact messages. |
 
-All paths above begin at `supabase/functions/`. Shared parsing, CORS and visitor hashing live in `_shared/http.ts`. Runtime connection credentials are injected by Supabase and read inside the functions. The browser credentials live in `data/config.json`. The only manually configured function secret in this application is the origin allowlist.
+## What can go wrong and what to check
+
+HTTP status is the short number that describes a response. A 400 means the request needs a correction. A 403 can mean the site address or requested option is disabled. A 409 can mean the slot is full. A 429 means slow down. A 500 can include a request ID you can match in the function logs. A body over 64 KiB receives 413; a CV can be up to 2 MiB and uploads separately.
+
+## Try it yourself
+
+Read the status checks in `requestHandler`. Run `node audit/order-contract.cjs` on Node 24 to watch the local practice version check invalid requests.
+
+## Limits for the waiters
+
+The Orders waiter accepts 1–50 distinct dishes and 1–50 of each. It accepts optional notes up to 500 characters. The Bookings waiter accepts 1–20 guests and listed time slots within 60 days of the India date, with at least 30 minutes of notice.
+
+Orders and Bookings allow 30 requests per minute per running function instance. Menu allows 60. Contact and Applications use the shared database limit of 10 per minute per endpoint and visitor. Requesting an upload link and completing the application count as separate calls. This behavior comes from `rateLimiter` in `http.ts` and `allow_submission` in migration 004.
+
+| Example request | What comes back after success |
+|---|---|
+| Ask Menu for vegetarian dishes | `{items, categories}` with prices and item IDs. |
+| Ask Orders for two portions of one known dish | A `CDL-` reference, saved lines and a server-calculated total. |
+| Ask Bookings for two seats at a listed time | A `BK-` reference and pending status. |
+| Ask Applications to upload a dummy PDF | A temporary link and a file path. Finishing the application returns an `APP-` reference. |
+| Send a short message to Contact | `{received: true}`. |

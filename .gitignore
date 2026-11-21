@@ -33,6 +33,7 @@ logs/
 audit/live-sql-report.json
 audit/live-smoke-result.json
 audit/disposable-smoke-result.json
+audit/mobile-output/
 coverage/
 .nyc_output/
 

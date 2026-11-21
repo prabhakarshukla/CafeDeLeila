@@ -126,6 +126,13 @@ Binary grep separately matched `sk_` bytes in `audit/screenshots/menu-768.png` (
 | G52 | PASS | `docs/VERIFY_SUPABASE.md` has read-only SQL for views and both roles' function grants, RLS, buckets and publication, plus PowerShell for exact origin preflights, public signup refusal, anonymous POST denial on all four tables, and staff status, total and settings updates. The hosted smoke section covers real alert delivery and points to the order and CV tests. All PowerShell blocks parsed locally. |
 | G53 | PASS | Deployment, owner checklist, backend audit, changelog and assumptions documents are present. The current docs keep the 12-key, ten-table inventory and distinguish historical audits from current findings. Root `ASSUMPTIONS.md` records the implementation and scope decisions. |
 
+## Mobile and admin branch
+
+- The mock admin session suite verified the default, local storage across a new browser context, tab-only storage, discarded legacy sessions, password visibility, role refusal and sign-out cleanup.
+- The mobile audit passed the 256 page and orientation checks, simulated insets and keyboard area, and the mocked public and admin journeys. It records before and after measurement and performance values. [Mobile audit](docs/MOBILE_AUDIT.md)
+- The new branch has no database or Edge Function changes. Its Vercel preview, actual Android and iPhone install behavior, native keyboard and gestures, production font and photograph costs, real session renewal, and Lighthouse mobile scores remain UNVERIFIED.
+- Existing production evidence below came from the earlier Supabase run. The tools for this branch used local mocks and made no live writes.
+
 ## H. What only the operator can verify
 
 Live HTTP and CLI checks ran on 20 November 2026. The initial Auth check found public signup enabled. The operator reran the anonymous smoke test after changing the setting. The saved report now shows HTTP 200 and `disable_signup: true`. The initial menu check found 18 active categories and zero available items. After the operator applied 004, patched 006, and the sample seed, the saved anonymous smoke report passed 23 checks with no failures. The menu returned HTTP 200 with 19 active categories, 80 available items, and Soups. All five function slugs were deployed, the retired webhook was absent, all 15 CORS preflights matched the expected status and headers, and all 12 public settings keys were present. The smoke scripts made no fixture writes, signup attempts, deployments, or Auth setting changes.

@@ -9,50 +9,55 @@ const project = 'https://project.fixture.invalid';
 const clientModule = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm';
 const pictures = fs.mkdtempSync(path.join(os.tmpdir(), 'cafe-admin-'));
 
+async function installAdminFixture(context, {origin=shop,serveFiles=false} = {}) {
+  await context.route('**/*', route => {
+    const url = new URL(route.request().url());
+    if (url.href === clientModule) return route.fulfill({contentType:'text/javascript', body:mock});
+    if (url.origin !== origin) return route.abort();
+    if (url.pathname === '/data/config.json') {
+      return route.fulfill({json:{supabase:{url:project,publishableKey:'fixture-public-value'}}});
+    }
+    if (serveFiles) return route.continue();
+    const file = path.resolve('.' + url.pathname + (url.pathname.endsWith('/') ? 'index.html' : ''));
+    if (!file.startsWith(process.cwd() + path.sep) || !fs.existsSync(file)) return route.fulfill({status:404});
+    const contentType = {'.mjs':'text/javascript', '.js':'text/javascript'}[path.extname(file)];
+    return route.fulfill({path:file, contentType});
+  });
+  await context.addInitScript(() => {
+    window.toneCount = 0;
+    window.AudioContext = class {
+      state = 'suspended';
+      currentTime = 0;
+      destination = {};
+      async resume() {this.state = 'running';}
+      async suspend() {this.state = 'suspended';}
+      async close() {this.state = 'closed';}
+      createGain() {return {gain:{value:0}, connect(){}};}
+      createOscillator() {return {
+        frequency:{value:0},
+        connect(gain) {return gain;},
+        start(){window.toneCount++;},
+        stop(){},
+      };}
+    };
+    window.print = () => {
+      const slip = document.querySelector('.printing .print-target');
+      window.printed = {
+        content: slip?.querySelector('ul')?.textContent,
+        notes: slip?.querySelector('ul + p')?.textContent,
+        hidesPrivate: [...slip.querySelectorAll('.no-print')].every(node => getComputedStyle(node).display === 'none'),
+        hidesOther: [...document.querySelectorAll('#view details:not(.print-target)')].every(node => getComputedStyle(node).display === 'none'),
+        visible: slip.getClientRects().length > 0,
+      };
+    };
+  });
+}
+
 async function main() {
   const browser = await chromium.launch({channel:'chrome', headless:true});
   try {
     const context = await browser.newContext({timezoneId:'Asia/Kolkata', serviceWorkers:'block', acceptDownloads:true});
-    await context.route('**/*', route => {
-      const url = new URL(route.request().url());
-      if (url.href === clientModule) return route.fulfill({contentType:'text/javascript', body:mock});
-      if (url.origin !== shop) return route.abort();
-      if (url.pathname === '/data/config.json') {
-        return route.fulfill({json:{supabase:{url:project,publishableKey:'fixture-public-value'}}});
-      }
-      const file = path.resolve('.' + url.pathname + (url.pathname.endsWith('/') ? 'index.html' : ''));
-      if (!file.startsWith(process.cwd() + path.sep) || !fs.existsSync(file)) return route.fulfill({status:404});
-      const contentType = {'.mjs':'text/javascript', '.js':'text/javascript'}[path.extname(file)];
-      return route.fulfill({path:file, contentType});
-    });
-    await context.addInitScript(() => {
-      window.toneCount = 0;
-      window.AudioContext = class {
-        state = 'suspended';
-        currentTime = 0;
-        destination = {};
-        async resume() {this.state = 'running';}
-        async suspend() {this.state = 'suspended';}
-        async close() {this.state = 'closed';}
-        createGain() {return {gain:{value:0}, connect(){}};}
-        createOscillator() {return {
-          frequency:{value:0},
-          connect(gain) {return gain;},
-          start(){window.toneCount++;},
-          stop(){},
-        };}
-      };
-      window.print = () => {
-        const slip = document.querySelector('.printing .print-target');
-        window.printed = {
-          content: slip?.querySelector('ul')?.textContent,
-          notes: slip?.querySelector('ul + p')?.textContent,
-          hidesPrivate: [...slip.querySelectorAll('.no-print')].every(node => getComputedStyle(node).display === 'none'),
-          hidesOther: [...document.querySelectorAll('#view details:not(.print-target)')].every(node => getComputedStyle(node).display === 'none'),
-          visible: slip.getClientRects().length > 0,
-        };
-      };
-    });
+    await installAdminFixture(context);
     const page = await context.newPage();
     page.setDefaultTimeout(8000);
     const errors = [];
@@ -89,6 +94,7 @@ async function main() {
       }
       await signOut();
     }
+    await page.setViewportSize({width:360,height:800});
     await signIn('owner');
     await nav('Orders').waitFor();
     await go('Orders');
@@ -188,7 +194,8 @@ async function main() {
 }
 
 const mock = `
-export function createClient(url) {
+export function createClient(url, _key, {auth}) {
+  if (!auth.persistSession || !auth.autoRefreshToken) throw new Error('Auth persistence or refresh disabled');
   let user;
   let listener;
   let shown;
@@ -216,9 +223,18 @@ export function createClient(url) {
   return {
     auth: {
       onAuthStateChange(callback) {listener = callback;},
-      async getSession() {return ok({session:null});},
-      async signInWithPassword({email}) {user = {id:email};return ok({session:{user}});},
-      async signOut() {listener?.('SIGNED_OUT',null);return ok(null);},
+      async getSession() {
+        const session = JSON.parse(auth.storage.getItem(auth.storageKey));
+        user = session?.user;
+        return ok({session});
+      },
+      async signInWithPassword({email}) {
+        user = {id:email};
+        const session = {user};
+        auth.storage.setItem(auth.storageKey,JSON.stringify(session));
+        return ok({session});
+      },
+      async signOut() {auth.storage.removeItem(auth.storageKey);listener?.('SIGNED_OUT',null);return ok(null);},
     },
     from(table) {
       let fields, type, takeOne = false;
@@ -264,4 +280,5 @@ export function createClient(url) {
   };
 }
 `;
-main().catch(error => {console.error(error.message);process.exitCode = 1;});
+module.exports = {installAdminFixture, shop};
+if (require.main === module) main().catch(error => {console.error(error.message);process.exitCode = 1;});

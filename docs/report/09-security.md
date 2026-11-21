@@ -1,24 +1,45 @@
-# Security controls and limits
+# How the security guard checks the list
 
-## How it works
+## What this part does
 
-| Risk | Control in source | Remaining evidence |
-|---|---|---|
-| Public access to customer records | RLS policies in 001–004 and legacy cleanup in 006; no GET on write functions | Embedded PostgreSQL checks pass for anon order read/write. Run hosted REST check. |
-| Customer changes item prices | Orders maps DB UUIDs to current `price_inr` and ignores client cost fields | Mock order handler tests pass. Hosted order receipt pending. |
-| Staff changes settings or grants access | Owner-only settings and admin_users policies plus owner route restrictions | Embedded SQL proves staff settings update is denied or affects no rows. Hosted session and REST verification pending. |
-| Staff edits totals, line items, customer details or payment IDs | Migration 006 runs `guard_staff_columns` before other update triggers. Order status and payment status are allowed. | Embedded rollback tests cover allowed staff status and payment changes, blocked protected fields, and owner edits. Hosted REST remains unverified. |
-| Unwanted public file writes | 006 drops legacy upload policies and limits MIME/size at bucket level; CV writes use a signed path | Actual Storage enforcement and file inspection remain unverified. MIME and extension checks alone cannot detect malicious document contents. |
-| Browser from unapproved origin | Exact origin allowlist; server still validates data; machine clients can omit Origin | Origin filtering is not authentication or a general abuse controls system. |
-| Burst submissions | Per-instance limit for orders/bookings/menu, database limits for applications/contact | Proxy IP selection and shared NAT behavior need hosted checks. |
-| Booking capacity oversell | Transaction lock in `reserve_booking` | SQL compiles and replays locally. Concurrent arrival tests on Supabase remain open. |
-| Admin UI injection | Admin `el` builds content with DOM text nodes; CSV escapes field separators and formula prefixes | Broader storefront and browser security review remains open. |
-| Secret in source | Browser config uses only project URL and publishable key. CLI metadata and environment files are ignored | No current private config key identified. Do not copy credentials, sessions or signed URLs into tickets. |
+The manager's office and café storeroom hold private records. The supabase roles and database rules check each action, even if someone tries to work around a hidden button.
 
-### Known weak spots
+## How it works, step by step
 
-There is no payment gateway, abuse challenge, message deduplication or automated file-retention job. A CV upload can be left behind if the follow-up request fails. Review permissions after adding policies on the hosted project because permissive policies can combine. The audit did not query the hosted project.
+1. Sign-in gives the browser a session. A JWT is a signed message that can describe who signed in and when that proof expires. `admin/js/app.js` uses the sign-in library and checks the matching role.
+2. RLS means Row Level Security. Migration 004 makes the guard check whether the caller can see or change each row. `guard_staff_columns` in 006 lets staff update permitted status fields and blocks changes to protected details.
+3. The waiters validate their input. `requestHandler` checks method, content size and CORS. CORS controls which websites can read browser responses. It does not stop someone calling the API outside a browser.
+4. The privileged backend keys live in Supabase. The browser has a publishable key, and policies still decide which records it can access.
 
-## Where to look
+## Which files are involved
 
-`supabase/migrations/004_admin_rls_storage_realtime.sql`, `006_cleanup_legacy.sql`, `supabase/functions/_shared/http.ts`, `orders/index.ts`, `applications/index.ts`, `admin/js/ui.js` and `admin/js/settings.js`. Verification details are in [the audit](../../REPORT_AUDIT.md).
+| File | What it does in simple words |
+|---|---|
+| `supabase/migrations/004_admin_rls_storage_realtime.sql` | Sets the rules for each role and for files. |
+| `supabase/migrations/006_cleanup_legacy.sql` | Takes away old public permissions and protects staff-only edits. |
+| `supabase/functions/_shared/http.ts` | Rejects oversized and unsuitable requests. |
+| `supabase/functions/orders/index.ts` | Gets trusted prices from the database. |
+| `admin/js/ui.js` | Uses element and text creation for dynamic values. |
+
+## What can go wrong and what to check
+
+Hosted abuse resistance, real browser data exposure, device security and long-term monitoring are UNVERIFIED. Rate limits reduce repeat traffic but can also affect customers sharing a connection. Signed links stay sensitive until they expire. Only payment status is recorded here.
+
+## Try it yourself
+
+In a mock order test, look at the made-up price sent by the browser. Then compare it with the saved subtotal.
+
+## Ten things the café plans for
+
+| Risk | Guard or waiter |
+|---|---|
+| A customer supplies a false price | Orders reads the price again from `menu_items`. |
+| A customer orders a hidden dish | Orders checks active categories and available items. |
+| A stranger reads an order | Migration 004 requires the admin role to read its row. |
+| A stranger writes straight into an orders table | Migration 006 revokes browser INSERT access on the private queues. |
+| Staff edit a price or customer details on an existing order | `guard_staff_columns` blocks the update. |
+| A large request uses too much memory | `readJson` stops beyond 64 KiB. |
+| Repeated contact spam | `allow_submission` counts requests to Contact and Applications. |
+| A harmful or oversized CV is uploaded | Applications and the private bucket check allowed types and size. Malware scanning is UNVERIFIED. |
+| Somebody shares a password, private key or link | Private credentials stay server-side. Signed links expire. Leaked credentials still require action by the owner. |
+| A displayed name contains HTML | Admin `el` displays values as text. Storefront templates use `escapeHtml` where they display customer text. |

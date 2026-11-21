@@ -1,0 +1,10 @@
+{
+  "name": "cafe-de-leila-audit",
+  "private": true,
+  "scripts": {
+    "audit:mobile": "node audit/mobile.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}

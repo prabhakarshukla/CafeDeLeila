@@ -1,19 +1,30 @@
-# A five-minute café demonstration
+# Hand over the manager's office
 
-## How it works
+## What this part does
 
-Show a test storefront and an admin account with fictional records. A customer can browse food, send an order request or reserve a table. Assigned café staff see incoming requests in the admin panel. The owner controls which meals appear, opening details and who can access the panel. Today the sample price and availability display are for review. Payment is arranged and recorded manually.
+Give the café owner a short tour of the window and office. Show what a guest can do and where the owner can confirm the real information.
 
-| Minute | Show | Say |
-|---|---|---|
-| 0–1 | Home and Menu, then categories and dietary filters | Customers can find a dish quickly and see which listings are examples. |
-| 1–2 | Add a sample item and submit a test takeaway order | The price comes from the database. The receipt means the café received a request. |
-| 2–3 | Admin Orders, refresh or show the alert, confirm and open the print slip | Staff can move the order through kitchen states. The owner can record payment. |
-| 3–4 | Table booking and Messages, or one fictional CV | The same dashboard gives the team somewhere to review requests. |
-| 4–5 | Menu editor, business settings and staff access | The owner sets real prices and details and chooses who handles requests. |
+## How it works, step by step
 
-If the hosted smoke tests are unfinished, show the sample catalog and admin screenshots from the mocked Playwright suite and describe which steps are demonstrations. Keep pricing, photographs, WhatsApp, hours and delivery terms marked as sample or awaiting confirmation.
+1. First minute. Open Home and Menu. Point out the sample menu label. Try a dietary filter and a search.
+2. Second minute. Open the cart in a mock or disposable project. Add a dish and change the quantity. Show a sample confirmation.
+3. Third minute. Show the booking and contact forms. Explain how the waiter checks a booking slot before giving the phone a reference.
+4. Fourth minute. Open the office as a test owner. Show the Orders card, the next status and the menu editor. Demonstrate sign-out and the home-screen link.
+5. Fifth minute. Ask the owner to review photographs, prices, hours, contact details, and service settings. Leave the owner with the verification runbook.
 
-## Where to look
+## Which files are involved
 
-[Owner checklist](../TODO_FOR_OWNER.md), `index.html`, `menu.html`, `admin/index.html` and `audit/admin-screenshots/`.
+| File | What it does in simple words |
+|---|---|
+| `js/main.js` | Runs the public demo from the window. |
+| `admin/js/menu.js` | Lets the owner approve prices and update dishes. |
+| `docs/TODO_FOR_OWNER.md` | Lists information the owner should confirm. |
+| `docs/ADMIN_ACCESS.md` | Shows how the owner can install the shortcut and sign out. |
+
+## What can go wrong and what to check
+
+A demo upload should use a fake CV in a disposable project. Real delivery, admin writes and alert behavior still need a controlled hosted test.
+
+## Try it yourself
+
+Read the five minute script aloud from a laptop. Mark any screen you would need to prepare before meeting the owner.

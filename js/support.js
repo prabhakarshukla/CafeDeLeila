@@ -72,7 +72,7 @@ function installDialogAccessibility() {
       next.querySelector('button:not(:disabled),input:not([type=hidden]),a[href]')?.focus();
     } else {
       document.body.style.overflow = '';
-      if (returnTo?.isConnected && returnTo.getClientRects().length) returnTo.focus();
+      if (returnTo !== document.body && returnTo?.isConnected && returnTo.getClientRects().length) returnTo.focus();
       else document.getElementById('cart-btn')?.focus();
     }
     active = next;
@@ -163,4 +163,26 @@ function catalogFromDatabase({categories, items}) {
       };
     }),
   }));
+}
+
+for (const link of document.querySelectorAll('link[data-screen-fonts]')) {
+  const enable = () => { link.media = 'all'; };
+  if (link.sheet) enable();
+  else link.addEventListener('load', enable, {once:true});
+}
+
+function installMobileFormScrolling() {
+  const viewport = window.visualViewport;
+  if (!viewport) return;
+  function revealField() {
+    if (!matchMedia('(pointer: coarse)').matches || viewport.scale !== 1) return;
+    document.documentElement.style.setProperty('--usable-height', viewport.height + 'px');
+    const active = document.activeElement;
+    if (active?.matches('input:not([readonly]):not([type=file]), textarea, select')) {
+      active.scrollIntoView({block:'nearest',inline:'nearest'});
+    }
+  }
+  viewport.addEventListener('resize', revealField);
+  document.addEventListener('focusin', () => requestAnimationFrame(revealField));
+  revealField();
 }

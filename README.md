@@ -1,22 +1,26 @@
 # Café De Leila
 
-The branch contains six static customer pages, an eight-view admin panel, five Supabase Edge Functions, database migrations and a sample menu seed. The report separates implemented features from verification. [Read the project report](PROJECT_REPORT.md).
+Six customer pages and a manager's office use Supabase for the menu, orders, bookings, applications and messages. Start with the guide for your role. [Start here](docs/START-HERE.md)
 
-## Run locally
+## Open the site on a laptop
 
 ```powershell
 python -m http.server 8080
 ```
 
-Open http://localhost:8080/ for the storefront and http://localhost:8080/admin/ for admin. If the Windows Python alias opens the Microsoft Store, use a working Python executable. The browser reads the project URL and publishable key from data/config.json. The six customer pages load `js/support.js` and `js/main.js`. The previous unreferenced storefront modules were removed. The menu can fall back to the 80-dish local sample. Checkout requires an available database catalog.
+Open `http://localhost:8080/` for the shop window or `http://localhost:8080/admin/` for the office. The normal site uses the project configured in `data/config.json`. The Vercel shortcut `/staff` leads to `/admin/`. It may not redirect on a plain Python server. [Admin phone access](docs/ADMIN_ACCESS.md)
 
-## Set up the database
+## Run the mobile checks
 
-- Fresh project: apply 001, 002, 003, 004, 006 and 007, then supabase/seed/menu_items.sql. Do not run the archive.
-- Existing early project: verify the limiter and booking routine. If missing, reapply current 004 before 006. Apply 007 after 006. Run the seed while preparing a sample catalog.
-- Configure the function origin allowlist, deploy the five functions, disable public sign-up and create an owner. Use the [numbered setup guide](docs/SETUP_SUPABASE.md) and [verification guide](docs/VERIFY_SUPABASE.md).
-- Run the anonymous access, order, CV and admin/staff smoke tests on a disposable project.
+```powershell
+npm ci
+npm run audit:mobile
+```
 
-Embedded PostgreSQL passed clean and repeat migration runs, simulated legacy cleanup, seed replay and rollback assertions. Tests with a stubbed database exercise all five handlers and verify server-side pricing. Mocked browser tests cover form failures and populated admin workflows. Hosted Auth, Storage, Realtime, end-to-end customer requests and the Vercel deployment remain **UNVERIFIED**. [Audit results](VERIFICATION_REPORT.md)
+Use Node 24 and Chrome. The audit uses pretend browser responses and creates no live Supabase records. Reports and screenshots go to the ignored `audit/mobile-output/` folder. The package files are for tests. The deployed web pages run directly in the browser. [Mobile results](docs/MOBILE_AUDIT.md)
 
-The 80 dishes and their prices are samples. Hours, address, WhatsApp, photos, tax and delivery terms need confirmation. Payments are tracked manually. WhatsApp appears only as an optional contact link when the configured Indian number is verified. Requests are submitted through the site. [Owner checklist](docs/TODO_FOR_OWNER.md)
+## Database and launch
+
+For a new project, use migrations 001–004, 006, and 007 and the separate sample seed. This mobile and documentation branch requires no new Supabase migrations or function changes for the existing project. Verify the preview and phone checklist before merging. [Database setup](docs/SETUP_SUPABASE.md) · [Verification](docs/VERIFY_SUPABASE.md)
+
+The menu uses 80 sample dishes, and the café owner still needs to approve the real prices, images, hours and contact details. The owner records payment status manually. [Project report](PROJECT_REPORT.md)

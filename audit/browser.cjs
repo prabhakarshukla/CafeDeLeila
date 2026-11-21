@@ -16,56 +16,61 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
   image_url:category === original[0] && index === 0 ? 'https://untrusted.fixture.invalid/external.png' : 'assets/meal.svg',
 })));
 
-(async () => {
+async function installStoreFixture(context,{origin=site,serveFiles=false} = {}) {
+  const attempts = [];
+  const forbidden = [];
+  const state = {};
+  await context.route('**/*', route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.origin === project) {
+      if (url.pathname === '/rest/v1/public_settings') return route.fulfill({json:[
+        {key:'ordering_enabled',value:{enabled:true}},
+        {key:'delivery_enabled',value:{enabled:true}},
+        ...(state.whatsapp ? [{key:'whatsapp_number',value:state.whatsapp}] : []),
+      ]});
+      if (url.pathname === '/functions/v1/menu') return route.fulfill({json:{items,categories}});
+      if (url.pathname === '/signed-upload-fixture' && request.method() === 'PUT') {
+        return state.fail === 'upload' ? route.abort('failed') : route.fulfill({status:200});
+      }
+      const name = url.pathname.replace('/functions/v1/','');
+      const body = request.postDataJSON();
+      attempts.push({name,body});
+      if (name === state.fail) return route.fulfill({status:502,contentType:'text/html',body:'<html>opaque gateway failure</html>'});
+      if (name === 'orders') {
+        const lines = body.items.map(({id,quantity}) => ({...items.find(item => item.id === id),quantity}));
+        const subtotal = lines.reduce((sum, item) => sum + item.price_inr * item.quantity,0);
+        return route.fulfill({json:{order_number:'CDL-FIXTURE',items:lines,subtotal_inr:subtotal,
+          delivery_fee_inr:0,tax_inr:0,total_inr:subtotal}});
+      }
+      if (name === 'bookings') return route.fulfill({json:{id:'booking',booking_number:'BK-FIXTURE'}});
+      if (name === 'applications/get-upload-url') {
+        return route.fulfill({json:{signedUrl:project + '/signed-upload-fixture',path:'cvs/mock.pdf'}});
+      }
+      if (name === 'applications') return route.fulfill({json:{id:'application',application_number:'APP-FIXTURE'}});
+      if (name === 'contact') return route.fulfill({json:{received:true}});
+    }
+    if (url.origin !== origin) {
+      if (url.hostname === 'untrusted.fixture.invalid') forbidden.push(url.pathname);
+      return route.fulfill({status:200,body:''});
+    }
+    if (url.pathname === '/data/config.json') return route.fulfill({json:config});
+    if (serveFiles) return route.continue();
+    const file = path.resolve('.' + url.pathname);
+    if (!file.startsWith(process.cwd() + path.sep) || !fs.existsSync(file)) return route.fulfill({status:404});
+    const contentType = {'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.svg':'image/svg+xml',
+      '.css':'text/css','.json':'application/json'}[path.extname(file)];
+    return route.fulfill({path:file,contentType});
+  });
+
+  return {state,attempts,forbidden};
+}
+
+async function main() {
   const browser = await chromium.launch({channel:'chrome', headless:true});
   try {
     const context = await browser.newContext({timezoneId:'America/Los_Angeles',serviceWorkers:'block'});
-    const attempts = [];
-    const forbidden = [];
-    let fail;
-    let whatsapp;
-    await context.route('**/*', route => {
-      const request = route.request();
-      const url = new URL(request.url());
-      if (url.origin === project) {
-        if (url.pathname === '/rest/v1/public_settings') return route.fulfill({json:[
-          {key:'ordering_enabled',value:{enabled:true}},
-          {key:'delivery_enabled',value:{enabled:true}},
-          ...(whatsapp ? [{key:'whatsapp_number',value:whatsapp}] : []),
-        ]});
-        if (url.pathname === '/functions/v1/menu') return route.fulfill({json:{items,categories}});
-        if (url.pathname === '/signed-upload-fixture' && request.method() === 'PUT') {
-          return fail === 'upload' ? route.abort('failed') : route.fulfill({status:200});
-        }
-        const name = url.pathname.replace('/functions/v1/','');
-        const body = request.postDataJSON();
-        attempts.push({name,body});
-        if (name === fail) return route.fulfill({status:502,contentType:'text/html',body:'<html>opaque gateway failure</html>'});
-        if (name === 'orders') {
-          const lines = body.items.map(({id,quantity}) => ({...items.find(item => item.id === id),quantity}));
-          const subtotal = lines.reduce((sum, item) => sum + item.price_inr * item.quantity,0);
-          return route.fulfill({json:{order_number:'CDL-FIXTURE',items:lines,subtotal_inr:subtotal,
-            delivery_fee_inr:0,tax_inr:0,total_inr:subtotal}});
-        }
-        if (name === 'bookings') return route.fulfill({json:{id:'booking',booking_number:'BK-FIXTURE'}});
-        if (name === 'applications/get-upload-url') {
-          return route.fulfill({json:{signedUrl:project + '/signed-upload-fixture',path:'cvs/mock.pdf'}});
-        }
-        if (name === 'applications') return route.fulfill({json:{id:'application',application_number:'APP-FIXTURE'}});
-        if (name === 'contact') return route.fulfill({json:{received:true}});
-      }
-      if (url.origin !== site) {
-        if (url.hostname === 'untrusted.fixture.invalid') forbidden.push(url.pathname);
-        return route.fulfill({status:200,body:''});
-      }
-      if (url.pathname === '/data/config.json') return route.fulfill({json:config});
-      const file = path.resolve('.' + url.pathname);
-      if (!file.startsWith(process.cwd() + path.sep) || !fs.existsSync(file)) return route.fulfill({status:404});
-      const contentType = {'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.svg':'image/svg+xml',
-        '.css':'text/css','.json':'application/json'}[path.extname(file)];
-      return route.fulfill({path:file,contentType});
-    });
-
+    const {state, attempts, forbidden} = await installStoreFixture(context);
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -109,13 +114,13 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
     assert.equal(await page.locator('.dish-card').count(),80);
     assert.equal(await page.locator('.dish-card img').first().getAttribute('src'),'assets/meal.svg');
     assert.equal(await page.locator('a[href^="https://wa.me/"]').count(),0);
-    whatsapp = {value:'9152245843',verified:true};
+    state.whatsapp = {value:'9152245843',verified:true};
     await go('menu');
     assert.equal(await page.locator('a[href^="https://wa.me/"]').count(),0);
-    whatsapp = {value:'919000000001',verified:false};
+    state.whatsapp = {value:'919000000001',verified:false};
     await go('menu');
     assert.equal(await page.locator('a[href^="https://wa.me/"]').count(),0);
-    whatsapp.verified = true;
+    state.whatsapp.verified = true;
     await go('menu');
     assert.equal(await page.getByRole('link',{name:'WhatsApp',exact:true}).getAttribute('href'),'https://wa.me/919000000001');
 
@@ -140,13 +145,13 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
     await page.locator('[data-type=delivery]').click();
     await page.locator('[data-type=takeaway]').click();
     assert.equal(await page.locator('#delivery-address-field').isVisible(),false);
-    fail = 'orders';
+    state.fail = 'orders';
     await page.locator('#checkout-form [type=submit]').click();
     await failure('#checkout-form',/could not confirm your order/);
     assert.equal(await page.locator('.cart-btn__count').first().textContent(),'2');
     assert.deepEqual(Object.keys(attempts.at(-1).body.items[0]).sort(),['id','quantity']);
     assert.equal(attempts.at(-1).body.notes,'No chilli');
-    fail = undefined;
+    state.fail = undefined;
     await page.locator('#checkout-form [type=submit]').click();
     await page.waitForSelector('#confirmation-modal.is-open');
     assert.match(await page.locator('#confirmation-modal').textContent(),/CDL-FIXTURE/);
@@ -158,10 +163,10 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
     await page.locator('[data-guests="4"]').click();
     await page.locator('#name').fill('Test Guest');
     await page.locator('#phone').fill('9876543210');
-    fail = 'bookings';
+    state.fail = 'bookings';
     await page.locator('#booking-form [type=submit]').click();
     await failure('#booking-form',/could not confirm your booking/);
-    fail = undefined;
+    state.fail = undefined;
     await page.locator('#booking-form [type=submit]').click();
     await page.waitForSelector('#booking-confirmation-modal.is-open');
     assert.match(await page.locator('#booking-confirmation-modal').textContent(),/BK-FIXTURE/);
@@ -178,10 +183,10 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
       assert.equal(await page.evaluate(() => careersState.selectedFile),null);
     }
     await page.locator('#cv').setInputFiles({name:'cv.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 fixture')});
-    fail = 'upload';
+    state.fail = 'upload';
     await page.locator('#careers-form [type=submit]').click();
     await failure('#careers-form',/could not submit your application/);
-    fail = undefined;
+    state.fail = undefined;
     await page.locator('#careers-form [type=submit]').click();
     await page.waitForSelector('#careers-confirmation-modal.is-open');
     assert.match(await page.locator('#careers-confirmation-modal').textContent(),/APP-FIXTURE/);
@@ -192,10 +197,10 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
     await page.locator('#phone').fill('9876543210');
     await page.locator('#subject').selectOption('general');
     await page.locator('#message').fill('Test only');
-    fail = 'contact';
+    state.fail = 'contact';
     await page.locator('#contact-form [type=submit]').click();
     await failure('#contact-form',/could not send your message/);
-    fail = undefined;
+    state.fail = undefined;
     await page.locator('#contact-form [type=submit]').click();
     await page.waitForSelector('#contact-confirmation-modal.is-open');
 
@@ -215,4 +220,6 @@ const items = original.flatMap(category => category.items.map(({id,name,descript
   } finally {
     await browser.close();
   }
-})().catch(error => {console.error(error.message);process.exitCode = 1;});
+}
+module.exports = {installStoreFixture,site};
+if (require.main === module) main().catch(error => {console.error(error.message);process.exitCode = 1;});

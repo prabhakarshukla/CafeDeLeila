@@ -1,13 +1,37 @@
-# Database tables, rules and permissions
+# The kitchen records, one sheet at a time
 
-## How it works
+## What this part does
 
-1. Migration 001 creates the six core tables. A sequence is a database counter that hands out a new number on request. Separate counters serve orders, bookings and applications. A trigger is a database hook that runs when a row changes. Before inserts, the three numbering triggers take an Asia/Kolkata date and attach the full sequence value with a minimum width of three digits.
-2. Migration 002 connects `admin_users.user_id` to `auth.users.id`. `is_admin` checks for staff or owner membership, and `is_owner` checks the owner role. `public_settings` exposes a whitelist of 12 settings rows as key/value pairs.
-3. Migration 003 validates order, booking and application status changes. Only orders keep a status history. An order trigger records the previous status, new status and actor in `order_status_history`. Bookings and applications retain their current status without a history table.
-4. Migration 004 grants narrowly scoped updates, creates Storage policies and buckets, and publishes order and booking changes. It adds the dashboard queries, a shared rate limiter and the booking reservation function.
-5. Migration 006 removes known legacy policies, upserts bucket definitions and inserts missing settings or categories. It also installs the staff column guard and narrows direct access to stats and trigger functions. A legacy Chinese category is renamed by slug when that preserves the existing ID. The seed uses category slugs to resolve foreign keys and deterministic IDs to avoid overwrites.
-6. Migration 007 normalizes live legacy rows, adds the supported state checks, aligns defaults and reinstates the canonical transition triggers. It advances reference sequences past legacy numbers without changing those references.
+Think of the database as linked Excel sheets. Each table is one sheet, each row is a single entry, and each column is one detail about that entry. Supabase holds these sheets behind the café window.
+
+## How it works, step by step
+
+1. When the Orders waiter receives dish IDs and quantities, it reads the active menu rows and calculates the total again. If two dishes cost ₹120 each, the subtotal is ₹240 even if the phone submits a made-up total.
+2. A sequence is a counter. A trigger is an automatic database action. The number triggers in 001 and 006 use counters to give orders `CDL-`, bookings `BK-`, and applications `APP-` references. Migration 007 keeps new numbers above ones already issued.
+3. The order starts at `pending`. The office can confirm, prepare, make ready, then complete it. Only delivery orders can go `out_for_delivery`. The permitted next steps are in `js/workflow.mjs` and 007.
+4. The security guard uses RLS, or Row Level Security. It reads `admin_users` to see who you are allowed to be. `guard_staff_columns` lets staff change permitted status values, and it rejects edits to totals and customer details. `order_status_history` records order status changes.
+
+## Which files are involved
+
+| File | What it does in simple words |
+|---|---|
+| `supabase/migrations/001_core_schema.sql` | Creates the main café sheets. |
+| `supabase/migrations/002_admin_settings.sql` | Stores who works in the office and which settings are public. |
+| `supabase/migrations/003_order_status_history.sql` | Adds a log of changes to orders. |
+| `supabase/migrations/004_admin_rls_storage_realtime.sql` | Sets the guard's access rules and configures file storage and booking limits. |
+| `supabase/migrations/006_cleanup_legacy.sql` | Removes old permissions and limits what staff can change. |
+| `supabase/migrations/007_align_legacy_schema.sql` | Sets the current status vocabulary and checks each update. |
+| `js/workflow.mjs` | Lists status choices shown in the office. |
+
+## What can go wrong and what to check
+
+Staff and owners both may see an order. The guard still checks which columns a staff member changes. An operator can compare the detailed rules below with a read-only SQL export.
+
+## Try it yourself
+
+Sketch the `menu_items` and `orders` sheets. Add a dish ID and a sample quantity. Circle the place where the server looks up its price.
+
+## Kitchen records reference
 
 ### Sequences, triggers and routines
 
@@ -75,167 +99,167 @@ Orders use `dine_in`, `takeaway`, and `delivery`. Only delivery orders can enter
 
 Catalog groups and route slugs. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `name` | `TEXT NOT NULL` |
-| `slug` | `TEXT UNIQUE NOT NULL` |
-| `description` | `TEXT` |
-| `display_order` | `INT DEFAULT 0` |
-| `is_active` | `BOOLEAN DEFAULT true` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `name` | The name displayed or entered on this record. | `TEXT NOT NULL` |
+| `slug` | Short unique label used in addresses and searches. | `TEXT UNIQUE NOT NULL` |
+| `description` | Short text that describes the item or category. | `TEXT` |
+| `display_order` | Number used to decide which entry comes first. | `INT DEFAULT 0` |
+| `is_active` | Whether the category can appear in the public menu. | `BOOLEAN DEFAULT true` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### menu_items
 
 Available dishes and whole-rupee prices. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `category_id` | `UUID REFERENCES menu_categories(id) ON DELETE CASCADE` |
-| `name` | `TEXT NOT NULL` |
-| `description` | `TEXT` |
-| `price_inr` | `INT NOT NULL` |
-| `veg` | `BOOLEAN DEFAULT true` |
-| `image_url` | `TEXT` |
-| `tags` | `TEXT[] DEFAULT '{}'` |
-| `is_available` | `BOOLEAN DEFAULT true` |
-| `display_order` | `INT DEFAULT 0` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `category_id` | ID that joins this dish to its category. | `UUID REFERENCES menu_categories(id) ON DELETE CASCADE` |
+| `name` | The name displayed or entered on this record. | `TEXT NOT NULL` |
+| `description` | Short text that describes the item or category. | `TEXT` |
+| `price_inr` | Price of one dish, in whole Indian rupees. | `INT NOT NULL` |
+| `veg` | Whether the dish is marked vegetarian. | `BOOLEAN DEFAULT true` |
+| `image_url` | Allowed image address or local file path. | `TEXT` |
+| `tags` | Short labels, such as spicy or popular. | `TEXT[] DEFAULT '{}'` |
+| `is_available` | Whether the café offers this dish now. | `BOOLEAN DEFAULT true` |
+| `display_order` | Number used to decide which entry comes first. | `INT DEFAULT 0` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### orders
 
 Order snapshots, totals, fulfillment and payment state. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `order_number` | `TEXT UNIQUE NOT NULL` |
-| `customer_name` | `TEXT NOT NULL` |
-| `customer_phone` | `TEXT NOT NULL` |
-| `customer_email` | `TEXT` |
-| `order_type` | `TEXT CHECK (order_type IN ('dine_in', 'takeaway', 'delivery')) DEFAULT 'dine_in'` |
-| `delivery_address` | `JSONB` |
-| `items` | `JSONB NOT NULL` |
-| `subtotal_inr` | `INT NOT NULL` |
-| `delivery_fee_inr` | `INT DEFAULT 0` |
-| `tax_inr` | `INT NOT NULL` |
-| `total_inr` | `INT NOT NULL` |
-| `status` | `TEXT CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled')) DEFAULT 'pending'` |
-| `payment_status` | `TEXT CHECK (payment_status IN ('unpaid', 'paid', 'failed', 'refunded')) DEFAULT 'unpaid'` |
-| `payment_method` | `TEXT CHECK (payment_method IN ('cash', 'upi', 'card', 'razorpay', 'stripe'))` |
-| `payment_id` | `TEXT` |
-| `notes` | `TEXT` |
-| `whatsapp_sent` | `BOOLEAN DEFAULT false` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `order_number` | Customer-facing order reference beginning CDL-. | `TEXT UNIQUE NOT NULL` |
+| `customer_name` | Name supplied by the person making the request. | `TEXT NOT NULL` |
+| `customer_phone` | Contact number supplied by the customer. | `TEXT NOT NULL` |
+| `customer_email` | Optional customer email. | `TEXT` |
+| `order_type` | Whether the meal is dine-in, takeaway, or delivery. Stored names use underscores. | `TEXT CHECK (order_type IN ('dine_in', 'takeaway', 'delivery')) DEFAULT 'dine_in'` |
+| `delivery_address` | Address details for a delivery. | `JSONB` |
+| `items` | List of dish IDs, names, trusted prices, and quantities saved with the order. | `JSONB NOT NULL` |
+| `subtotal_inr` | Total for dishes before tax and delivery. | `INT NOT NULL` |
+| `delivery_fee_inr` | Additional delivery cost in rupees. | `INT DEFAULT 0` |
+| `tax_inr` | Tax calculated by the waiter in whole rupees. | `INT NOT NULL` |
+| `total_inr` | Final amount for the order. | `INT NOT NULL` |
+| `status` | Current step of this order, booking, application, or message. | `TEXT CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled')) DEFAULT 'pending'` |
+| `payment_status` | Payment state recorded in the office. It starts as unpaid. | `TEXT CHECK (payment_status IN ('unpaid', 'paid', 'failed', 'refunded')) DEFAULT 'unpaid'` |
+| `payment_method` | How the customer paid, when recorded. | `TEXT CHECK (payment_method IN ('cash', 'upi', 'card', 'razorpay', 'stripe'))` |
+| `payment_id` | Optional reference for an external payment. | `TEXT` |
+| `notes` | Extra instructions or notes from the customer. | `TEXT` |
+| `whatsapp_sent` | Stored flag for whether a WhatsApp notice was sent. Automatic sending is not built. | `BOOLEAN DEFAULT false` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### bookings
 
 Table requests and requested slots. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `booking_number` | `TEXT UNIQUE NOT NULL` |
-| `customer_name` | `TEXT NOT NULL` |
-| `customer_phone` | `TEXT NOT NULL` |
-| `customer_email` | `TEXT` |
-| `booking_date` | `DATE NOT NULL` |
-| `booking_time` | `TIME NOT NULL` |
-| `guests` | `INT CHECK (guests > 0 AND guests <= 20) NOT NULL` |
-| `special_requests` | `TEXT` |
-| `status` | `TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')) DEFAULT 'pending'` |
-| `whatsapp_sent` | `BOOLEAN DEFAULT false` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `booking_number` | Customer-facing booking reference beginning BK-. | `TEXT UNIQUE NOT NULL` |
+| `customer_name` | Name supplied by the person making the request. | `TEXT NOT NULL` |
+| `customer_phone` | Contact number supplied by the customer. | `TEXT NOT NULL` |
+| `customer_email` | Optional customer email. | `TEXT` |
+| `booking_date` | Day requested for the table reservation. | `DATE NOT NULL` |
+| `booking_time` | Local time requested for that booking. | `TIME NOT NULL` |
+| `guests` | Number of people expected at the table. | `INT CHECK (guests > 0 AND guests <= 20) NOT NULL` |
+| `special_requests` | Optional access, seating or other booking requests. | `TEXT` |
+| `status` | Current step of this order, booking, application, or message. | `TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')) DEFAULT 'pending'` |
+| `whatsapp_sent` | Stored flag for whether a WhatsApp notice was sent. Automatic sending is not built. | `BOOLEAN DEFAULT false` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### job_applications
 
 Applicant, review state and private CV path. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `application_number` | `TEXT UNIQUE NOT NULL` |
-| `full_name` | `TEXT NOT NULL` |
-| `email` | `TEXT NOT NULL` |
-| `phone` | `TEXT NOT NULL` |
-| `role` | `TEXT NOT NULL` |
-| `cv_url` | `TEXT` |
-| `address` | `TEXT` |
-| `status` | `TEXT CHECK (status IN ('pending', 'reviewing', 'shortlisted', 'rejected', 'hired')) DEFAULT 'pending'` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `application_number` | Customer-facing application reference beginning APP-. | `TEXT UNIQUE NOT NULL` |
+| `full_name` | Name supplied by the applicant. | `TEXT NOT NULL` |
+| `email` | Email supplied on the form. | `TEXT NOT NULL` |
+| `phone` | Phone number supplied on the form. | `TEXT NOT NULL` |
+| `role` | Job chosen by an applicant, or an owner or staff role in the admin list. | `TEXT NOT NULL` |
+| `cv_url` | Stored path to the private CV file. The office requests a temporary link separately. | `TEXT` |
+| `address` | Address supplied by the applicant. | `TEXT` |
+| `status` | Current step of this order, booking, application, or message. | `TEXT CHECK (status IN ('pending', 'reviewing', 'shortlisted', 'rejected', 'hired')) DEFAULT 'pending'` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### contact_messages
 
 Incoming contact requests. Defined in `001_core_schema.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `name` | `TEXT NOT NULL` |
-| `email` | `TEXT NOT NULL` |
-| `phone` | `TEXT` |
-| `subject` | `TEXT` |
-| `message` | `TEXT NOT NULL` |
-| `status` | `TEXT CHECK (status IN ('new', 'read', 'replied', 'archived')) DEFAULT 'new'` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `name` | The name displayed or entered on this record. | `TEXT NOT NULL` |
+| `email` | Email supplied on the form. | `TEXT NOT NULL` |
+| `phone` | Phone number supplied on the form. | `TEXT` |
+| `subject` | Short subject chosen for the message. | `TEXT` |
+| `message` | Words the customer sends to the café. | `TEXT NOT NULL` |
+| `status` | Current step of this order, booking, application, or message. | `TEXT CHECK (status IN ('new', 'read', 'replied', 'archived')) DEFAULT 'new'` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### admin_users
 
 Auth membership and owner/staff roles. Defined in `002_admin_settings.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `user_id` | `UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE` |
-| `role` | `TEXT NOT NULL CHECK (role IN ('owner', 'staff'))` |
-| `display_name` | `TEXT` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `user_id` | ID of the signed-in account on the admin list. | `UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE` |
+| `role` | Job chosen by an applicant, or an owner or staff role in the admin list. | `TEXT NOT NULL CHECK (role IN ('owner', 'staff'))` |
+| `display_name` | Optional name to show for a staff or owner account. | `TEXT` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### settings
 
 Owner-managed key/value settings. Defined in `002_admin_settings.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `key` | `TEXT PRIMARY KEY` |
-| `value` | `JSONB NOT NULL` |
-| `updated_by` | `UUID REFERENCES auth.users(id)` |
-| `updated_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `key` | Name used to look up a particular setting. | `TEXT PRIMARY KEY` |
+| `value` | Stored contents of that setting. | `JSONB NOT NULL` |
+| `updated_by` | ID of the account that changed a setting. | `UUID REFERENCES auth.users(id)` |
+| `updated_at` | Date and time the row was last changed. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### order_status_history
 
 Order status audit trail. Defined in `003_order_status_history.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
-| `order_id` | `UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE` |
-| `from_status` | `TEXT` |
-| `to_status` | `TEXT NOT NULL` |
-| `changed_by` | `UUID REFERENCES auth.users(id)` |
-| `note` | `TEXT` |
-| `created_at` | `TIMESTAMPTZ DEFAULT NOW()` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `id` | Unique ID used by programs to find this row. Different entries get different IDs. | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `order_id` | ID of the order that the history entry belongs to. | `UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE` |
+| `from_status` | Previous order state. | `TEXT` |
+| `to_status` | New order state. | `TEXT NOT NULL` |
+| `changed_by` | Account that moved the order to a new state, if available. | `UUID REFERENCES auth.users(id)` |
+| `note` | Optional extra detail about the status change. | `TEXT` |
+| `created_at` | Date and time this row was made. | `TIMESTAMPTZ DEFAULT NOW()` |
 
 #### submission_limits
 
 Shared minute counters for public submissions. Defined in `004_admin_rls_storage_realtime.sql`.
 
-| Column or table rule | Type, default and constraints |
-|---|---|
-| `endpoint` | `text NOT NULL` |
-| `visitor` | `text NOT NULL` |
-| `minute` | `timestamptz NOT NULL` |
-| `hits` | `integer NOT NULL` |
-| `PRIMARY` | `KEY (endpoint, visitor, minute)` |
+| Column | What it means | Exact SQL type or rule |
+|---|---|---|
+| `endpoint` | Name of the waiter that received the submission. | `text NOT NULL` |
+| `visitor` | Hashed visitor clue used to count repeat requests. | `text NOT NULL` |
+| `minute` | Time window for this counter. | `timestamptz NOT NULL` |
+| `hits` | How many requests this visitor made during the minute. | `integer NOT NULL` |
+| `PRIMARY` | Together these three details identify one counter. | `KEY (endpoint, visitor, minute)` |
 
 ### Final policy reference
 
-The table shows each policy after applying all migrations. Table grants and the payment trigger further restrict writes.
+The table shows each policy after applying all migrations. Table grants and the staff column guard further restrict writes.
 
 | Relation | Policy | Rule | Last declared in |
 |---|---|---|---|
