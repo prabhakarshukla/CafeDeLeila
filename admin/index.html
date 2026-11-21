@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#161616">
+  <link rel="manifest" href="/admin/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/admin/icons/admin-apple.png">
   <title>Café De Leila | Admin</title>
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="admin.css">
@@ -19,7 +22,9 @@
       <h1>Admin sign in</h1>
       <label>Email<input name="email" type="email" autocomplete="username" required></label>
       <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-      <button>Sign in</button>
+      <button id="toggle-password" type="button" aria-pressed="false">Show password</button>
+      <label class="remember-device"><input name="keepSignedIn" type="checkbox"> Keep me signed in on this device</label>
+      <button type="submit">Sign in</button>
     </form>
     <section id="view" aria-label="Admin page" hidden></section>
   </main>

@@ -45,7 +45,13 @@ The folders separate browser code, database and function source, documentation a
 | `REPORT_AUDIT.md` | Historical report baseline | Reviewers | Earlier source and test runs |
 | `VERIFICATION_REPORT.md` | Current checklist results and hosted verification outstanding | Reviewers and operator | Source, local checks and verification guide |
 | `admin/admin.css` | Admin layout, focus and print styles | admin/index.html | css/variables.css |
+| `admin/icons/admin-192.png` | Small launcher icon from the café logo | Android launcher | Admin manifest |
+| `admin/icons/admin-512.png` | Large launcher icon from the café logo | Android launcher | Admin manifest |
+| `admin/icons/admin-apple.png` | Home screen icon from the café logo | Safari | Admin HTML |
+| `admin/icons/admin-maskable.png` | Padded logo for cropped launcher shapes | Android launcher | Admin manifest |
+| `admin/manifest.webmanifest` | Admin home-screen app details | Browsers | App icons |
 | `admin/index.html` | Admin page, login form and navigation host | Browser at /admin/ | admin.css and admin/js/app.js |
+| `admin/js/session-storage.mjs` | Chooses storage for admin sessions | Admin sign in | Browser storage |
 | `admin/js/app.js` | Session and route guard | Admin app or modules | Supabase and admin UI modules |
 | `admin/js/dashboard.js` | Dashboard RPC and metrics | Admin app or modules | Supabase and admin UI modules |
 | `admin/js/menu.js` | Menu and image editing | Admin app or modules | Supabase and admin UI modules |
@@ -56,6 +62,7 @@ The folders separate browser code, database and function source, documentation a
 | `assets/favicon.svg` | Browser tab icon | Root HTML pages | SVG |
 | `assets/logo_delelia.svg` | Brand art | Site header markup | SVG |
 | `assets/meal.svg` | Fallback illustration for menu dishes | Menu/home renderers | SVG |
+| `audit/admin-session.cjs` | Checks session restoration and sign-out | Developers | Playwright and mock login |
 | `audit/admin-browser.cjs` | Checks admin layouts, roles and populated workflows | Playwright | Chrome, mocked client, admin page |
 | `audit/booking-timezone.cjs` | Compares booking behavior across browser timezones | Playwright | Chrome and the booking page |
 | `audit/browser-results.json` | Historical browser flow outcomes | Historical audit | Corresponding command in audit/ |
@@ -80,6 +87,7 @@ The folders separate browser code, database and function source, documentation a
 | `css/variables.css` | Design tokens | Storefront HTML | Cascade and CSS design tokens |
 | `data/config.json` | Public fallback settings and Supabase browser config | loadConfig and admin start | Site and Supabase project settings |
 | `data/menu.json` | 80 sample dishes in 19 categories | loadMenu and SQL seed generator | assets/meal.svg and sample catalog |
+| `docs/ADMIN_ACCESS.md` | Phone install and login guide | Café owner and staff | Admin site |
 | `docs/ASSUMPTIONS.md` | Constraints and migration assumptions | Contributors and operator | Project source and audit history |
 | `docs/AUDIT.md` | Prior storefront verification | Contributors and operator | Project source and audit history |
 | `docs/BACKEND_AUDIT.md` | Prior admin and backend evidence | Contributors and operator | Project source and audit history |
@@ -148,4 +156,5 @@ The folders separate browser code, database and function source, documentation a
 | `supabase/migrations/006_cleanup_legacy.sql` | Legacy policy cleanup, bucket convergence and complete numbers | SQL Editor and embedded replay | Earlier migrations and platform schemas |
 | `supabase/migrations/007_align_legacy_schema.sql` | Aligns legacy constraints, defaults, reference sequences and workflow triggers | SQL Editor and embedded replay | Earlier migrations |
 | `supabase/seed/menu_items.sql` | Generated, repeatable sample catalog inserts | Operator SQL Editor and replay test | 006 category slugs and data/menu.json |
+| `vercel.json` | Sends /staff to the admin | Vercel | Admin route |
 | `supabase/tests/behavior.sql` | Rollback role, transition and reference assertions | Embedded replay or disposable SQL Editor | Migrations, auth.users stub or service |

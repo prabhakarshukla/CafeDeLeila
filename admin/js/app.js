@@ -1,9 +1,13 @@
 import {el, result} from './ui.js';
+import {adminSessionStorage} from './session-storage.mjs';
 
 const nav = document.querySelector('#nav');
 const view = document.querySelector('#view');
 const login = document.querySelector('#login');
 const logout = document.querySelector('#logout');
+const remember = login.elements.keepSignedIn;
+const password = login.elements.password;
+const togglePassword = document.querySelector('#toggle-password');
 const notice = message => { document.querySelector('#notice').textContent = message; };
 const pages = {
   dashboard:['Dashboard', './dashboard.js'],
@@ -16,6 +20,7 @@ const pages = {
   staff:['Staff', './settings.js', true],
 };
 let client;
+let sessionStorageAdapter;
 let projectUrl;
 let user;
 let role;
@@ -65,14 +70,11 @@ async function access(session) {
     login.hidden = false;
     return;
   }
-  if (user?.id === session.user.id && role) return;
   hideWorkspace();
   const record = await result(client.from('admin_users').select('role').eq('user_id', session.user.id).maybeSingle());
   if (authGeneration !== current) return;
   if (!['owner','staff'].includes(record?.role)) {
-    await client.auth.signOut();
-    notice('Not authorised');
-    login.hidden = false;
+    await endSession('Not authorised');
     return;
   }
   user = session.user;
@@ -91,31 +93,66 @@ async function start() {
   if (!supabase?.url || !supabase.publishableKey) throw new Error('Add the Supabase URL and publishable key in data/config.json to enable sign in.');
   const {createClient} = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm');
   projectUrl = supabase.url;
-  client = createClient(projectUrl, supabase.publishableKey);
+  const storageKey = 'sb-' + new URL(projectUrl).hostname.split('.')[0] + '-auth-token';
+  sessionStorageAdapter = adminSessionStorage(storageKey);
+  remember.checked = sessionStorageAdapter.keepSignedIn;
+  client = createClient(projectUrl, supabase.publishableKey, {
+    auth: {storageKey, storage:sessionStorageAdapter, persistSession:true, autoRefreshToken:true},
+  });
   client.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') setTimeout(() => access(null), 0);
   });
-  const {session} = await result(client.auth.getSession());
-  if (!session) notice('');
-  await access(session);
+  await restoreAccess();
 }
+
+async function restoreAccess() {
+  try {
+    const {session} = await result(client.auth.getSession());
+    if (!session) notice('');
+    await access(session);
+  } catch {
+    await access(null);
+    notice('Could not check access. Sign in again to retry.');
+  }
+}
+
+async function endSession(message) {
+  await access(null);
+  try { await client.auth.signOut(); }
+  catch { /* The browser session is still cleared below. */ }
+  finally {
+    sessionStorageAdapter.clear();
+    history.replaceState(null, '', location.pathname + location.search);
+    notice(message);
+  }
+}
+
+function showPassword(visible) {
+  password.type = visible ? 'text' : 'password';
+  togglePassword.setAttribute('aria-pressed', String(visible));
+  togglePassword.textContent = visible ? 'Hide password' : 'Show password';
+}
+
+togglePassword.addEventListener('click', () => showPassword(password.type === 'password'));
+remember.addEventListener('change', () => sessionStorageAdapter?.setPreference(remember.checked));
 
 login.addEventListener('submit', async event => {
   event.preventDefault();
-  const submit = login.querySelector('button');
+  const submit = login.querySelector('[type="submit"]');
   submit.disabled = true;
   notice('Signing in…');
   const fields = new FormData(login);
   try {
     const {session} = await result(client.auth.signInWithPassword({email: fields.get('email'), password: fields.get('password')}));
     login.reset();
+    remember.checked = sessionStorageAdapter.keepSignedIn;
+    showPassword(false);
     await access(session);
   } catch (error) { notice(error.message); }
   finally { submit.disabled = false; }
 });
 logout.addEventListener('click', async () => {
-  try { await result(client.auth.signOut()); await access(null); notice('Signed out'); }
-  catch (error) { notice(error.message); }
+  await endSession('Signed out');
 });
-window.addEventListener('hashchange', showPage);
+window.addEventListener('hashchange', () => { if (client && role) void restoreAccess(); });
 start().catch(error => notice(error.message));

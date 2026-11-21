@@ -17,6 +17,9 @@ label input[type=checkbox] { width: 44px; accent-color: var(--color-sand); }
 form, article, details { background: var(--color-obsidian-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 16px; margin: 16px 0; overflow-wrap: anywhere; }
 form { display: grid; gap: 12px; }
 #login { max-width: 30rem; }
+#toggle-password { justify-self: start; }
+.remember-device { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.remember-device input { margin: 0; flex: none; }
 :focus-visible { outline: 3px solid var(--color-sand-light); outline-offset: 3px; }
 h1,h2,h3 { font-family: var(--font-heading); }
 h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 0 0 14px; }
